@@ -1,0 +1,354 @@
+/* HpGrid.css
+   Re-skinned to match the reference admin-panel UI:
+   lavender-blue table headers, navy header text, teal accent buttons,
+   blue/red pencil-trash action icons, warm highlight on the actively
+   edited cell. Everything is overridable via the classes below, or via
+   colDef.className / rowClassName for per-cell / per-row overrides. */
+
+:root {
+  --hpg-teal: #14a6b6;
+  --hpg-teal-dark: #0f8b99;
+  --hpg-navy: #29314d;
+  --hpg-border: #e3e8f0;
+  --hpg-header-bg: #eef3fb;
+  --hpg-row-hover: #f8fafc;
+  --hpg-row-selected: #e9f4ff;
+  --hpg-edit-highlight-bg: #fff9e6;
+  --hpg-edit-highlight-border: #f2c94c;
+  --hpg-blue: #2f80ed;
+  --hpg-blue-bg: #eaf2fe;
+  --hpg-red: #eb5757;
+  --hpg-red-bg: #fdeded;
+}
+
+.hp-grid {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--hpg-border);
+  overflow: hidden;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  color: #1f2328;
+  background: #fff;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  box-shadow: none;
+  border-radius: 6px;
+}
+
+.hp-grid-table-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ---------------------------- toolbar ---------------------------- */
+.hp-grid-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--hpg-border);
+  background: #fff;
+  flex-wrap: wrap;
+}
+
+.hp-grid-toolbar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--hpg-navy);
+  font-size: 14px;
+}
+
+.hp-grid-toolbar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 0;
+  background: var(--hpg-teal);
+  color: #fff;
+  font-size: 13px;
+}
+
+.hp-grid-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hp-grid-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--hpg-border);
+  border-radius: 0;
+  padding: 6px 12px;
+  background: #fff;
+  min-width: 200px;
+}
+
+.hp-grid-search-icon {
+  color: #9aa1a9;
+  flex-shrink: 0;
+}
+
+.hp-grid-search input {
+  border: none;
+  outline: none;
+  font: inherit;
+  width: 100%;
+  background: transparent;
+}
+
+.hp-grid-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  height: 28px;
+  padding: 0 10px;
+  margin: 0;
+
+  border: none;
+  border-radius: 6px;
+
+  background: var(--hpg-teal);
+  color: #fff;
+
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+
+  cursor: pointer;
+  white-space: nowrap;
+
+  box-shadow: 0 2px 6px rgba(20, 184, 166, 0.15);
+
+  transition: all 0.2s ease;
+}
+
+.hp-grid-add-btn:hover {
+  background: var(--hpg-teal-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(20, 184, 166, 0.22);
+}
+
+.hp-grid-add-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.hp-grid-add-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.25);
+}
+
+/* ---------------------------- header ---------------------------- */
+.hp-grid-scroll-area {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.hp-grid-scroll-content {
+  min-width: max-content;
+}
+
+.hp-grid-header {
+  display: flex;
+  background: var(--hpg-header-bg);
+  border-bottom: 1px solid var(--hpg-border);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-width: max-content;
+}
+
+.hp-grid-header-cell {
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  color: var(--hpg-navy);
+  border-right: 1px solid var(--hpg-border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hp-grid-header-cell:last-child {
+  border-right: none;
+}
+
+/* ---------------------------- body/rows ---------------------------- */
+.hp-grid-body {
+  overflow: visible;
+  flex: 1;
+  min-height: 0;
+}
+
+.hp-grid-row {
+  display: flex;
+  border-bottom: 1px solid #eef1f5;
+  transition: background-color 120ms ease;
+  min-width: max-content;
+}
+
+.hp-grid-row:hover {
+  background: var(--hpg-row-hover);
+}
+
+.hp-grid-row--selected {
+  background: var(--hpg-row-selected);
+}
+
+.hp-grid-empty {
+  padding: 24px;
+  text-align: center;
+  color: #9aa1a9;
+}
+
+.hp-grid-cell-outer {
+  display: flex;
+  min-width: 0;
+  border-right: 1px solid #eef1f5;
+}
+
+.hp-grid-cell-outer:last-child {
+  border-right: none;
+}
+
+.hp-grid-cell {
+  width: 100%;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  outline: none;
+  min-height: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hp-grid-cell--select-col {
+  flex: 0 0 40px;
+  justify-content: center;
+  padding: 0;
+}
+
+.hp-grid-cell--readonly {
+  cursor: default;
+}
+
+.hp-grid-cell--editable {
+  padding: 0 4px;
+  cursor: text;
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.hp-grid-cell--editable:hover:not(.hp-grid-cell--focused) {
+  background: #fafbfc;
+}
+
+/* Warm "actively editing" highlight, matching the reference UI's
+   Price Range editable-cell state, instead of a plain blue box-shadow. */
+.hp-grid-cell--focused {
+  background: var(--hpg-edit-highlight-bg);
+  z-index: 1;
+  position: relative;
+}
+
+.hp-grid-input,
+.hp-grid-select,
+.hp-grid-textarea {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  padding: 8px;
+}
+
+.hp-grid-input--number {
+  text-align: right;
+}
+
+.hp-grid-textarea {
+  resize: vertical;
+  min-height: 32px;
+}
+
+.hp-grid-checkbox {
+  margin: 0 auto;
+}
+
+/* ---------------------------- actions column ---------------------------- */
+.hp-grid-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hp-grid-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+}
+
+.hp-grid-action-btn--edit {
+  background: var(--hpg-blue-bg);
+  color: var(--hpg-blue);
+}
+
+.hp-grid-action-btn--edit:hover {
+  background: #d9e8fd;
+}
+
+.hp-grid-action-btn--delete {
+  background: var(--hpg-red-bg);
+  color: var(--hpg-red);
+}
+
+.hp-grid-action-btn--delete:hover {
+  background: #fbdada;
+}
+
+.hp-grid-action-btn--default {
+  background: #f1f2f4;
+  color: #4b5563;
+}
+
+/* ---------------------------- status dot ---------------------------- */
+.hp-grid-status-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #c9ced6;
+}
+
+.hp-grid-status-dot--active {
+  background: var(--hpg-teal);
+}
+
+.hp-grid-status-dot--inactive {
+  background: #c9ced6;
+}

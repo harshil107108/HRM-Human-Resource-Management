@@ -28,7 +28,7 @@ const useCompanyConfig = () => {
       required: true,
       prevFocusField: "panNumber",
       nextFocusField: "industryname",
-    },
+    }
   ];
 
   const businessInfoSchema2 = [
@@ -127,6 +127,7 @@ const useCompanyConfig = () => {
       id: "country",
       type: "selectWrapper",
       label: "Country",
+      multiSelect: true,
       placeHolder: "Select Country",
       options: [
         { label: "United States", value: "US" },

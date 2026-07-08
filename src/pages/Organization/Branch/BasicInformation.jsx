@@ -1,6 +1,6 @@
 import React from "react";
 import useBranchConfig from "./useBranchConfig";
-import { ArrowLeft, ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, ChevronRight } from "lucide-react";
 import { FormRenderer } from "@/form-engine";
 
 const BasicInformation = ({
@@ -53,6 +53,100 @@ const BasicInformation = ({
         </div>
 
         <FormRenderer formMethod={formmethod} formSchema={basicInfoSchema} />
+
+        <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
+                <Building2 className="h-4 w-4" />
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Head Office
+                </h3>
+
+                <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
+                  Mark this branch as the primary administrative office.
+                </p>
+              </div>
+            </div>
+
+            <label className="relative inline-flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                className="peer sr-only"
+              />
+
+              <div
+                className="
+          h-5
+          w-9
+          rounded-full
+          bg-slate-300
+          transition-colors
+          duration-200
+          peer-checked:bg-indigo-600
+          after:absolute
+          after:left-[2px]
+          after:top-[2px]
+          after:h-4
+          after:w-4
+          after:rounded-full
+          after:bg-white
+          after:shadow-sm
+          after:transition-transform
+          after:duration-200
+          peer-checked:after:translate-x-4
+        "
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <label
+            htmlFor="branchDescription"
+            className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+          >
+            Branch Description
+          </label>
+
+          <textarea
+            id="branchDescription"
+            rows={3}
+            placeholder="Enter branch objectives, responsibilities, or operational details..."
+            className="
+      w-full
+      resize-none
+      rounded-md
+      border
+      border-slate-300
+      bg-white
+      px-3
+      py-2
+      text-sm
+      text-slate-700
+      placeholder:text-slate-400
+      transition-all
+      duration-200
+      focus:border-indigo-500
+      focus:outline-none
+      focus:ring-2
+      focus:ring-indigo-100
+    "
+          />
+
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-[11px] text-slate-400">
+              This description helps identify the purpose and operations of this branch.
+            </p>
+
+            <span className="text-[11px] text-slate-400">
+              0 / 500
+            </span>
+          </div>
+        </div>
 
         <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-6">
           <button

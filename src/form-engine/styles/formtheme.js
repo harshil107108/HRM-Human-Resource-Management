@@ -71,17 +71,27 @@ disabled:cursor-not-allowed
 
 // Checkbox
 export const checkboxClass = `
-h-4
-w-4
-
+appearance-none
+relative
+inline-flex
+shrink-0
+items-center
+justify-center
 rounded
-
+border
 border-slate-300
-
+bg-white
 text-blue-600
-
+shadow-sm
+transition-all
+duration-200
+outline-none
+checked:bg-blue-600
+checked:border-blue-600
+checked:text-white
 focus:ring-2
 focus:ring-blue-100
+focus:ring-offset-0
 `;
 
 // Radio

@@ -12,6 +12,7 @@ import CompanyListing from "@pages/Organization/company/CompanyListing";
 import BranchListing from "@pages/Organization/Branch/BranchListing";
 import Branch from "@pages/Organization/Branch/Branch";
 import DepartmentListing from "@/pages/Organization/Departments/DepartmentListing";
+import Department from "@/pages/Organization/Departments/Department";
 
 const router = createBrowserRouter([
   // ===========================
@@ -75,7 +76,16 @@ const router = createBrowserRouter([
       },
       {
         path: "organization/departments",
-        element: <DepartmentListing />,
+        children: [
+          {
+            index: true,
+            element: <DepartmentListing />,
+          },
+          {
+            path: "addedit",
+            element: <Department />,
+          },
+        ],
       },
       {
         path: "organization/designations",

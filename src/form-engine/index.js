@@ -11,6 +11,7 @@ import NumberField from "./components/fields/NumberField";
 import SelectWrapper from "./components/fields/SelectWrapper";
 import TextField from "./components/fields/TextField";
 import DateField from "./components/fields/DateField";
+import CheckboxField from "./components/fields/CheckboxField";
 
 // ---- register built-in field types -----------------------------------
 // Add new types anywhere in your app with the exported `registerFieldType`
@@ -20,6 +21,7 @@ registerFieldType("number", NumberField);
 registerFieldType("selectWrapper", SelectWrapper);
 registerFieldType("text", TextField);
 registerFieldType("date", DateField);
+registerFieldType("checkbox", CheckboxField);
 
 // ---- public exports -----------------------------------------------------
 export { default as formMethod, extendFormMethod } from "./core/formMethod";

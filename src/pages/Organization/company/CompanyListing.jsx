@@ -126,7 +126,7 @@ const CompanyListing = () => {
                 companyid: data?.companyid,
             },
         });
-    }
+    } 
 
     const handleAdd = () => {
         navigate(`${location.pathname}/addedit`);

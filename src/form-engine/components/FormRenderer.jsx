@@ -2,6 +2,30 @@ import React from "react";
 import { useFormStore } from "../hooks/useFormStore";
 import { getFieldComponent } from "../core/fieldRegistry";
 
+const getGridSpanStyle = (field) => {
+  const classNames = [
+    field.className,
+    field.wrapperClassName,
+    field.containerClassName,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const spanMatch = classNames.match(/(?:^|\s)(?:[a-z-]+:)?col-span-(\d+|full)(?:\s|$)/);
+
+  if (!spanMatch) {
+    return {
+      gridColumn: "span 6 / span 6",
+    };
+  }
+
+  const spanValue = spanMatch[1];
+
+  return {
+    gridColumn: spanValue === "full" ? "1 / -1" : `span ${spanValue} / span ${spanValue}`,
+  };
+};
+
 /**
  * FormRenderer
  * ------------
@@ -49,7 +73,7 @@ export default function FormRenderer({
     <div
       className={`grid gap-x-4 gap-y-6 items-start ${className}`.trim()}
       style={{
-        gridTemplateColumns: `repeat(auto-fit, minmax(${baseWidth}, 1fr))`,
+        gridTemplateColumns: `repeat(12, minmax(0, 1fr))`,
       }}
     >
       {schema.map((field) => {
@@ -74,14 +98,18 @@ export default function FormRenderer({
           .filter(Boolean)
           .join(" ");
 
-        const fieldWrapperStyle = field.minWidth
-          ? {
+        const spanStyle = getGridSpanStyle(field);
+        const fieldWrapperStyle = {
+          ...(field.minWidth
+            ? {
               minWidth:
                 typeof field.minWidth === "number"
                   ? `${field.minWidth}px`
                   : field.minWidth,
             }
-          : undefined;
+            : {}),
+          ...spanStyle,
+        };
 
         return (
           <div

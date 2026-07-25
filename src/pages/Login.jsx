@@ -1,20 +1,18 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import companyLogo from "@assets/images/companyLogo.png";
 import { motion } from "framer-motion";
 import {
-  Shield,
-  Mail,
-  Lock,
   ArrowRight,
-  Activity,
-  Users,
+  CheckCircle2,
   Globe,
   Key,
-  Command,
-  CheckCircle2,
+  Lock,
+  Mail,
+  Shield,
   Sliders,
+  Users
 } from "lucide-react";
-import companyLogo from "@assets/images/companyLogo.png";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();

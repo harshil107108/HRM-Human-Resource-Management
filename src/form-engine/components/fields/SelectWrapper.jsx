@@ -46,7 +46,8 @@ export default function SelectWrapper({ field, form }) {
   const handleChange = useCallback(
     (selected) => {
       if (isMultiSelect) {
-        setDraftValues(selected ? selected.map((item) => item.value) : []);
+        const nextValues = selected ? selected.map((item) => item.value) : [];
+        setDraftValues(nextValues);
         return;
       }
 
@@ -55,6 +56,16 @@ export default function SelectWrapper({ field, form }) {
     },
     [form, id, isMultiSelect]
   );
+
+  const handleMenuOpen = useCallback(() => {
+    setDraftValues(selectedValues);
+    setIsMenuOpen(true);
+  }, [selectedValues]);
+
+  const handleMenuClose = useCallback(() => {
+    setDraftValues(selectedValues);
+    setIsMenuOpen(false);
+  }, [selectedValues]);
 
   const handleOptionToggle = useCallback((optionValue) => {
     setDraftValues((prev) =>
@@ -86,9 +97,10 @@ export default function SelectWrapper({ field, form }) {
   }, [disabled]);
 
   const handleBlur = useCallback(() => {
+    setDraftValues(selectedValues);
     setIsMenuOpen(false);
     form.methods.blurField(id);
-  }, [form, id]);
+  }, [form, id, selectedValues]);
 
   const handleKeyDown = useCallback(
     (event) => {
@@ -120,8 +132,9 @@ export default function SelectWrapper({ field, form }) {
 
   const renderOption = useCallback(
     (optionProps) => {
-      const { data, innerRef, innerProps, isSelected } = optionProps;
+      const { data, innerRef, innerProps } = optionProps;
       const { onClick, ...restInnerProps } = innerProps;
+      const isSelected = draftValues.includes(data.value);
 
       return (
         <div
@@ -146,35 +159,39 @@ export default function SelectWrapper({ field, form }) {
         </div>
       );
     },
-    [handleOptionToggle]
+    [draftValues, handleOptionToggle]
   );
 
   const renderMenuList = useCallback(
     ({ children }) => (
       <div>
-        <div className="flex items-center gap-2 border-b border-slate-200 px-2 py-2">
-          <input
-            type="checkbox"
-            checked={draftValues.length > 0 && draftValues.length === options.length}
-            onChange={handleSelectAll}
-            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
-          />
-          <span className="text-sm font-medium text-slate-700">Select All</span>
-        </div>
+        {isMultiSelect && (
+          <div className="flex items-center gap-2 border-b border-slate-200 px-2 py-2">
+            <input
+              type="checkbox"
+              checked={draftValues.length > 0 && draftValues.length === options.length}
+              onChange={handleSelectAll}
+              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
+            />
+            <span className="text-sm font-medium text-slate-700">Select All</span>
+          </div>
+        )}
         <div className="max-h-56 overflow-y-auto py-1">{children}</div>
-        <div className="border-t border-slate-200 px-2 py-2">
-          <button
-            type="button"
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={handleApply}
-            className="w-full rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            Apply
-          </button>
-        </div>
+        {isMultiSelect && (
+          <div className="border-t border-slate-200 px-2 py-2">
+            <button
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={handleApply}
+              className="w-full rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Apply
+            </button>
+          </div>
+        )}
       </div>
     ),
-    [draftValues.length, handleApply, handleSelectAll, options.length]
+    [draftValues.length, handleApply, handleSelectAll, isMultiSelect, options.length]
   );
 
   return (
@@ -203,11 +220,12 @@ export default function SelectWrapper({ field, form }) {
         isClearable={false}
         isSearchable
         closeMenuOnSelect={false}
+        hideSelectedOptions={false}
         menuPlacement="auto"
         menuPortalTarget={document.body}
         menuIsOpen={isMenuOpen}
-        onMenuOpen={() => setIsMenuOpen(true)}
-        onMenuClose={() => setIsMenuOpen(false)}
+        onMenuOpen={handleMenuOpen}
+        onMenuClose={handleMenuClose}
         classNamePrefix="form-select"
         className="w-full"
         components={{ Option: renderOption, MenuList: renderMenuList }}

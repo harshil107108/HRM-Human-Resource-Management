@@ -13,6 +13,9 @@ import BranchListing from "@pages/Organization/Branch/BranchListing";
 import Branch from "@pages/Organization/Branch/Branch";
 import DepartmentListing from "@/pages/Organization/Departments/DepartmentListing";
 import Department from "@/pages/Organization/Departments/Department";
+import DesignationListing from "@/pages/Organization/Designation/DesignationListing";
+import Designation from "@/pages/Organization/Designation/Designation";
+import CountryMasterListing from "@/pages/Master/CountryMaster/CountryMasterListing";
 
 const router = createBrowserRouter([
   // ===========================
@@ -44,6 +47,34 @@ const router = createBrowserRouter([
         element: <Dashboard />,
       },
 
+      // ============================================
+      // Master Setup
+      // ============================================
+
+      {
+        path: "master/countries",
+        element: <CountryMasterListing />,
+      },
+      {
+        path: "master/states",
+        element: <UnderConstruction moduleName="State Master" />,
+      },
+      {
+        path: "master/cities",
+        element: <UnderConstruction moduleName="City Master" />,
+      },
+      {
+        path: "master/holidays",
+        element: <UnderConstruction moduleName="Holiday Master" />,
+      },
+      {
+        path: "master/departments",
+        element: <UnderConstruction moduleName="Department Master" />,
+      },
+      {
+        path: "master/designations",
+        element: <UnderConstruction moduleName="Designation Master" />,
+      },
       // ============================================
       // Organization
       // ============================================
@@ -89,7 +120,16 @@ const router = createBrowserRouter([
       },
       {
         path: "organization/designations",
-        element: <UnderConstruction moduleName="Designation Management" />,
+        children: [
+          {
+            index: true,
+            element: <DesignationListing />,
+          },
+          {
+            path: "addedit",
+            element: <Designation />,
+          },
+        ],
       },
       {
         path: "organization/locations",

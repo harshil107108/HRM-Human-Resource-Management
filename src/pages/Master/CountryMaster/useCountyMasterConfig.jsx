@@ -38,13 +38,6 @@ const useCountyMasterConfig = () => {
             headerName: "Nationality",
             width: 180,
         },
-        {
-            id: "isActive",
-            field: "isActive",
-            headerName: "Status",
-            width: 60,
-            cellRenderer: "statusRenderer",
-        },
     ];
 
     const countrySchema = [
@@ -100,15 +93,6 @@ const useCountyMasterConfig = () => {
             prevFocusField: "phoneCode",
             nextFocusField: "isActive",
             className: "col-span-6",
-        },
-        {
-            id: "isActive",
-            type: "switch",
-            label: "Status",
-            required: false,
-            prevFocusField: "nationality",
-            className: "col-span-6",
-            defaultValue: true,
         },
     ];
 

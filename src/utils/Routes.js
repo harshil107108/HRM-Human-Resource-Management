@@ -81,18 +81,7 @@ export const NAVIGATION_SCHEMA = [
         label: "Designations",
         path: "/organization/designations",
       },
-      {
-        label: "Locations",
-        path: "/organization/locations",
-      },
-      {
-        label: "Business Units",
-        path: "/organization/business-units",
-      },
-      {
-        label: "Cost Centers",
-        path: "/organization/cost-centers",
-      },
+      
     ],
   },
 

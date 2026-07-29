@@ -146,7 +146,7 @@ export default function SelectWrapper({ field, form }) {
             event.stopPropagation();
             handleOptionToggle(data.value);
           }}
-          className={`flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm ${isSelected ? "bg-blue-50" : "hover:bg-slate-50"
+          className={`flex cursor-pointer items-center gap-2 rounded px-3 py-3 text-sm ${isSelected ? "bg-blue-50" : "hover:bg-slate-50"
             }`}
         >
           <input
@@ -228,7 +228,14 @@ export default function SelectWrapper({ field, form }) {
         onMenuClose={handleMenuClose}
         classNamePrefix="form-select"
         className="w-full"
-        components={{ Option: renderOption, MenuList: renderMenuList }}
+        components={
+          isMultiSelect
+            ? {
+              Option: renderOption,
+              MenuList: renderMenuList,
+            }
+            : undefined
+        }
         styles={customStyles(error)}
       />
 

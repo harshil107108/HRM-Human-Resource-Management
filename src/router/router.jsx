@@ -16,6 +16,11 @@ import Department from "@/pages/Organization/Departments/Department";
 import DesignationListing from "@/pages/Organization/Designation/DesignationListing";
 import Designation from "@/pages/Organization/Designation/Designation";
 import CountryMasterListing from "@/pages/Master/CountryMaster/CountryMasterListing";
+import StateMasterListing from "@/pages/Master/StateMaster/StateMasterListing";
+import CityMasterListing from "@/pages/Master/CityMaster/CityMasterListing";
+import HolidayMasterListing from "@/pages/Master/HolidayMaster/HolidayMasterListing";
+import EmployeeListing from "@/pages/Employee/EmployeeDirectory/EmployeeListing";
+import Employee from "@/pages/Employee/EmployeeDirectory/Employee";
 
 const router = createBrowserRouter([
   // ===========================
@@ -57,15 +62,15 @@ const router = createBrowserRouter([
       },
       {
         path: "master/states",
-        element: <UnderConstruction moduleName="State Master" />,
+        element: <StateMasterListing />,
       },
       {
         path: "master/cities",
-        element: <UnderConstruction moduleName="City Master" />,
+        element: <CityMasterListing />,
       },
       {
         path: "master/holidays",
-        element: <UnderConstruction moduleName="Holiday Master" />,
+        element: <HolidayMasterListing />,
       },
       {
         path: "master/departments",
@@ -131,18 +136,6 @@ const router = createBrowserRouter([
           },
         ],
       },
-      {
-        path: "organization/locations",
-        element: <UnderConstruction moduleName="Location Management" />,
-      },
-      {
-        path: "organization/business-units",
-        element: <UnderConstruction moduleName="Business Unit Management" />,
-      },
-      {
-        path: "organization/cost-centers",
-        element: <UnderConstruction moduleName="Cost Center Management" />,
-      },
 
       // ============================================
       // Employees
@@ -150,7 +143,16 @@ const router = createBrowserRouter([
 
       {
         path: "employees/directory",
-        element: <UnderConstruction moduleName="Employee Directory" />,
+        children: [
+          {
+            index: true,
+            element: <EmployeeListing />,
+          },
+          {
+            path: "addedit",
+            element: <Employee />,
+          },
+        ],
       },
       {
         path: "employees/profiles",

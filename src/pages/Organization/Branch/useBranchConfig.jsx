@@ -93,7 +93,7 @@ const useBranchConfig = () => {
             placeHolder: "Street address, P.O. box, company name",
             required: true,
             nextFocusField: "addressLine2",
-            className: "col-span-2",
+            className: "col-span-6",
         },
         {
             id: "addressLine2",
@@ -102,7 +102,7 @@ const useBranchConfig = () => {
             placeHolder: "Apartment, suite, unit, building, floor",
             prevFocusField: "addressLine1",
             nextFocusField: "country",
-            className: "col-span-2",
+            className: "col-span-6",
         },
         {
             id: "country",

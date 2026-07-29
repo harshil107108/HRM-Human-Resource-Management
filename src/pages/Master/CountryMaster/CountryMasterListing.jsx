@@ -13,7 +13,7 @@ const CountryMasterListing = () => {
         onModalOpen({
             mode: "add",
         });
-    }   
+    }
     return (
         <>
             {isModalOpen && (
@@ -30,7 +30,7 @@ const CountryMasterListing = () => {
                 style={{ height: '100%' }}
                 // onDoubleClick={handleDoubleClick}
                 onAddClick={handleAdd}
-                title="Company"
+                title="Country"
             />
         </>
     )

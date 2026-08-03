@@ -59,8 +59,62 @@ const useDesignationConfig = () => {
             nextFocusField: "companyCode",
         },
     ];
-
-    const DesignationListingColDef = [];
+    const DesignationListingColDef = [
+        {
+            id: "designationId",
+            field: "designationId",
+            headerName: "Id",
+            width: 80,
+        },
+        {
+            id: "designationName",
+            field: "designationName",
+            headerName: "Designation Name",
+            width: 220,
+        },
+        {
+            id: "designationCode",
+            field: "designationCode",
+            headerName: "Designation Code",
+            width: 150,
+        },
+        {
+            id: "shortName",
+            field: "shortName",
+            headerName: "Short Name",
+            width: 120,
+        },
+        {
+            id: "companyName",
+            field: "companyName",
+            headerName: "Company",
+            width: 220,
+        },
+        {
+            id: "branchName",
+            field: "branchName",
+            headerName: "Branch",
+            width: 180,
+        },
+        {
+            id: "departmentName",
+            field: "departmentName",
+            headerName: "Department",
+            width: 180,
+        },
+        {
+            id: "employeeCount",
+            field: "employeeCount",
+            headerName: "Employees",
+            width: 120,
+        },
+        {
+            id: "status",
+            field: "status",
+            headerName: "Status",
+            width: 120,
+        },
+    ];
 
     const jobAssignmentSchema = [
         {

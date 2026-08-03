@@ -98,14 +98,6 @@ export const NAVIGATION_SCHEMA = [
         path: "/employees/directory",
       },
       {
-        label: "Employee Profiles",
-        path: "/employees/profiles",
-      },
-      {
-        label: "Documents",
-        path: "/employees/documents",
-      },
-      {
         label: "Assets",
         path: "/employees/assets",
       },

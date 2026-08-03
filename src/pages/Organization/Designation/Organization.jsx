@@ -22,7 +22,7 @@ const Organization = ({
                     </span>
                 </div>
                 <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                    Basic Information
+                    Organization Information
                 </h1>
                 <p className="text-[13px] text-slate-500 font-medium mt-2 leading-relaxed">
                     Enter the basic details of the designation

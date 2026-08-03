@@ -260,20 +260,7 @@ export default function EnterpriseDashboard() {
                 Here is an overview of your organization's health today.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="secondary">
-                <UserPlus className="w-4 h-4 text-gray-500" />
-                <span>Add Employee</span>
-              </Button>
-              <Button variant="secondary">
-                <UserCheck className="w-4 h-4 text-gray-500" />
-                <span>Mark Attendance</span>
-              </Button>
-              <Button variant="secondary">
-                <CreditCard className="w-4 h-4 text-gray-500" />
-                <span>Create Payroll</span>
-              </Button>
-            </div>
+
           </div>
 
           {/* Stats Cards Grid */}

@@ -29,10 +29,45 @@ const DepartmentListing = () => {
         });
     }
 
+    const departmentRowData = [
+        {
+            departmentId: 1,
+            departmentName: "Human Resources",
+            departmentCode: "HR001",
+            shortName: "HR",
+            companyName: "Orvexa Technologies",
+            branchName: "Ahmedabad Head Office",
+            parentDepartment: "-",
+            departmentHead: "Priya Patel",
+            reportingDepartment: "Corporate",
+            businessUnit: "Administration",
+            costCenterCode: "CC1001",
+            employeeCapacity: 50,
+            currentEmployeeCount: 32,
+            status: "Active",
+        },
+        {
+            departmentId: 2,
+            departmentName: "Software Development",
+            departmentCode: "DEV001",
+            shortName: "DEV",
+            companyName: "Orvexa Technologies",
+            branchName: "Ahmedabad Head Office",
+            parentDepartment: "Technology",
+            departmentHead: "Amit Shah",
+            reportingDepartment: "Technology",
+            businessUnit: "Engineering",
+            costCenterCode: "CC1002",
+            employeeCapacity: 120,
+            currentEmployeeCount: 98,
+            status: "Active",
+        },
+    ];
+
     return (
         <HpGrid
             id="departmentListing"
-            rowData={[]}
+            rowData={departmentRowData}
             colDef={DepartmentListingColDef}
             style={{ height: "100%" }}
             onAddClick={handleAdd}

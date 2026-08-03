@@ -34,7 +34,7 @@ const Employees = ({
                     </span>
                 </div>
                 <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                    Management
+                    Employee
                 </h1>
                 <p className="text-[13px] text-slate-500 font-medium mt-2 leading-relaxed">
                     Assign management and operational policies.

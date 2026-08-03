@@ -1,7 +1,92 @@
 import React from 'react'
 
 const useDepatmentConfig = () => {
-    const DepartmentListingColDef = [];
+    const DepartmentListingColDef = [
+        {
+            id: "departmentId",
+            field: "departmentId",
+            headerName: "Id",
+            width: 80,
+        },
+        {
+            id: "departmentName",
+            field: "departmentName",
+            headerName: "Department Name",
+            width: 220,
+        },
+        {
+            id: "departmentCode",
+            field: "departmentCode",
+            headerName: "Department Code",
+            width: 140,
+        },
+        {
+            id: "shortName",
+            field: "shortName",
+            headerName: "Short Name",
+            width: 120,
+        },
+        {
+            id: "companyName",
+            field: "companyName",
+            headerName: "Company",
+            width: 200,
+        },
+        {
+            id: "branchName",
+            field: "branchName",
+            headerName: "Branch",
+            width: 180,
+        },
+        {
+            id: "parentDepartment",
+            field: "parentDepartment",
+            headerName: "Parent Department",
+            width: 200,
+        },
+        {
+            id: "departmentHead",
+            field: "departmentHead",
+            headerName: "Department Head",
+            width: 180,
+        },
+        {
+            id: "reportingDepartment",
+            field: "reportingDepartment",
+            headerName: "Reporting Department",
+            width: 200,
+        },
+        {
+            id: "businessUnit",
+            field: "businessUnit",
+            headerName: "Business Unit",
+            width: 180,
+        },
+        {
+            id: "costCenterCode",
+            field: "costCenterCode",
+            headerName: "Cost Center",
+            width: 150,
+        },
+        {
+            id: "employeeCapacity",
+            field: "employeeCapacity",
+            headerName: "Capacity",
+            width: 120,
+        },
+        {
+            id: "currentEmployeeCount",
+            field: "currentEmployeeCount",
+            headerName: "Employees",
+            width: 120,
+        },
+        {
+            id: "status",
+            field: "status",
+            headerName: "Status",
+            width: 120,
+        },
+    ];
     const basicInfoSchema = [
         {
             id: "departmentname",

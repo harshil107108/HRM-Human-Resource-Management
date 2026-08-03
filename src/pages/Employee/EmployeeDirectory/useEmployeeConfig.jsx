@@ -1,7 +1,80 @@
 import React from "react";
 
 const useEmployeeConfig = () => {
-    const employeeListingColDef = [];
+    const employeeListingColDef = [
+        {
+            id: "employeeName",
+            field: "employeeName",
+            headerName: "Employee",
+            width: 220,
+        },
+        {
+            id: "employeeCode",
+            field: "employeeCode",
+            headerName: "Employee ID",
+            width: 120,
+        },
+        {
+            id: "companyName",
+            field: "companyName",
+            headerName: "Company",
+            width: 180,
+        },
+        {
+            id: "branchName",
+            field: "branchName",
+            headerName: "Branch",
+            width: 160,
+        },
+        {
+            id: "departmentName",
+            field: "departmentName",
+            headerName: "Department",
+            width: 180,
+        },
+        {
+            id: "designationName",
+            field: "designationName",
+            headerName: "Designation",
+            width: 180,
+        },
+        {
+            id: "reportingManager",
+            field: "reportingManager",
+            headerName: "Manager",
+            width: 180,
+        },
+        {
+            id: "employmentType",
+            field: "employmentType",
+            headerName: "Employment",
+            width: 150,
+        },
+        {
+            id: "joiningDate",
+            field: "joiningDate",
+            headerName: "Joining Date",
+            width: 140,
+        },
+        {
+            id: "workEmail",
+            field: "workEmail",
+            headerName: "Work Email",
+            width: 240,
+        },
+        {
+            id: "mobileNumber",
+            field: "mobileNumber",
+            headerName: "Mobile",
+            width: 150,
+        },
+        {
+            id: "status",
+            field: "status",
+            headerName: "Status",
+            width: 120,
+        },
+    ];
 
     const personalInformationSchema = [
         {

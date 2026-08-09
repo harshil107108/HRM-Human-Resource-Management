@@ -11,14 +11,15 @@ gap-1.5
 export const labelClass = `
 block
 text-[13px]
-font-medium
+font-semibold
 text-slate-700
 leading-5
 select-none
+tracking-[0.01em]
 `;
 
 // Input
-export const inputClass = `w-full h-8 rounded-sm border border-slate-300 bg-white px-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition-all duration-200 outline-none hover:border-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-100 disabled:bg-slate-100 disabled:border-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed`;
+export const inputClass = `w-full h-9 rounded-sm border border-slate-200 bg-slate-50/80 px-2.5 text-sm text-slate-800 placeholder:text-slate-400 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 outline-none hover:border-sky-300 hover:bg-white focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100 disabled:border-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed`;
 
 // Select
 export const selectClass = `
@@ -33,33 +34,35 @@ export const textareaClass = `
 w-full
 min-h-[100px]
 
-rounded-md
+rounded-sm
 
 border
-border-slate-300
+border-slate-200
 
-bg-white
+bg-slate-50/80
 
-px-3.5
-py-2.5
+px-2.5
+py-2
 
 text-sm
-text-slate-900
+text-slate-800
 
 placeholder:text-slate-400
 
-shadow-sm
+shadow-[0_1px_2px_rgba(15,23,42,0.04)]
 
 transition-all
 duration-200
 
 outline-none
 
-hover:border-slate-400
+hover:border-sky-300
+hover:bg-white
 
-focus:border-blue-600
-focus:ring-1
-focus:ring-blue-100
+focus:border-sky-500
+focus:bg-white
+focus:ring-2
+focus:ring-sky-100
 
 resize-y
 
@@ -77,20 +80,20 @@ inline-flex
 shrink-0
 items-center
 justify-center
-rounded
+rounded-sm
 border
 border-slate-300
 bg-white
-text-blue-600
+text-sky-600
 shadow-sm
 transition-all
 duration-200
 outline-none
-checked:bg-blue-600
-checked:border-blue-600
+checked:bg-sky-500
+checked:border-sky-500
 checked:text-white
 focus:ring-2
-focus:ring-blue-100
+focus:ring-sky-100
 focus:ring-offset-0
 `;
 
@@ -101,17 +104,17 @@ w-4
 
 border-slate-300
 
-text-blue-600
+text-sky-600
 
-focus:ring-2
-focus:ring-blue-100
+focus:ring-4
+focus:ring-sky-100
 `;
 
 // Error Input
 export const errorInputClass = `
-border-red-500
-focus:border-red-500
-focus:ring-1
+border-red-300
+focus:border-red-400
+focus:ring-2
 focus:ring-red-100
 `;
 

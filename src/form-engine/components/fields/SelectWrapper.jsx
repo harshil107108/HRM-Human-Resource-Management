@@ -179,14 +179,16 @@ export default function SelectWrapper({ field, form }) {
         <div className="max-h-56 overflow-y-auto py-1">{children}</div>
         {isMultiSelect && (
           <div className="border-t border-slate-200 px-2 py-2">
-            <button
-              type="button"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={handleApply}
-              className="w-full rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Apply
-            </button>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={handleApply}
+                className="rounded bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700"
+              >
+                Apply
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -251,24 +253,24 @@ const customStyles = (error) => ({
     ...base,
     minHeight: 32,
     height: 32,
-    borderRadius: 4,
-    border: `1px solid ${error ? "#ef4444" : state.isFocused ? "#2563eb" : "#cbd5e1"}`,
-    boxShadow: state.isFocused ? "0 0 0 1px #2563eb" : "none",
+    borderRadius: 6,
+    border: `1px solid ${error ? "#ef4444" : state.isFocused ? "#0ea5e9" : "#dbe1ea"}`,
+    boxShadow: state.isFocused ? "0 0 0 2px rgba(14, 165, 233, 0.10)" : "0 1px 2px rgba(15, 23, 42, 0.04)",
     outline: "none",
     display: "flex",
     alignItems: "center",
     "&:hover": {
-      borderColor: state.isFocused ? "#2563eb" : "#94a3b8",
+      borderColor: state.isFocused ? "#0ea5e9" : "#bfdbfe",
     },
     fontSize: 14,
-    backgroundColor: "#fff",
-    transition: "all .2s",
-    padding: "0 2px",
+    backgroundColor: "#f8fafc",
+    transition: "all .2s ease",
+    padding: "0 4px",
   }),
 
   valueContainer: (base) => ({
     ...base,
-    padding: "0 8px",
+    padding: "0 6px",
     height: "100%",
     overflow: "hidden",
   }),
@@ -296,7 +298,7 @@ const customStyles = (error) => ({
   dropdownIndicator: (base, state) => ({
     ...base,
     color: "#64748b",
-    padding: "0 6px",
+    padding: "0 4px",
     transform: state.selectProps.menuIsOpen
       ? "rotate(180deg)"
       : "rotate(0deg)",
@@ -306,7 +308,7 @@ const customStyles = (error) => ({
   clearIndicator: (base) => ({
     ...base,
     color: "#64748b",
-    padding: "0 4px",
+    padding: "0 2px",
   }),
 
   menuPortal: (base) => ({
@@ -316,31 +318,37 @@ const customStyles = (error) => ({
 
   menu: (base) => ({
     ...base,
-    borderRadius: 6,
+    borderRadius: 10,
     overflow: "hidden",
-    boxShadow: "0 8px 24px rgba(0,0,0,.12)",
+    boxShadow: "0 12px 28px rgba(15, 23, 42, 0.12)",
+    border: "1px solid #e2e8f0",
+    backgroundColor: "#fff",
   }),
 
   menuList: (base) => ({
     ...base,
     padding: 4,
     maxHeight: 220,
+    scrollbarWidth: "thin",
+    scrollbarColor: "#cbd5e1 transparent",
+    overflowY: "auto",
   }),
 
   option: (base, state) => ({
     ...base,
-    padding: "8px 10px",
+    padding: "7px 10px",
     borderRadius: 6,
     marginBottom: 2,
     cursor: "pointer",
     backgroundColor: state.isSelected
-      ? "#2563eb"
+      ? "#e0f2fe"
       : state.isFocused
-        ? "#eff6ff"
+        ? "#f8fafc"
         : "#fff",
-    color: state.isSelected ? "#fff" : "#0f172a",
+    color: state.isSelected ? "#0f172a" : "#0f172a",
     fontSize: 14,
     fontWeight: 500,
+    transition: "all .15s ease",
   }),
 
   noOptionsMessage: (base) => ({

@@ -59,6 +59,42 @@ function isRealDate(day, month, year) {
   );
 }
 
+export function getDateValidationError(day, month, year, { min, max } = {}) {
+  const d = Number(day);
+  const m = Number(month);
+  const y = Number(year);
+
+  if (day === "" && month === "" && year === "") return "";
+
+  if (day !== "" && (Number.isNaN(d) || d < 1 || d > 31)) {
+    return "Day must be between 1 and 31";
+  }
+
+  if (month !== "" && (Number.isNaN(m) || m < 1 || m > 12)) {
+    return "Month must be between 1 and 12";
+  }
+
+  if (year === "") {
+    return "";
+  }
+
+  if (Number.isNaN(y) || y < 1000 || y > 9999) {
+    return "Year must be valid";
+  }
+
+  if (day !== "" && month !== "" && !isRealDate(day, month, year)) {
+    return "Enter a valid date";
+  }
+
+  if (day && month && year) {
+    const iso = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    if (min && iso < min) return `Date can't be before ${min}`;
+    if (max && iso > max) return `Date can't be after ${max}`;
+  }
+
+  return "";
+}
+
 export default function DateField({ field, form }) {
   useFormStore(form);
 
@@ -129,45 +165,37 @@ export default function DateField({ field, form }) {
 
   const validateAndCommit = useCallback(
     (d, m, y, { fillDefaults } = {}) => {
-      // Auto-fill missing year if day+month are present
-      if (fillDefaults && d.length === 2 && m.length === 2 && !y) {
-        y = todayParts().year;
-        setYear(y);
+      const nextDay = d || "";
+      const nextMonth = m || "";
+      const nextYear = y || "";
+
+      if (fillDefaults && nextDay.length === 2 && nextMonth.length === 2 && !nextYear) {
+        const currentYear = todayParts().year;
+        setYear(currentYear);
+        return validateAndCommit(nextDay, nextMonth, currentYear);
       }
 
-      if (!d && !m && !y) {
+      if (!nextDay && !nextMonth && !nextYear) {
         lastEmitted.current = "";
         setLocalError("");
         form.methods.setValue(id, "");
         return;
       }
 
-      if (d.length < 2 || m.length < 2 || y.length < 4) {
-        // incomplete, don't emit yet
+      const errorText = getDateValidationError(nextDay, nextMonth, nextYear, { min, max });
+      if (errorText) {
+        setLocalError(errorText);
+        lastEmitted.current = undefined;
+        return;
+      }
+
+      if (nextDay.length < 2 || nextMonth.length < 2 || nextYear.length < 4) {
         lastEmitted.current = undefined;
         setLocalError("");
         return;
       }
 
-      if (!isRealDate(d, m, y)) {
-        setLocalError("Enter a valid date");
-        lastEmitted.current = undefined;
-        return;
-      }
-
-      const iso = `${y}-${m}-${d}`;
-
-      if (min && iso < min) {
-        setLocalError(`Date can't be before ${min}`);
-        lastEmitted.current = undefined;
-        return;
-      }
-      if (max && iso > max) {
-        setLocalError(`Date can't be after ${max}`);
-        lastEmitted.current = undefined;
-        return;
-      }
-
+      const iso = `${nextYear}-${nextMonth}-${nextDay}`;
       setLocalError("");
       lastEmitted.current = iso;
       form.methods.setValue(id, iso);
@@ -180,7 +208,7 @@ export default function DateField({ field, form }) {
     setDay(v);
     validateAndCommit(v, month, year);
 
-    if (v.length === 2 || Number(v) > 3) {
+    if (v.length === 2) {
       monthRef.current?.focus();
       monthRef.current?.select();
     }
@@ -191,7 +219,7 @@ export default function DateField({ field, form }) {
     setMonth(v);
     validateAndCommit(day, v, year);
 
-    if (v.length === 2 || Number(v) > 1) {
+    if (v.length === 2) {
       yearRef.current?.focus();
       yearRef.current?.select();
     }

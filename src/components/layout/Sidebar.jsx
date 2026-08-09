@@ -165,7 +165,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
       {/* Nav Menu */}
       <nav
-        className={`flex-1 overflow-y-auto pt-3 ${isCollapsed ? "px-1.5" : "px-3"}`}
+        className={`flex-1 overflow-y-auto overflow-x-hidden pt-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${isCollapsed ? "px-1.5" : "px-3"}`}
       >
         <ul className="space-y-0.5">
           {NAVIGATION_SCHEMA.map((item, index) => {

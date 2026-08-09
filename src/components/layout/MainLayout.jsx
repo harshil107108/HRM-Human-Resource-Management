@@ -4,7 +4,7 @@ import Sidebar from "@components/layout/Sidebar";
 import Header from "@components/layout/Header";
 
 const MainLayout = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeMenu, setActiveMenu] = useState("Dashboard");
 

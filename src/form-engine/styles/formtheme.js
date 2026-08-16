@@ -10,8 +10,8 @@ gap-1.5
 // Label
 export const labelClass = `
 block
-text-[13px]
-font-semibold
+text-[12px]
+font-bold
 text-slate-700
 leading-5
 select-none
@@ -19,7 +19,7 @@ tracking-[0.01em]
 `;
 
 // Input
-export const inputClass = `w-full h-9 rounded-sm border border-slate-200 bg-slate-50/80 px-2.5 text-sm text-slate-800 placeholder:text-slate-400 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 outline-none hover:border-sky-300 hover:bg-white focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100 disabled:border-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed`;
+export const inputClass = `w-full h-8 rounded-sm border border-slate-200 bg-slate-50/80 px-2.5 text-xs font-semibold text-slate-800 placeholder:text-slate-400 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 outline-none hover:border-sky-300 hover:bg-white focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100 disabled:border-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed`;
 
 // Select
 export const selectClass = `
@@ -44,7 +44,8 @@ bg-slate-50/80
 px-2.5
 py-2
 
-text-sm
+text-xs
+font-semibold
 text-slate-800
 
 placeholder:text-slate-400
@@ -122,6 +123,7 @@ focus:ring-red-100
 export const helperClass = `
 mt-1
 text-xs
+font-semibold
 text-slate-500
 `;
 
@@ -129,6 +131,6 @@ text-slate-500
 export const errorClass = `
 mt-1
 text-xs
-font-medium
+font-bold
 text-red-600
 `;

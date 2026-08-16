@@ -311,7 +311,7 @@ export default function DateField({ field, form }) {
       )}
 
       <div
-        className={`flex items-center gap-0.5 rounded-sm border bg-white px-3 py-1 shadow-sm transition-colors focus-within:ring-2 focus-within:ring-blue-500/40 focus-within:border-blue-500 ${error
+        className={`flex h-8 items-center gap-0.5 rounded-sm border bg-white px-2.5 shadow-sm transition-colors focus-within:ring-2 focus-within:ring-blue-500/40 focus-within:border-blue-500 ${error
           ? "border-red-500"
           : "border-gray-300 hover:border-gray-400"
           } ${disabled ? "bg-gray-50 opacity-70" : ""}`}

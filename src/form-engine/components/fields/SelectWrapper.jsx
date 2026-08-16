@@ -7,6 +7,16 @@ import {
   wrapperClass,
 } from "../../styles/formtheme";
 
+export function shouldHandleSelectKeyDown(event, { form, id, prevFocusField }) {
+  if (event.key === "Tab" && event.shiftKey && prevFocusField) {
+    event.preventDefault();
+    form.methods.focusPrev(id);
+    return true;
+  }
+
+  return false;
+}
+
 export default function SelectWrapper({ field, form }) {
   useFormStore(form);
 
@@ -104,30 +114,15 @@ export default function SelectWrapper({ field, form }) {
 
   const handleKeyDown = useCallback(
     (event) => {
-      if (event.key === " ") {
-        event.preventDefault();
-        setIsMenuOpen((prev) => !prev);
+      if (shouldHandleSelectKeyDown(event, {
+        form,
+        id,
+        prevFocusField: field.prevFocusField,
+      })) {
         return;
-      }
-
-      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-        event.preventDefault();
-        setIsMenuOpen(true);
-        return;
-      }
-
-      if (event.key === "Enter") {
-        event.preventDefault();
-        form.methods.focusNext(id);
-        return;
-      }
-
-      if (event.key === "Tab" && event.shiftKey && field.prevFocusField) {
-        event.preventDefault();
-        form.methods.focusPrev(id);
       }
     },
-    [form, id, field.prevFocusField]
+    [field.prevFocusField, form, id]
   );
 
   const renderOption = useCallback(
@@ -214,20 +209,20 @@ export default function SelectWrapper({ field, form }) {
         value={selectedValue}
         placeholder={placeHolder || "Select"}
         onChange={handleChange}
-        onFocus={handleFocus}
+        onFocus={isMultiSelect ? handleFocus : undefined}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         isDisabled={disabled}
         isMulti={isMultiSelect}
         isClearable={false}
         isSearchable
-        closeMenuOnSelect={false}
+        closeMenuOnSelect={isMultiSelect ? false : true}
         hideSelectedOptions={false}
         menuPlacement="auto"
         menuPortalTarget={document.body}
-        menuIsOpen={isMenuOpen}
-        onMenuOpen={handleMenuOpen}
-        onMenuClose={handleMenuClose}
+        menuIsOpen={isMultiSelect ? isMenuOpen : undefined}
+        onMenuOpen={isMultiSelect ? handleMenuOpen : undefined}
+        onMenuClose={isMultiSelect ? handleMenuClose : undefined}
         classNamePrefix="form-select"
         className="w-full"
         components={
@@ -253,7 +248,7 @@ const customStyles = (error) => ({
     ...base,
     minHeight: 32,
     height: 32,
-    borderRadius: 6,
+    borderRadius: 5,
     border: `1px solid ${error ? "#ef4444" : state.isFocused ? "#0ea5e9" : "#dbe1ea"}`,
     boxShadow: state.isFocused ? "0 0 0 2px rgba(14, 165, 233, 0.10)" : "0 1px 2px rgba(15, 23, 42, 0.04)",
     outline: "none",
@@ -262,7 +257,7 @@ const customStyles = (error) => ({
     "&:hover": {
       borderColor: state.isFocused ? "#0ea5e9" : "#bfdbfe",
     },
-    fontSize: 14,
+    fontSize: 11,
     backgroundColor: "#f8fafc",
     transition: "all .2s ease",
     padding: "0 4px",
@@ -270,7 +265,9 @@ const customStyles = (error) => ({
 
   valueContainer: (base) => ({
     ...base,
-    padding: "0 6px",
+    display: "flex",
+    alignItems: "center",
+    padding: "0 5px",
     height: "100%",
     overflow: "hidden",
   }),
@@ -278,8 +275,9 @@ const customStyles = (error) => ({
   placeholder: (base) => ({
     ...base,
     color: "#94a3b8",
-    margin: 4,
-    fontSize: 14,
+    margin: 3,
+    fontSize: 11,
+    fontWeight: 600,
     lineHeight: 1.2,
   }),
 
@@ -287,18 +285,23 @@ const customStyles = (error) => ({
     ...base,
     color: "#0f172a",
     margin: 0,
-    fontSize: 14,
+    fontSize: 11,
+    fontWeight: 600,
     lineHeight: 1.2,
   }),
 
-  indicatorSeparator: () => ({
-    display: "none",
+  indicatorSeparator: (base) => ({
+    ...base,
+    backgroundColor: "#cbd5e1",
+    width: 1,
+    margin: "3px 0",
+    alignSelf: "stretch",
   }),
 
   dropdownIndicator: (base, state) => ({
     ...base,
     color: "#64748b",
-    padding: "0 4px",
+    padding: "0 5px 0 7px",
     transform: state.selectProps.menuIsOpen
       ? "rotate(180deg)"
       : "rotate(0deg)",
@@ -336,8 +339,8 @@ const customStyles = (error) => ({
 
   option: (base, state) => ({
     ...base,
-    padding: "7px 10px",
-    borderRadius: 6,
+    padding: "6px 8px",
+    borderRadius: 5,
     marginBottom: 2,
     cursor: "pointer",
     backgroundColor: state.isSelected
@@ -346,8 +349,8 @@ const customStyles = (error) => ({
         ? "#f8fafc"
         : "#fff",
     color: state.isSelected ? "#0f172a" : "#0f172a",
-    fontSize: 14,
-    fontWeight: 500,
+    fontSize: 11,
+    fontWeight: 700,
     transition: "all .15s ease",
   }),
 

@@ -1,22 +1,3 @@
-/**
- * formMethod
- * ----------
- * Public factory namespace used like:
- *
- *   const form = formMethod.createForm({
- *     schema: userSchema,
- *     initialValue,
- *   });
- *
- * It is intentionally a plain object (not a class instance) so that new
- * top-level methods can be bolted on later without touching this file's
- * callers, e.g.:
- *
- *   formMethod.createFormFromApi = async (url) => { ... }
- *
- * Prefer using `extendFormMethod` below rather than mutating the object
- * directly - it warns if you accidentally overwrite a built-in method.
- */
 
 import { FormStore } from "./FormStore";
 

@@ -26,34 +26,6 @@ const getGridSpanStyle = (field) => {
   };
 };
 
-/**
- * FormRenderer
- * ------------
- * Layout model: a responsive, auto-fit CSS grid.
- *
- *   grid-template-columns: repeat(auto-fit, minmax(<baseWidth>, 1fr))
- *
- * This is what gives every field two things at once:
- *   1. By default (no className), a field is NOT block/full-row - it only
- *      takes up a natural, comfortable column width (baseWidth, 220px by
- *      default) and sits side-by-side with the next field, wrapping to a
- *      new row automatically when it runs out of horizontal space.
- *   2. When a field DOES declare a `className` with a `col-span-*` (and
- *      optional `md:col-span-*`) utility, it spans that many of the
- *      auto-generated tracks - giving you exact, deliberate control over
- *      wide fields (e.g. "col-span-2" for an email address) without
- *      having to think in a rigid fixed 12-column system.
- *
- * Per-field overrides:
- *   field.className / field.wrapperClassName / field.containerClassName
- *     - merged onto the field's wrapper <div>, aliases of each other
- *   field.minWidth
- *     - number (px) or CSS length string, overrides `baseWidth` for just
- *       this field, e.g. `minWidth: 320` for a field that needs more room
- *
- * FormRenderer-level prop:
- *   baseWidth - default minmax() floor for every column (default "220px")
- */
 export default function FormRenderer({
   formMethod: form,
   formSchema,

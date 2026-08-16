@@ -6,29 +6,6 @@ import {
   wrapperClass,
 } from "../../styles/formtheme";
 
-/**
- * DateField
- * ---------
- * Segmented Day / Month / Year date input. Schema options:
- *   id, label, disabled, required
- *   min            - earliest selectable date, "YYYY-MM-DD"
- *   max            - latest selectable date, "YYYY-MM-DD"
- *   defaultToday   - defaults value to today's date on mount (default: true)
- *   nextFocusField / prevFocusField
- *   onChange(form) / onBlur(form)
- *
- * Behaviour:
- *  - Focus flow is always Day -> Month -> Year, auto-advancing as each
- *    segment is completed (or when a typed digit makes the segment
- *    unambiguous, e.g. typing "4" for month jumps straight to year).
- *  - Backspace on an empty segment moves back and clears the previous one.
- *  - If Day + Month are filled but Year is left empty on blur, the
- *    current year is filled in automatically.
- *  - If the field is empty on mount, it defaults to today's date
- *    (disable with `defaultToday: false` in the schema).
- *  - Value is always stored/emitted on the form as "YYYY-MM-DD".
- */
-
 const pad2 = (n) => String(n).padStart(2, "0");
 
 function todayParts() {
@@ -122,7 +99,6 @@ export default function DateField({ field, form }) {
   const lastEmitted = useRef(undefined);
   const initialized = useRef(false);
 
-  // Initialize: default to today if empty, otherwise hydrate from value
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
@@ -143,10 +119,8 @@ export default function DateField({ field, form }) {
       setYear(p.year);
       lastEmitted.current = existing;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Keep segments in sync if the form value changes externally (e.g. reset)
   useEffect(() => {
     if (value !== lastEmitted.current) {
       const p = partsFromValue(value);
@@ -155,12 +129,10 @@ export default function DateField({ field, form }) {
       setYear(p.year);
       lastEmitted.current = value;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   useEffect(() => {
     form.methods.registerRef(id, dayRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayRef.current]);
 
   const validateAndCommit = useCallback(

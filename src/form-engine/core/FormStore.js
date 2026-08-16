@@ -1,18 +1,3 @@
-/**
- * FormStore
- * ---------
- * A framework-agnostic reactive store that powers a schema-driven form.
- * It is a plain JS class (not a React hook) so it can be created once
- * with `formMethod.createForm(...)` and safely passed around / subscribed
- * to from multiple React components via `useFormStore`.
- *
- * Responsibilities:
- *  - hold values / errors / touched state
- *  - expose getters/setters that emit change notifications
- *  - hold a live schema map for O(1) field lookups
- *  - hold DOM node refs so fields can programmatically move focus
- *    using `nextFocusField` / `prevFocusField` declared in the schema
- */
 
 export class FormStore {
   constructor({ schema = [], initialValue = {} } = {}) {

@@ -18,8 +18,6 @@ export function shouldHandleSelectKeyDown(event, { form, id, prevFocusField }) {
 }
 
 export default function SelectWrapper({ field, form }) {
-  useFormStore(form);
-
   const {
     id,
     label,
@@ -29,8 +27,8 @@ export default function SelectWrapper({ field, form }) {
     required,
   } = field;
 
-  const value = form.methods.getValue(id);
-  const error = form.methods.getErrors()[id];
+  const value = useFormStore(form, (state) => state.values[id]);
+  const error = useFormStore(form, (state) => state.errors[id]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [draftValues, setDraftValues] = useState([]);
   const isMultiSelect = Boolean(field.isMultiSelect || field.multiSelect);
@@ -42,8 +40,10 @@ export default function SelectWrapper({ field, form }) {
   }, [value]);
 
   useEffect(() => {
-    setDraftValues(selectedValues);
-  }, [selectedValues]);
+    if (isMultiSelect) {
+      setDraftValues(selectedValues);
+    }
+  }, [isMultiSelect, selectedValues]);
 
   const selectedValue = useMemo(() => {
     if (isMultiSelect) {

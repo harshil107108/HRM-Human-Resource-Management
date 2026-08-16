@@ -4,23 +4,23 @@ import { useCallback, useSyncExternalStore } from "react";
  * useFormStore
  * ------------
  * Subscribes the calling component to a FormStore instance so it
- * re-renders whenever values / errors / touched change.
+ * re-renders only when the selected state changes.
  *
- * Because FormStore is a plain JS class (not React state), any component
- * that needs to react to form changes (FormRenderer itself, or an
- * individual field component) should call this hook.
- *
- * @param {import('../core/FormStore').FormStore} store
- * @returns {{ values: object, errors: object, touched: object }}
+ * Passing a selector keeps field components from re-rendering on every
+ * unrelated form update, which is important for large forms.
  */
-export function useFormStore(store) {
+export function useFormStore(store, selector = (snapshot) => snapshot) {
   const subscribe = useCallback(
     (onChange) => store.methods.subscribe(onChange),
     [store],
   );
-  const getSnapshot = useCallback(() => store.methods.getSnapshot(), [store]);
 
-  return useSyncExternalStore(subscribe, getSnapshot);
+  const getSnapshot = useCallback(
+    () => selector(store.methods.getSnapshot()),
+    [store, selector],
+  );
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 export default useFormStore;

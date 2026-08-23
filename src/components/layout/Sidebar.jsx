@@ -92,9 +92,15 @@ const NestedSubMenu = ({ children, isCollapsed }) => {
 // MAIN SIDEBAR
 // ==========================================
 
-export const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
+export const Sidebar = ({
+  isCollapsed,
+  setIsCollapsed,
+  isMobileOpen = false,
+  setIsMobileOpen,
+}) => {
   const location = useLocation();
   const [expandedGroups, setExpandedGroups] = useState({});
+  const navigationCollapsed = isCollapsed && !isMobileOpen;
 
   useEffect(() => {
     const activeGroup = NAVIGATION_SCHEMA.find(
@@ -123,85 +129,106 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     }));
   };
 
+  const handleSidebarToggle = () => {
+    if (isMobileOpen) {
+      setIsMobileOpen(false);
+      return;
+    }
+
+    setIsCollapsed((previous) => !previous);
+  };
+
   return (
-    <aside
-      className={`hidden lg:flex h-screen sticky top-0 bg-white border-r border-slate-200/80 flex-col pb-4 z-40 shrink-0 transition-all duration-300 ease-in-out relative ${isCollapsed ? "w-14" : "w-56"
-        }`}
-    >
-      {/* Brand Header */}
-      <div
-        className={`h-14 px-4 flex items-center border-b border-slate-100/80 overflow-hidden ${isCollapsed ? "justify-center" : "justify-between"
-          }`}
+    <>
+      {isMobileOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          className="fixed inset-0 z-40 bg-slate-900/30 lg:hidden"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+      <aside
+        className={`${isMobileOpen ? "flex" : "hidden"} lg:flex fixed lg:sticky top-0 left-0 h-screen bg-white border-r border-slate-200/80 flex-col pb-4 z-50 shrink-0 transition-all duration-300 ease-in-out`}
+        style={{
+          width: isMobileOpen ? "16rem" : navigationCollapsed ? "3.5rem" : "14rem",
+        }}
       >
-        <div className="flex items-center overflow-hidden">
-          {isCollapsed ? (
-            <img
-              src={Logo}
-              alt="Orvexa"
-              className="w-9 h-9 object-contain mx-auto"
-            />
-          ) : (
-            <img
-              src={companyLogo}
-              alt="Orvexa Enterprise HRM"
-              className="h-20 w-auto object-contain"
-            />
-          )}
+        {/* Brand Header */}
+        <div
+          className={`h-14 px-4 flex items-center border-b border-slate-100/80 overflow-hidden ${navigationCollapsed ? "justify-center" : "justify-between"
+            }`}
+        >
+          <div className="flex items-center overflow-hidden">
+            {navigationCollapsed ? (
+              <img
+                src={Logo}
+                alt="Orvexa"
+                className="w-9 h-9 object-contain mx-auto"
+              />
+            ) : (
+              <img
+                src={companyLogo}
+                alt="Orvexa Enterprise HRM"
+                className="h-20 w-auto object-contain"
+              />
+            )}
+          </div>
+
+          {/* Expand/Shrink Toggle Button */}
+          <button
+            onClick={handleSidebarToggle}
+            className="absolute -right-2.75 top-3.5 flex h-6 w-6 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-600 shadow-sm transition-all duration-200 hover:border-blue-300 hover:bg-blue-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:ring-offset-1 z-50"
+            aria-label={isMobileOpen || !isCollapsed ? "Close sidebar" : "Expand sidebar"}
+          >
+            {navigationCollapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <ChevronLeft className="w-4 h-4" />
+            )}
+          </button>
         </div>
 
-        {/* Expand/Shrink Toggle Button */}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-2.75 top-3.5 flex h-6 w-6 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-600 shadow-sm transition-all duration-200 hover:border-blue-300 hover:bg-blue-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:ring-offset-1 z-50"
-          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        {/* Nav Menu */}
+        <nav
+          className={`flex-1 overflow-y-auto overflow-x-hidden pt-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${navigationCollapsed ? "px-1.5" : "px-3"}`}
         >
-          {isCollapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <ChevronLeft className="w-4 h-4" />
-          )}
-        </button>
-      </div>
+          <ul className="space-y-0.5">
+            {NAVIGATION_SCHEMA.map((item, index) => {
+              const hasChildren = !!item.children;
+              const isGroupActive = hasChildren
+                ? item.children.some((child) =>
+                  location.pathname.startsWith(child.path),
+                )
+                : location.pathname === item.path;
 
-      {/* Nav Menu */}
-      <nav
-        className={`flex-1 overflow-y-auto overflow-x-hidden pt-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${isCollapsed ? "px-1.5" : "px-3"}`}
-      >
-        <ul className="space-y-0.5">
-          {NAVIGATION_SCHEMA.map((item, index) => {
-            const hasChildren = !!item.children;
-            const isGroupActive = hasChildren
-              ? item.children.some((child) =>
-                location.pathname.startsWith(child.path),
-              )
-              : location.pathname === item.path;
+              const isGroupExpanded = !!expandedGroups[item.label];
 
-            const isGroupExpanded = !!expandedGroups[item.label];
-
-            return (
-              <li key={index} className="space-y-0.5">
-                <ParentMenuItem
-                  icon={item.icon}
-                  label={item.label}
-                  isCollapsed={isCollapsed}
-                  isExpanded={isGroupExpanded}
-                  hasChildren={hasChildren}
-                  isActive={isGroupActive}
-                  path={item.path}
-                  onClick={() => hasChildren && handleGroupToggle(item.label)}
-                />
-                {hasChildren && isGroupExpanded && (
-                  <NestedSubMenu
-                    children={item.children}
-                    isCollapsed={isCollapsed}
+              return (
+                <li key={index} className="space-y-0.5">
+                  <ParentMenuItem
+                    icon={item.icon}
+                    label={item.label}
+                    isCollapsed={navigationCollapsed}
+                    isExpanded={isGroupExpanded}
+                    hasChildren={hasChildren}
+                    isActive={isGroupActive}
+                    path={item.path}
+                    onClick={() => hasChildren && handleGroupToggle(item.label)}
                   />
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </aside>
+                  {hasChildren && isGroupExpanded && (
+                    <NestedSubMenu
+                      children={item.children}
+                      isCollapsed={navigationCollapsed}
+                    />
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </aside>
+    </>
   );
 };
 

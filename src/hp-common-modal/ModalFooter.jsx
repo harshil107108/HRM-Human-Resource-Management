@@ -53,28 +53,26 @@ export default function ModalFooter() {
         <div
             className={cx('hp-modal-footer', stickyFooter && 'hp-modal-footer--sticky', footerClassName)}
         >
-            <div className="hp-modal-footer__left">
+            <div className="hp-modal-footer__right">
                 {showClearButton && (
                     <button
                         type="button"
-                        className="hp-modal-btn hp-modal-btn--ghost"
+                        className="hp-modal-btn hp-modal-btn--clear"
                         disabled={disableClear || loading}
                         onClick={onClear}
                     >
-                        <Eraser size={16} />
+                        <span className="hp-modal-btn__icon"><Eraser size={16} /></span>
                         {clearText}
                     </button>
                 )}
-            </div>
 
-            <div className="hp-modal-footer__right">
                 <button
                     type="button"
-                    className="hp-modal-btn hp-modal-btn--secondary"
+                    className="hp-modal-btn hp-modal-btn--cancel"
                     disabled={cancelDisabled}
                     onClick={() => requestClose('cancel-button')}
                 >
-                    <X size={16} />
+                    <span className="hp-modal-btn__icon"><X size={16} /></span>
                     {cancelText}
                 </button>
 
@@ -87,12 +85,12 @@ export default function ModalFooter() {
                     >
                         {loading ? (
                             <>
-                                <Loader2 size={16} className="hp-modal-spin" />
+                                <span className="hp-modal-btn__icon"><Loader2 size={16} className="hp-modal-spin" /></span>
                                 {DEFAULT_SAVING_LABEL}
                             </>
                         ) : (
                             <>
-                                <Save size={16} />
+                                <span className="hp-modal-btn__icon"><Save size={16} /></span>
                                 {saveText}
                             </>
                         )}

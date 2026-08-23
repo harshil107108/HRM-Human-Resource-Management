@@ -5,6 +5,7 @@ import Header from "@components/layout/Header";
 
 const MainLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeMenu, setActiveMenu] = useState("Dashboard");
 
@@ -16,12 +17,19 @@ const MainLayout = () => {
         setActiveMenu={setActiveMenu}
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
+        isMobileOpen={isMobileSidebarOpen}
+        setIsMobileOpen={setIsMobileSidebarOpen}
       />
 
       {/* Main Panel Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         {/* Header Component */}
-        <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        <Header
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          isMobileSidebarOpen={isMobileSidebarOpen}
+          setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+        />
 
         {/* Content Canvas */}
         <main className="flex-1 overflow-y-auto p-3 bg-slate-50/50">

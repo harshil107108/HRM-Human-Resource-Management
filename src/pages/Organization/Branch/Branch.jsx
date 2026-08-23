@@ -1,21 +1,10 @@
-import React, { useState } from "react";
-import BusinessSetup from "./ContactInformation";
-import BasicInformation from "./BasicInformation";
-import CompanyAddress from "./BranchAddress";
-import ReviewSetup from "./ReviewSetup";
-import SetupWizard from "./SetupWizard";
 import { formMethod } from "@/form-engine";
 import useBranchConfig from "./useBranchConfig";
-
-const steps = [
-  { key: "basic", label: "Basic Info", component: BasicInformation },
-  { key: "contact", label: "Contact", component: BusinessSetup },
-  { key: "address", label: "Address", component: CompanyAddress },
-  { key: "review", label: "Review", component: ReviewSetup },
-];
+import HpHeader from "@/hooks/HpHeader";
+import { FormRenderer } from "@/form-engine";
+import HpFooter from "@/hooks/HpFooter";
 
 const Branch = () => {
-  const [activeStep, setActiveStep] = useState(0);
 
   const initialValue = {
     companyName: '',
@@ -39,7 +28,7 @@ const Branch = () => {
     postalCode: "",
   };
 
-  const { contactInfoSchema, basicInfoSchema } =
+  const { contactInfoSchema, basicInfoSchema, addressSchema } =
     useBranchConfig();
 
   const formmethod = formMethod.createForm({
@@ -50,43 +39,130 @@ const Branch = () => {
     initialValue,
   });
 
-  const handleNext = () => {
-    setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
-  };
-
-  const handleBack = () => {
-    setActiveStep((prev) => Math.max(prev - 1, 0));
-  };
-
-  const handleStepSelect = (index) => {
-    setActiveStep(index);
-  };
-
-  const CurrentStepComponent = steps[activeStep].component;
 
   return (
-    <div className="min-h-screen rounded-3xl bg-white border border-slate-200 shadow-[0_4px_10px_rgba(0,0,0,0.03),0_20px_50px_rgba(0,0,0,0.08)] px-6 py-6">
-      <div className="mx-auto flex w-full max-w-7xl gap-8">
-        <main className="flex-1">
-          <CurrentStepComponent
-            onNext={handleNext}
-            onBack={handleBack}
-            currentStep={activeStep}
-            totalSteps={steps.length}
-            onStepSelect={handleStepSelect}
-            formmethod={formmethod}
-          />
-        </main>
+    <>
+      <div className="hp-company-page">
+        <HpHeader
+          title="Branch"
+          className="hp-company-page__header"
+        />
 
-        <div className="mt-28">
-          <SetupWizard
-            steps={steps}
-            activeStep={activeStep}
-            onStepSelect={handleStepSelect}
-          />
+        <div className="hp-company-content mx-auto w-full max-w-7xl pt-6">
+
+          {/* =========================
+            BASIC INFORMATION
+        ========================== */}
+          <div className="mb-4 overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
+
+            {/* Card Header */}
+            <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
+              <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
+              <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
+                Basic Information
+              </h2>
+            </div>
+
+            {/* Card Body */}
+            <div className="p-4">
+
+              {/* Company Logo */}
+              <div className="mb-3 flex flex-col items-start gap-6 border-b border-slate-100 pb-6 md:flex-row md:items-center">
+
+                <div className="flex h-28 w-28 shrink-0 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/50 transition-all hover:border-indigo-500 hover:bg-slate-50">
+                  <span className="text-[10px] font-bold text-slate-500">
+                    Upload Logo
+                  </span>
+                </div>
+
+                <div className="flex-1">
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Branch Logo
+                  </h3>
+
+                  <p className="mt-1 text-[11px] font-medium text-slate-400">
+                    Preferred size: 512x512px. Supported formats: PNG, JPG, SVG.
+                  </p>
+
+                  <button
+                    type="button"
+                    className="mt-2.5 text-xs font-bold text-indigo-600 hover:text-indigo-700"
+                  >
+                    Choose File
+                  </button>
+                </div>
+
+              </div>
+
+
+              <FormRenderer formMethod={formmethod} formSchema={basicInfoSchema} />
+
+            </div>
+          </div>
+
+
+          {/* =========================
+            BOTTOM SECTION
+        ========================== */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+            {/* =========================
+              ADDRESS
+          ========================== */}
+            <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
+
+              {/* Card Header */}
+              <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
+                <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
+
+                <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
+                  Branch Address
+                </h2>
+              </div>
+
+              {/* Card Body */}
+              <div className="p-4">
+                <FormRenderer formMethod={formmethod} formSchema={addressSchema} />
+              </div>
+
+            </div>
+
+            <div className="flex flex-col gap-4">
+
+              <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
+
+                {/* Card Header */}
+                <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
+                  <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
+
+                  <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
+                    Contact Information
+                  </h2>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-4">
+                  <FormRenderer
+                    formMethod={formmethod}
+                    formSchema={contactInfoSchema}
+                  />
+                </div>
+
+              </div>
+
+
+
+
+
+            </div>
+
+          </div>
+
+          <HpFooter />
+
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -1,21 +1,10 @@
-import React, { useState } from "react";
-import BasicInformation from "./BasicInformation";
-import SetupWizard from "./SetupWizard";
 import { formMethod } from "@/form-engine";
 import useDepatmentConfig from "./useDepatmentConfig";
-import Management from "./Management";
-import Employees from "./Employees";
-import ReviewSetup from "./ReviewSetup";
-
-const steps = [
-  { key: "basic", label: "Basic Info", component: BasicInformation },
-  { key: "management", label: "Management", component: Management },
-  { key: "employee", label: "Employee", component: Employees },
-  { key: "review", label: "Review", component: ReviewSetup },
-];
+import HpHeader from "@/hooks/HpHeader";
+import { FormRenderer } from "@/form-engine";
+import HpFooter from "@/hooks/HpFooter";
 
 const Department = () => {
-  const [activeStep, setActiveStep] = useState(0);
 
   const initialValue = {
     companyName: '',
@@ -39,7 +28,7 @@ const Department = () => {
     postalCode: "",
   };
 
-  const { basicInfoSchema } = useDepatmentConfig();
+  const { basicInfoSchema, employeeSchema, managementSchema } = useDepatmentConfig();
 
   const formmethod = formMethod.createForm({
     schema: [
@@ -48,43 +37,113 @@ const Department = () => {
     initialValue,
   });
 
-  const handleNext = () => {
-    setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
-  };
 
-  const handleBack = () => {
-    setActiveStep((prev) => Math.max(prev - 1, 0));
-  };
-
-  const handleStepSelect = (index) => {
-    setActiveStep(index);
-  };
-
-  const CurrentStepComponent = steps[activeStep].component;
 
   return (
-    <div className="min-h-screen rounded-3xl bg-white border border-slate-200 shadow-[0_4px_10px_rgba(0,0,0,0.03),0_20px_50px_rgba(0,0,0,0.08)] px-6 py-6">
-      <div className="mx-auto flex w-full max-w-7xl gap-8">
-        <main className="flex-1">
-          <CurrentStepComponent
-            onNext={handleNext}
-            onBack={handleBack}
-            currentStep={activeStep}
-            totalSteps={steps.length}
-            onStepSelect={handleStepSelect}
-            formmethod={formmethod}
-          />
-        </main>
+    <>
+      <div className="hp-company-page">
+        <HpHeader
+          title="Department"
+          className="hp-company-page__header"
+        />
 
-        <div className="mt-28">
-          <SetupWizard
-            steps={steps}
-            activeStep={activeStep}
-            onStepSelect={handleStepSelect}
-          />
+        <div className="hp-company-content mx-auto w-full max-w-7xl pt-6">
+
+
+          <div className="mb-4 overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
+
+            {/* Card Header */}
+            <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
+              <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
+              <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
+                Basic Information
+              </h2>
+            </div>
+
+            {/* Card Body */}
+            <div className="p-4">
+              <FormRenderer formMethod={formmethod} formSchema={basicInfoSchema} />
+
+              <div className="mt-4">
+                <label
+                  htmlFor="branchDescription"
+                  className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+                >
+                  Description
+                </label>
+
+                <textarea
+                  id="branchDescription"
+                  rows={3}
+                  placeholder="Briefly describe the department's core function and objectives..."
+                  className=" w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                />
+              </div>
+
+            </div>
+          </div>
+
+
+          {/* =========================
+            BOTTOM SECTION
+        ========================== */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+            {/* =========================
+              ADDRESS
+          ========================== */}
+            <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
+
+              {/* Card Header */}
+              <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
+                <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
+
+                <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
+                  Employee
+                </h2>
+              </div>
+
+              {/* Card Body */}
+              <div className="p-4">
+
+                <FormRenderer formMethod={formmethod} formSchema={employeeSchema} />
+              </div>
+
+            </div>
+
+            <div className="flex flex-col gap-4">
+
+              <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
+
+                {/* Card Header */}
+                <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
+                  <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
+
+                  <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
+                    Management
+                  </h2>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-4">
+                  <FormRenderer formMethod={formmethod} formSchema={managementSchema} />
+                </div>
+
+              </div>
+
+
+
+
+
+            </div>
+
+          </div>
+
+          <HpFooter />
+
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

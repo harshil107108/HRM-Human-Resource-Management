@@ -56,7 +56,8 @@ const useCompanyConfig = () => {
       placeHolder: "e.g. Acme Corporation",
       required: true,
       nextFocusField: "legalName",
-      prevFocusField: 'companyName'
+      prevFocusField: 'companyName',
+      className: "col-span-3  ",
     },
     {
       id: "legalName",
@@ -66,6 +67,7 @@ const useCompanyConfig = () => {
       required: true,
       prevFocusField: "companyName",
       nextFocusField: "companyCode",
+      className: "col-span-3  ",
     },
     {
       id: "companyCode",
@@ -75,6 +77,7 @@ const useCompanyConfig = () => {
       required: true,
       prevFocusField: "legalName",
       nextFocusField: "businessEmail",
+      className: "col-span-3  ",
     },
     {
       id: "businessEmail",
@@ -84,6 +87,7 @@ const useCompanyConfig = () => {
       required: true,
       prevFocusField: "companyCode",
       nextFocusField: "phone",
+      className: "col-span-3  ",
     },
     {
       id: "phone",
@@ -93,6 +97,7 @@ const useCompanyConfig = () => {
       required: true,
       prevFocusField: "businessEmail",
       nextFocusField: "website",
+      className: "col-span-3  ",
     },
     {
       id: "website",
@@ -101,6 +106,7 @@ const useCompanyConfig = () => {
       placeHolder: "https://www.company.com",
       required: true,
       prevFocusField: "phone",
+      className: "col-span-3  ",
     },
   ];
 

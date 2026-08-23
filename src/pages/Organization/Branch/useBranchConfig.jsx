@@ -57,6 +57,8 @@ const useBranchConfig = () => {
             required: true,
             prevFocusField: null,
             nextFocusField: "branchname",
+            className: "col-span-3",
+
         },
         {
             id: "branchname",
@@ -66,6 +68,7 @@ const useBranchConfig = () => {
             required: true,
             prevFocusField: "branchcode",
             nextFocusField: "parentcompany",
+            className: "col-span-3",
         },
         {
             id: "parentcompany",
@@ -74,6 +77,7 @@ const useBranchConfig = () => {
             required: true,
             prevFocusField: "branchname",
             nextFocusField: "branchtype",
+            className: "col-span-3",
         },
         {
             id: "branchtype",
@@ -82,6 +86,7 @@ const useBranchConfig = () => {
             required: true,
             prevFocusField: "parentcompany",
             nextFocusField: null,
+            className: "col-span-3",
         },
     ];
     const addressSchema = [

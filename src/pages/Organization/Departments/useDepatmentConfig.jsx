@@ -96,6 +96,7 @@ const useDepatmentConfig = () => {
             required: true,
             prevFocusField: null,
             nextFocusField: "departmentcode",
+            className: "col-span-3",
         },
         {
             id: "departmentcode",
@@ -105,6 +106,7 @@ const useDepatmentConfig = () => {
             required: true,
             prevFocusField: "departmentname",
             nextFocusField: "company",
+            className: "col-span-3",
         },
         {
             id: "company",
@@ -113,6 +115,7 @@ const useDepatmentConfig = () => {
             required: true,
             prevFocusField: "departmentcode",
             nextFocusField: "branch",
+            className: "col-span-3",
         },
         {
             id: "branch",
@@ -121,6 +124,7 @@ const useDepatmentConfig = () => {
             required: true,
             prevFocusField: "company",
             nextFocusField: "parentdepartment",
+            className: "col-span-3",
         },
         {
             id: "parentdepartment",
@@ -129,6 +133,7 @@ const useDepatmentConfig = () => {
             required: false,
             prevFocusField: "branch",
             nextFocusField: "shortname",
+            className: "col-span-3",
         },
         {
             id: "shortname",
@@ -138,6 +143,7 @@ const useDepatmentConfig = () => {
             required: false,
             prevFocusField: "parentdepartment",
             nextFocusField: null,
+            className: "col-span-3",
         },
     ];
 

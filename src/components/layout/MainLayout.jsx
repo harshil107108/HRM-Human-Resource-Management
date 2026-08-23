@@ -4,13 +4,16 @@ import Sidebar from "@components/layout/Sidebar";
 import Header from "@components/layout/Header";
 
 const MainLayout = () => {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeMenu, setActiveMenu] = useState("Dashboard");
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans text-slate-700 antialiased">
+    <div
+      className="flex h-screen bg-slate-50 overflow-hidden font-sans text-slate-700 antialiased"
+      style={{ "--sidebar-width": isCollapsed ? "3.5rem" : "14rem" }}
+    >
       {/* Sidebar Component */}
       <Sidebar
         activeMenu={activeMenu}
@@ -32,7 +35,7 @@ const MainLayout = () => {
         />
 
         {/* Content Canvas */}
-        <main className="flex-1 overflow-y-auto p-3 bg-slate-50/50">
+        <main className="min-w-0 flex-1 ml-1 overflow-x-hidden overflow-y-auto bg-slate-50/50">
           <Outlet />
         </main>
       </div>

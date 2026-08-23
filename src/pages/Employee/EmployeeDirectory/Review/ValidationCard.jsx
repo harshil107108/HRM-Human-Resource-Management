@@ -52,9 +52,7 @@ const ValidationCard = () => {
                         Employee profile is ready for onboarding,
                         document verification and account provisioning.
                     </p>
-
                 </div>
-
             </div>
 
         </div>

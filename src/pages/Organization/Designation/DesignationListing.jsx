@@ -122,12 +122,12 @@ const DesignationListing = () => {
 
     return (
         <HpGrid
-            id="departmentListing"
+            id="designationListing"
             rowData={designationRowData}
             colDef={DesignationListingColDef}
             style={{ height: "100%" }}
             onAddClick={handleAdd}
-            title="Department"
+            title="Designation"
             onDoubleClick={handleDoubleClick}
         />
     );

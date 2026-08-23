@@ -1,5 +1,6 @@
 import React from 'react'
 
+
 const useDesignationConfig = () => {
     const basicInfoSchema = [
         {
@@ -9,7 +10,8 @@ const useDesignationConfig = () => {
             placeHolder: "e.g. Acme Corporation",
             required: true,
             nextFocusField: "legalName",
-            prevFocusField: 'companyName'
+            prevFocusField: 'companyName',
+            className: "col-span-3",
         },
         {
             id: "designationcode",
@@ -19,6 +21,7 @@ const useDesignationConfig = () => {
             required: true,
             prevFocusField: "companyName",
             nextFocusField: "companyCode",
+            className: "col-span-3",
         },
         {
             id: "shortname",
@@ -28,9 +31,8 @@ const useDesignationConfig = () => {
             required: true,
             prevFocusField: "companyName",
             nextFocusField: "companyCode",
+            className: "col-span-3",
         },
-    ];
-    const basicInfoSchema2 = [
         {
             id: "company",
             type: "selectWrapper",
@@ -38,7 +40,8 @@ const useDesignationConfig = () => {
             placeHolder: "e.g. Acme Corporation",
             required: true,
             nextFocusField: "legalName",
-            prevFocusField: 'companyName'
+            prevFocusField: 'companyName',
+            className: "col-span-3",
         },
         {
             id: "branch",
@@ -48,6 +51,7 @@ const useDesignationConfig = () => {
             required: true,
             prevFocusField: "companyName",
             nextFocusField: "companyCode",
+            className: "col-span-3",
         },
         {
             id: "department",
@@ -57,6 +61,7 @@ const useDesignationConfig = () => {
             required: true,
             prevFocusField: "companyName",
             nextFocusField: "companyCode",
+            className: "col-span-3",
         },
     ];
     const DesignationListingColDef = [
@@ -115,7 +120,6 @@ const useDesignationConfig = () => {
             width: 120,
         },
     ];
-
     const jobAssignmentSchema = [
         {
             id: "companyId",
@@ -123,7 +127,7 @@ const useDesignationConfig = () => {
             label: "Company",
             placeHolder: "Select Company",
             required: true,
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "branchId",
@@ -131,7 +135,7 @@ const useDesignationConfig = () => {
             label: "Branch",
             placeHolder: "Select Branch",
             required: true,
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "departmentId",
@@ -139,7 +143,7 @@ const useDesignationConfig = () => {
             label: "Department",
             placeHolder: "Select Department",
             required: true,
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "designationId",
@@ -147,28 +151,21 @@ const useDesignationConfig = () => {
             label: "Designation",
             placeHolder: "Select Designation",
             required: true,
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "businessUnitId",
             type: "selectWrapper",
             label: "Business Unit",
             placeHolder: "Select Business Unit",
-            className: "col-span-6",
-        },
-        {
-            id: "costCenterId",
-            type: "selectWrapper",
-            label: "Cost Center",
-            placeHolder: "Select Cost Center",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "locationId",
             type: "selectWrapper",
             label: "Location",
             placeHolder: "Select Location",
-            className: "col-span-6",
+            className: "col-span-4",
         },
     ];
     const employmentSchema = [
@@ -178,7 +175,7 @@ const useDesignationConfig = () => {
             label: "Employment Type",
             placeHolder: "Select Employment Type",
             required: true,
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "employmentStatus",
@@ -186,32 +183,32 @@ const useDesignationConfig = () => {
             label: "Employment Status",
             placeHolder: "Select Status",
             required: true,
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "joiningDate",
             type: "date",
             label: "Date of Joining",
             required: true,
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "confirmationDate",
             type: "date",
             label: "Confirmation Date",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "probationPeriod",
             type: "selectWrapper",
             label: "Probation Period",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "noticePeriod",
             type: "selectWrapper",
             label: "Notice Period",
-            className: "col-span-6",
+            className: "col-span-4",
         },
     ];
     const reportingStructreSchema = [
@@ -272,50 +269,50 @@ const useDesignationConfig = () => {
             id: "workingShift",
             type: "selectWrapper",
             label: "Working Shift",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "holidayCalendar",
             type: "selectWrapper",
             label: "Holiday Calendar",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "weeklyOff",
             type: "selectWrapper",
             label: "Weekly Off",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "attendancePolicy",
             type: "selectWrapper",
             label: "Attendance Policy",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "officialEmail",
             type: "text",
             label: "Official Email",
             placeHolder: "Enter Official Email",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "officialPhone",
             type: "number",
             label: "Official Phone",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "extensionNumber",
             type: "text",
             label: "Extension Number",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "workMode",
             type: "selectWrapper",
             label: "Work Mode",
-            className: "col-span-6",
+            className: "col-span-4",
         },
     ];
     const payrollSchema = [
@@ -373,7 +370,7 @@ const useDesignationConfig = () => {
     ];
 
     return {
-        basicInfoSchema, basicInfoSchema2, DesignationListingColDef, jobAssignmentSchema,
+        basicInfoSchema, DesignationListingColDef, jobAssignmentSchema,
         reportingStructreSchema,
         gradeSchema,
         employmentSchema,

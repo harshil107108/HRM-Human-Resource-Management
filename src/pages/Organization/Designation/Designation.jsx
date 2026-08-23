@@ -1,22 +1,12 @@
 import { formMethod } from "@/form-engine";
-import { useState } from "react";
-import BasicInformation from "./BasicInformation";
-import JobInformation from "./JobInformation";
-import Organization from "./Organization";
-import ReviewSetup from "./ReviewSetup";
-import SetupWizard from "./SetupWizard";
 import useDesignationConfig from "./useDesignationConfig";
+import HpHeader from "@/hooks/HpHeader";
+import { FormRenderer } from "@/form-engine";
+import HpFooter from "@/hooks/HpFooter";
+import Toggle from "@/hooks/Toogle";
 
-
-const steps = [
-  { key: "basic", label: "Basic Info", component: BasicInformation },
-  { key: "jobinformation", label: "Job Information", component: JobInformation },
-  { key: "organization", label: "Organization", component: Organization },
-  { key: "review", label: "Review", component: ReviewSetup },
-];
 
 const Designation = () => {
-  const [activeStep, setActiveStep] = useState(0);
 
   const initialValue = {
     companyName: '',
@@ -40,7 +30,7 @@ const Designation = () => {
     postalCode: "",
   };
 
-  const { basicInfoSchema } = useDesignationConfig();
+  const { basicInfoSchema, jobAssignmentSchema, employmentSchema, reportingStructreSchema, workSchema, gradeSchema, payrollSchema, payrollToggleConfig } = useDesignationConfig();
 
   const formmethod = formMethod.createForm({
     schema: [
@@ -49,43 +39,233 @@ const Designation = () => {
     initialValue,
   });
 
-  const handleNext = () => {
-    setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
-  };
-
-  const handleBack = () => {
-    setActiveStep((prev) => Math.max(prev - 1, 0));
-  };
-
-  const handleStepSelect = (index) => {
-    setActiveStep(index);
-  };
-
-  const CurrentStepComponent = steps[activeStep].component;
-
   return (
-    <div className="min-h-screen rounded-3xl bg-white border border-slate-200 shadow-[0_4px_10px_rgba(0,0,0,0.03),0_20px_50px_rgba(0,0,0,0.08)] px-6 py-6">
-      <div className="mx-auto flex w-full max-w-7xl gap-8">
-        <main className="flex-1">
-          <CurrentStepComponent
-            onNext={handleNext}
-            onBack={handleBack}
-            currentStep={activeStep}
-            totalSteps={steps.length}
-            onStepSelect={handleStepSelect}
-            formmethod={formmethod}
-          />
-        </main>
+    <>
+      <div className="hp-company-page">
+        <HpHeader
+          title="Designation"
+          className="hp-company-page__header"
+        />
 
-        <div className="mt-28">
-          <SetupWizard
-            steps={steps}
-            activeStep={activeStep}
-            onStepSelect={handleStepSelect}
-          />
+        <div className="hp-company-content mx-auto w-full max-w-7xl pt-6">
+
+
+          <div className="mb-4 overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
+
+            {/* Card Header */}
+            <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
+              <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
+              <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
+                Basic Information
+              </h2>
+            </div>
+
+            {/* Card Body */}
+            <div className="p-4">
+              <FormRenderer formMethod={formmethod} formSchema={basicInfoSchema} />
+
+              <div className="mt-4">
+                <label
+                  htmlFor="branchDescription"
+                  className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+                >
+                  Description
+                </label>
+
+                <textarea
+                  id="branchDescription"
+                  rows={3}
+                  placeholder="Briefly describe the department's core function and objectives..."
+                  className=" w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                />
+              </div>
+
+            </div>
+          </div>
+
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
+
+              {/* Card Header */}
+              <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
+                <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
+
+                <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
+                  Job Assignment
+                </h2>
+              </div>
+
+              {/* Card Body */}
+              <div className="p-4">
+
+                <FormRenderer formMethod={formmethod} formSchema={jobAssignmentSchema} />
+              </div>
+
+            </div>
+
+            <div className="flex flex-col gap-4">
+
+              <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
+
+                {/* Card Header */}
+                <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
+                  <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
+
+                  <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
+                    Employment Details
+                  </h2>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-4">
+                  <FormRenderer formMethod={formmethod} formSchema={employmentSchema} />
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 mt-5">
+            <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
+
+              {/* Card Header */}
+              <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
+                <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
+
+                <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
+                  Work Information
+                </h2>
+              </div>
+
+              {/* Card Body */}
+              <div className="p-4">
+
+                <FormRenderer formMethod={formmethod} formSchema={workSchema} />
+              </div>
+
+            </div>
+
+            <div className="flex flex-col gap-4">
+
+              <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
+
+                {/* Card Header */}
+                <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
+                  <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
+
+                  <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
+                    Reporting Structure
+                  </h2>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-4">
+                  <FormRenderer formMethod={formmethod} formSchema={reportingStructreSchema} />
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 mt-5">
+            <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
+
+              {/* Card Header */}
+              <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
+                <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
+
+                <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
+                  Grade & Level
+                </h2>
+              </div>
+
+              {/* Card Body */}
+              <div className="p-4">
+
+                <FormRenderer formMethod={formmethod} formSchema={gradeSchema} />
+              </div>
+
+            </div>
+
+            <div className="flex flex-col gap-4">
+
+              <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
+
+                {/* Card Header */}
+                <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
+                  <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
+
+                  <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
+                    Payroll & System Mapping
+                  </h2>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-4">
+                  <FormRenderer formMethod={formmethod} formSchema={payrollSchema} />
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+
+          <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="lg:col-span-2 overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
+
+              {/* Card Header */}
+              <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
+                <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
+
+                <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
+                  Payroll Eligibility
+                </h2>
+              </div>
+
+              {/* Card Body */}
+              <div className="p-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {payrollToggleConfig.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 transition-colors duration-150 hover:bg-slate-100/70"
+                    >
+                      <div>
+                        <h4 className="text-sm font-semibold text-slate-800">
+                          {item.title}
+                        </h4>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          Enable or disable this option for the employee.
+                        </p>
+                      </div>
+
+                      <Toggle
+                        name={item.id}
+                        formMethod={formmethod}
+                        defaultValue={item.defaultValue}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+
+
+          <HpFooter />
+
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

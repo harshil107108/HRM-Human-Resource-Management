@@ -73,8 +73,6 @@ export function getDateValidationError(day, month, year, { min, max } = {}) {
 }
 
 export default function DateField({ field, form }) {
-  useFormStore(form);
-
   const {
     id,
     label,
@@ -85,8 +83,8 @@ export default function DateField({ field, form }) {
     defaultToday = true,
   } = field;
 
-  const value = form.methods.getValue(id);
-  const formError = form.methods.getErrors()[id];
+  const value = useFormStore(form, (snapshot) => snapshot.values[id]);
+  const formError = useFormStore(form, (snapshot) => snapshot.errors[id]);
 
   const [day, setDay] = useState("");
   const [month, setMonth] = useState("");

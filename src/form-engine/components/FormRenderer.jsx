@@ -32,7 +32,7 @@ export default function FormRenderer({
   className = "",
   baseWidth = "220px",
 }) {
-  useFormStore(form);
+  useFormStore(form, (snapshot) => snapshot.schema);
 
   if (!form) {
     console.error('[FormRenderer] "formMethod" prop is required.');

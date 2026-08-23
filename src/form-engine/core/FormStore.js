@@ -209,6 +209,7 @@ export class FormStore {
 
   _buildSnapshot() {
     return {
+      schema: this.schema,
       values: this.values,
       errors: this.errors,
       touched: this.touched,

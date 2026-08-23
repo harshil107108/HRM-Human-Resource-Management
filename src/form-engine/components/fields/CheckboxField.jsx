@@ -16,8 +16,6 @@ const sizeClassMap = {
 };
 
 export default function CheckboxField({ field, form }) {
-    useFormStore(form);
-
     const {
         id,
         label,
@@ -28,8 +26,8 @@ export default function CheckboxField({ field, form }) {
         uncheckedValue = false,
     } = field;
 
-    const value = form.methods.getValue(id);
-    const error = form.methods.getErrors()[id];
+    const value = useFormStore(form, (snapshot) => snapshot.values[id]);
+    const error = useFormStore(form, (snapshot) => snapshot.errors[id]);
 
     const resolvedSize = field.size ?? field.checkboxSize ?? "md";
     const sizeClass =

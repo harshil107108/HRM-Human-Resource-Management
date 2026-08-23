@@ -28,10 +28,10 @@ const ParentMenuItem = ({
     <button
       onClick={onClick}
       title={isCollapsed ? label : undefined}
-      className={`w-full flex items-center rounded-md text-[13px] transition-all duration-150 font-medium ${isCollapsed ? "justify-center p-2" : "gap-2.5 px-2.5 py-1.5"
+      className={`group w-full flex items-center rounded-md text-[13px] transition-all duration-150 font-medium ${isCollapsed ? "justify-center p-2" : "gap-2.5 px-2.5 py-1.5"
         } ${isActive && !hasChildren
-          ? "bg-blue-50/70 text-blue-600 font-semibold"
-          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+          ? "bg-blue-50 text-blue-700 font-semibold shadow-sm"
+          : "text-slate-600 hover:bg-blue-50/70 hover:text-blue-700"
         }`}
     >
       <Icon
@@ -68,15 +68,15 @@ const ParentMenuItem = ({
 const NestedSubMenu = ({ children, isCollapsed }) => {
   if (isCollapsed) return null;
   return (
-    <ul className="mt-1 pl-4 border-l border-slate-100 ml-4 space-y-1 transition-all duration-200">
+    <ul className="mt-1 pl-4 border-l border-blue-100 ml-4 space-y-1 transition-all duration-200">
       {children.map((sub, index) => (
         <li key={index}>
           <NavLink
             to={sub.path}
             className={({ isActive }) =>
               `block px-3 py-1 text-[12px] font-medium rounded-md transition-all duration-150 ${isActive
-                ? "bg-slate-100 text-slate-900 font-semibold"
-                : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                ? "bg-blue-50 text-blue-700 font-semibold"
+                : "text-slate-500 hover:text-blue-700 hover:bg-blue-50/60"
               }`
             }
           >
@@ -152,7 +152,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         {/* Expand/Shrink Toggle Button */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute right-[-10px] top-4 p-0.5 bg-white border border-slate-200 hover:border-slate-300 rounded-full shadow-sm hover:bg-slate-50 transition-all z-50 text-slate-400 hover:text-slate-600"
+          className="absolute -right-2.75 top-3.5 flex h-6 w-6 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-600 shadow-sm transition-all duration-200 hover:border-blue-300 hover:bg-blue-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:ring-offset-1 z-50"
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {isCollapsed ? (

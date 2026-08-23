@@ -8,12 +8,9 @@ import {
 } from "../../styles/formtheme";
 
 export default function TextField({ field, form }) {
-  useFormStore(form);
-
   const { id, label, placeHolder, disabled, maxLength } = field;
-
-  const value = form.methods.getValue(id);
-  const error = form.methods.getErrors()[id];
+  const value = useFormStore(form, (snapshot) => snapshot.values[id]);
+  const error = useFormStore(form, (snapshot) => snapshot.errors[id]);
 
   const handleChange = useCallback(
     (event) => form.methods.setValue(id, event.target.value),
@@ -61,9 +58,8 @@ export default function TextField({ field, form }) {
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         aria-invalid={Boolean(error)}
-        className={`${inputClass} ${
-          error ? "border-red-500 focus:border-red-500" : ""
-        }`}
+        className={`${inputClass} ${error ? "border-red-500 focus:border-red-500" : ""
+          }`}
       />
       {error && <p className={errorClass}>{error}</p>}
     </div>

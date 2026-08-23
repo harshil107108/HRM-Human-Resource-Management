@@ -67,13 +67,6 @@ const OrganizationInformation = ({
 
                     <div className="flex gap-3">
 
-                        <button
-                            type="button"
-                            className="flex items-center gap-2 rounded-lg border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-                        >
-                            <Save size={16} />
-                            Save Draft
-                        </button>
 
                         <button
                             type="button"

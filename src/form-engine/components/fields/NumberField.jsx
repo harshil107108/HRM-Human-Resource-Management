@@ -8,12 +8,9 @@ import {
 } from "../../styles/formtheme";
 
 export default function NumberField({ field, form }) {
-  useFormStore(form);
-
   const { id, label, placeHolder, precision, min, max, disabled } = field;
-
-  const value = form.methods.getValue(id);
-  const error = form.methods.getErrors()[id];
+  const value = useFormStore(form, (snapshot) => snapshot.values[id]);
+  const error = useFormStore(form, (snapshot) => snapshot.errors[id]);
 
   const handleChange = useCallback(
     (event) => {
@@ -88,9 +85,8 @@ export default function NumberField({ field, form }) {
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         aria-invalid={Boolean(error)}
-        className={`${inputClass} ${
-          error ? "border-red-500 focus:border-red-500" : ""
-        }`}
+        className={`${inputClass} ${error ? "border-red-500 focus:border-red-500" : ""
+          }`}
       />
 
       {error && <p className={errorClass}>{error}</p>}

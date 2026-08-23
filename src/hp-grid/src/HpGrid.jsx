@@ -37,6 +37,106 @@ import "./HpGrid.css";
  *   grid.focusOnCell(row.id, 'name');  // by the row's unique id + field/col name
  * ------------------------------------------------------------------
  */
+
+// ---------------------------------------------------------------------
+// Column-filter helpers (module scope - pure functions, no component
+// state needed).
+// ---------------------------------------------------------------------
+
+// Decides which kind of filter CONTROL a column gets in the filter row.
+//   colDef.filterable === false  -> 'none' (no control rendered)
+//   colDef.filterType            -> explicit override, always wins
+//   otherwise falls back based on colDef.type, mirroring cellTypes.jsx
+function getColumnFilterType(col) {
+  if (col.filterable === false) return "none";
+  if (col.filterType) return col.filterType;
+  switch (col.type) {
+    case "select":
+      return "select";
+    case "checkbox":
+      return "checkbox";
+    case "status":
+      return "checkbox";
+    case "number":
+      return "number";
+    case "date":
+      return "date";
+    case "actions":
+      return "none";
+    case "custom":
+      return col.filterable ? "text" : "none";
+    default:
+      return "text";
+  }
+}
+
+// Numeric / date filters support an optional leading operator so users can
+// type things like ">100", "<=2024-06-01", "=50" as well as a bare value.
+const OPERATOR_RE = /^(>=|<=|>|<|=)?\s*(.+)$/;
+
+function compareWithOperator(actual, raw, parse) {
+  const match = String(raw).trim().match(OPERATOR_RE);
+  if (!match) return true;
+  const [, op, rest] = match;
+  const target = parse(rest);
+  if (target === null || Number.isNaN(target)) return true;
+  const value = parse(actual);
+  if (value === null || Number.isNaN(value)) return false;
+  switch (op) {
+    case ">":
+      return value > target;
+    case "<":
+      return value < target;
+    case ">=":
+      return value >= target;
+    case "<=":
+      return value <= target;
+    default:
+      return value === target;
+  }
+}
+
+// Applies a single column's filter value against a single row's value for
+// that column. Returns true when the row should be KEPT.
+function matchesColumnFilter(value, filterValue, filterType, col) {
+  if (filterValue === undefined || filterValue === null || filterValue === "")
+    return true;
+
+  switch (filterType) {
+    case "select":
+      return String(value ?? "") === String(filterValue);
+
+    case "checkbox": {
+      const boolValue =
+        col.type === "status" && typeof col.isActive === "function"
+          ? !!col.isActive(value)
+          : !!value;
+      if (filterValue === "true") return boolValue === true;
+      if (filterValue === "false") return boolValue === false;
+      return true;
+    }
+
+    case "number":
+      return compareWithOperator(value, filterValue, (v) => {
+        const n = Number(v);
+        return v === "" || v === null || v === undefined ? null : n;
+      });
+
+    case "date":
+      return compareWithOperator(value, filterValue, (v) => {
+        if (!v) return null;
+        const t = new Date(v).getTime();
+        return Number.isNaN(t) ? null : t;
+      });
+
+    case "text":
+    default:
+      return String(value ?? "")
+        .toLowerCase()
+        .includes(String(filterValue).toLowerCase());
+  }
+}
+
 function HpGrid(props) {
   const {
     id,
@@ -63,6 +163,11 @@ function HpGrid(props) {
     onSearchChange, // (term) => void -- optional external listener
     addButtonLabel = "Add New", // e.g. "+ Add Database" / "+ Add Group"
     onAddClick, // if provided, the "+ Add" button is shown
+
+    // ---- per-column filter row (rendered directly under the header) ----
+    columnFilterable = true, // set false to hide the whole filter row
+    filterPlaceholder = "Filter...", // default placeholder for text/number/date filter inputs
+    onColumnFiltersChange, // (filters) => void -- optional external listener, fires with the full { field: value } map
 
     // ---- keyboard behaviour ----
     // 'right' (default): Enter commits the value and moves focus to the
@@ -94,6 +199,9 @@ function HpGrid(props) {
     colIndex: null,
   });
   const [searchTerm, setSearchTerm] = useState("");
+  // Per-column filters: { [field]: filterValue }. Only fields with a
+  // non-empty value are considered "active" - see displayRows below.
+  const [columnFilters, setColumnFiltersState] = useState({});
 
   // Keep latest state in refs so imperative API methods (which are only
   // created once) always read fresh data instead of a stale closure.
@@ -106,6 +214,7 @@ function HpGrid(props) {
   const rowDataRef = useRef(rowData);
   const colDefRef = useRef(colDef);
   const selectedRef = useRef(selectedIndices);
+  const columnFiltersRef = useRef(columnFilters);
   useLayoutEffect(() => {
     rowDataRef.current = rowData;
   }, [rowData]);
@@ -115,6 +224,35 @@ function HpGrid(props) {
   useLayoutEffect(() => {
     selectedRef.current = selectedIndices;
   }, [selectedIndices]);
+  useLayoutEffect(() => {
+    columnFiltersRef.current = columnFilters;
+  }, [columnFilters]);
+
+  // Updates (or clears, when value === "") a single column's filter value.
+  // Defined up here (rather than next to displayRows) so it - and
+  // clearColumnFilters below - are already initialized by the time the
+  // imperative `api` useMemo below reads them.
+  const handleColumnFilterChange = useCallback(
+    (field, value) => {
+      setColumnFiltersState((prev) => {
+        const next = { ...prev };
+        if (value === "" || value === undefined || value === null) {
+          delete next[field];
+        } else {
+          next[field] = value;
+        }
+        if (typeof onColumnFiltersChange === "function")
+          onColumnFiltersChange(next);
+        return next;
+      });
+    },
+    [onColumnFiltersChange],
+  );
+
+  const clearColumnFilters = useCallback(() => {
+    setColumnFiltersState({});
+    if (typeof onColumnFiltersChange === "function") onColumnFiltersChange({});
+  }, [onColumnFiltersChange]);
 
   // rowIndex-colIndex -> actual focusable DOM node
   const cellRefs = useRef({});
@@ -573,6 +711,18 @@ function HpGrid(props) {
         });
       },
 
+      // ---- column filters ----
+      setColumnFilters: (updater) =>
+        setColumnFiltersState((prev) => {
+          const next =
+            typeof updater === "function" ? updater(prev) : updater || {};
+          if (typeof onColumnFiltersChange === "function")
+            onColumnFiltersChange(next);
+          return next;
+        }),
+      getColumnFilters: () => columnFiltersRef.current,
+      clearColumnFilters,
+
       // ---- misc ----
       refresh: () => setRowDataState((prev) => prev.slice()),
       getId: () => id,
@@ -587,6 +737,8 @@ function HpGrid(props) {
       clearSelection,
       selectAll,
       resolveRowId,
+      clearColumnFilters,
+      onColumnFiltersChange,
       id,
     ],
   );
@@ -605,22 +757,136 @@ function HpGrid(props) {
   // Search filters what's displayed only - the original array index is kept
   // as `rowIndex` for every row, so focusOnCellIndex/updateCell/etc. always
   // stay correct regardless of how the list is currently filtered.
-  const displayRows = useMemo(() => {
-    const indexed = rowData.map((row, rowIndex) => ({ row, rowIndex }));
-    if (!searchable || !searchTerm.trim()) return indexed;
-    const term = searchTerm.trim().toLowerCase();
-    return indexed.filter(({ row }) =>
-      colDef.some((col) =>
-        String(row[col.field] ?? "")
-          .toLowerCase()
-          .includes(term),
+  const activeColumnFilterFields = useMemo(
+    () =>
+      Object.keys(columnFilters).filter(
+        (field) => columnFilters[field] !== "" && columnFilters[field] != null,
       ),
-    );
-  }, [rowData, colDef, searchable, searchTerm]);
+    [columnFilters],
+  );
+
+  const displayRows = useMemo(() => {
+    let indexed = rowData.map((row, rowIndex) => ({ row, rowIndex }));
+
+    if (searchable && searchTerm.trim()) {
+      const term = searchTerm.trim().toLowerCase();
+      indexed = indexed.filter(({ row }) =>
+        colDef.some((col) =>
+          String(row[col.field] ?? "")
+            .toLowerCase()
+            .includes(term),
+        ),
+      );
+    }
+
+    if (columnFilterable && activeColumnFilterFields.length) {
+      indexed = indexed.filter(({ row }) =>
+        activeColumnFilterFields.every((field) => {
+          const col = colDef.find((c) => c.field === field);
+          if (!col) return true;
+          const filterType = getColumnFilterType(col);
+          return matchesColumnFilter(
+            row[field],
+            columnFilters[field],
+            filterType,
+            col,
+          );
+        }),
+      );
+    }
+
+    return indexed;
+  }, [
+    rowData,
+    colDef,
+    searchable,
+    searchTerm,
+    columnFilterable,
+    columnFilters,
+    activeColumnFilterFields,
+  ]);
 
   const handleSearchChange = (value) => {
     setSearchTerm(value);
     if (typeof onSearchChange === "function") onSearchChange(value);
+  };
+
+  // Renders the actual control (text input / select / etc.) for one column's
+  // filter cell, based on getColumnFilterType(col). Returns null for columns
+  // that opted out (filterType === 'none'), so an empty placeholder cell is
+  // rendered instead to keep column alignment intact.
+  const renderFilterControl = (col) => {
+    const filterType = getColumnFilterType(col);
+    if (filterType === "none") return null;
+
+    const filterValue = columnFilters[col.field] ?? "";
+    const onChange = (value) => handleColumnFilterChange(col.field, value);
+
+    if (filterType === "select") {
+      return (
+        <select
+          className="hp-grid-filter-select"
+          value={filterValue}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">All</option>
+          {(col.options || []).map((opt) => {
+            const v = typeof opt === "object" ? opt.value : opt;
+            const label = typeof opt === "object" ? opt.label : opt;
+            return (
+              <option key={v} value={v}>
+                {label}
+              </option>
+            );
+          })}
+        </select>
+      );
+    }
+
+    if (filterType === "checkbox") {
+      return (
+        <select
+          className="hp-grid-filter-select"
+          value={filterValue}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">All</option>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      );
+    }
+
+    if (filterType === "number") {
+      return (
+        <input
+          type="text"
+          className="hp-grid-filter-input"
+          value={filterValue}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      );
+    }
+
+    if (filterType === "date") {
+      return (
+        <input
+          type="text"
+          className="hp-grid-filter-input"
+          value={filterValue}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      );
+    }
+
+    return (
+      <input
+        type="text"
+        className="hp-grid-filter-input"
+        value={filterValue}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    );
   };
 
   const showToolbar = Boolean(title || icon || searchable || onAddClick);
@@ -694,10 +960,41 @@ function HpGrid(props) {
               ))}
             </div>
 
+            {columnFilterable && (
+              <div className="hp-grid-header-filters">
+                {selectable && (
+                  <div className="hp-grid-cell hp-grid-cell--select-col hp-grid-filter-cell hp-grid-filter-cell--empty" />
+                )}
+                {colDef.map((col) => (
+                  <div
+                    key={col.id || col.field}
+                    className="hp-grid-filter-cell-outer"
+                    style={getColumnStyle(col)}
+                  >
+                    {renderFilterControl(col) || (
+                      <div className="hp-grid-filter-cell hp-grid-filter-cell--empty" />
+                    )}
+                  </div>
+                ))}
+                {activeColumnFilterFields.length > 0 && (
+                  <button
+                    type="button"
+                    className="hp-grid-filter-clear-btn"
+                    onClick={clearColumnFilters}
+                    title="Clear all column filters"
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className="hp-grid-body">
               {displayRows.length === 0 && (
                 <div className="hp-grid-empty">
-                  {searchTerm.trim() ? "No matching rows" : "No rows to display"}
+                  {searchTerm.trim() || activeColumnFilterFields.length > 0
+                    ? "No matching rows"
+                    : "No rows to display"}
                 </div>
               )}
               {displayRows.map(({ row, rowIndex }) => (

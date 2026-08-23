@@ -31,6 +31,7 @@ const CountryMasterListing = () => {
                 // onDoubleClick={handleDoubleClick}
                 onAddClick={handleAdd}
                 title="Country"
+                columnFilterable={false}
             />
         </>
     )

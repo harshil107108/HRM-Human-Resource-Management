@@ -33,6 +33,8 @@ const Department = () => {
   const formmethod = formMethod.createForm({
     schema: [
       ...basicInfoSchema,
+      ...employeeSchema,
+      ...managementSchema,
     ],
     initialValue,
   });
@@ -130,10 +132,6 @@ const Department = () => {
                 </div>
 
               </div>
-
-
-
-
 
             </div>
 

@@ -80,7 +80,7 @@ export default function DateField({ field, form }) {
     required,
     min,
     max,
-    defaultToday = true,
+emplo    defaultToday = false,
   } = field;
 
   const value = useFormStore(form, (snapshot) => snapshot.values[id]);
@@ -257,15 +257,6 @@ export default function DateField({ field, form }) {
     }
   };
 
-  const goToday = () => {
-    const t = todayParts();
-    setDay(t.day);
-    setMonth(t.month);
-    setYear(t.year);
-    validateAndCommit(t.day, t.month, t.year);
-    dayRef.current?.focus();
-  };
-
   const error = formError || localError;
 
   const segmentBase =
@@ -338,16 +329,6 @@ export default function DateField({ field, form }) {
           className={`${segmentBase} w-12`}
         />
 
-        {!disabled && (
-          <button
-            type="button"
-            onClick={goToday}
-            tabIndex={-1}
-            className="ml-auto rounded px-1.5 py-0.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
-          >
-            Today
-          </button>
-        )}
       </div>
 
       {error && <p className={errorClass}>{error}</p>}

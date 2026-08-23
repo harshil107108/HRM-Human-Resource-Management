@@ -36,6 +36,7 @@ const Company = () => {
       ...businessInfoSchema1,
       ...businessInfoSchema2,
       ...basicInfoSchema,
+      ...addressSchema,
     ],
     initialValue,
   });

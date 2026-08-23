@@ -28,13 +28,13 @@ const Branch = () => {
     postalCode: "",
   };
 
-  const { contactInfoSchema, basicInfoSchema, addressSchema } =
-    useBranchConfig();
+  const { contactInfoSchema, basicInfoSchema, addressSchema } = useBranchConfig();
 
   const formmethod = formMethod.createForm({
     schema: [
       ...contactInfoSchema,
       ...basicInfoSchema,
+      ...addressSchema,
     ],
     initialValue,
   });

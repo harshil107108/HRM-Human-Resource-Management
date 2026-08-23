@@ -107,6 +107,7 @@ const useCompanyConfig = () => {
       required: true,
       prevFocusField: "phone",
       className: "col-span-3  ",
+      nextFocusField: "addressLine1",
     },
   ];
 
@@ -118,6 +119,7 @@ const useCompanyConfig = () => {
       placeHolder: "Street address, P.O. box, company name",
       required: true,
       nextFocusField: "addressLine2",
+      prevFocusField: "website",
       className: "col-span-6",
     },
     {
@@ -170,6 +172,7 @@ const useCompanyConfig = () => {
       placeHolder: "Zip/Postal",
       required: true,
       prevFocusField: "city",
+      nextFocusField: "gstNumber",
     },
   ];
 

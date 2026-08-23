@@ -200,9 +200,9 @@ const useDepatmentConfig = () => {
             required: true,
             prevFocusField: "employeecapacity",
             nextFocusField: null,
+            nextFocusField: "departmenthead",
         },
     ];
-
 
     return {
         DepartmentListingColDef,

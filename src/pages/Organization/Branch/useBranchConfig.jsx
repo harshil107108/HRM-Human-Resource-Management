@@ -148,6 +148,7 @@ const useBranchConfig = () => {
             placeHolder: "Zip/Postal",
             required: true,
             prevFocusField: "city",
+            nextFocusField: "officialemail",
         },
     ];
 

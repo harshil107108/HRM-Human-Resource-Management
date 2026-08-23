@@ -85,7 +85,7 @@ const useEmployeeConfig = () => {
             required: true,
             disabled: true,
             nextFocusField: "firstName",
-            className: "col-span-6",
+            className: "col-span-2",
         },
         {
             id: "firstName",
@@ -95,7 +95,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "employeeId",
             nextFocusField: "middleName",
-            className: "col-span-6",
+            className: "col-span-2",
         },
         {
             id: "middleName",
@@ -105,7 +105,7 @@ const useEmployeeConfig = () => {
             required: false,
             prevFocusField: "firstName",
             nextFocusField: "lastName",
-            className: "col-span-6",
+            className: "col-span-2",
         },
         {
             id: "lastName",
@@ -115,7 +115,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "middleName",
             nextFocusField: "gender",
-            className: "col-span-6",
+            className: "col-span-2",
         },
         {
             id: "gender",
@@ -125,7 +125,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "lastName",
             nextFocusField: "dateOfBirth",
-            className: "col-span-6",
+            className: "col-span-2",
             options: [
                 {
                     label: "Male",
@@ -149,7 +149,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "gender",
             nextFocusField: "maritalStatus",
-            className: "col-span-6",
+            className: "col-span-2",
         },
         {
             id: "maritalStatus",
@@ -159,7 +159,7 @@ const useEmployeeConfig = () => {
             required: false,
             prevFocusField: "dateOfBirth",
             nextFocusField: "bloodGroup",
-            className: "col-span-6",
+            className: "col-span-2",
             options: [
                 {
                     label: "Single",
@@ -187,7 +187,7 @@ const useEmployeeConfig = () => {
             required: false,
             prevFocusField: "maritalStatus",
             nextFocusField: "",
-            className: "col-span-6",
+            className: "col-span-2",
             options: [
                 { label: "A+", value: "A+" },
                 { label: "A-", value: "A-" },
@@ -209,7 +209,7 @@ const useEmployeeConfig = () => {
             placeHolder: "Select Company",
             required: true,
             nextFocusField: "branchId",
-            className: "col-span-6",
+            className: "col-span-4",
             options: [
                 { label: "Elite Enterprises Inc.", value: 1 },
                 { label: "Orvexa Technologies", value: 2 },
@@ -223,7 +223,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "companyId",
             nextFocusField: "departmentId",
-            className: "col-span-6",
+            className: "col-span-4",
             options: [
                 { label: "Main Headquarters", value: 1 },
                 { label: "Ahmedabad Branch", value: 2 },
@@ -237,7 +237,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "branchId",
             nextFocusField: "designationId",
-            className: "col-span-6",
+            className: "col-span-4",
             options: [
                 { label: "Engineering", value: 1 },
                 { label: "HR", value: 2 },
@@ -252,7 +252,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "departmentId",
             nextFocusField: "reportingManager",
-            className: "col-span-6",
+            className: "col-span-4",
             options: [
                 { label: "Software Engineer", value: 1 },
                 { label: "Senior Developer", value: 2 },
@@ -267,7 +267,7 @@ const useEmployeeConfig = () => {
             required: false,
             prevFocusField: "designationId",
             nextFocusField: "employmentType",
-            className: "col-span-6",
+            className: "col-span-4",
             options: [
                 { label: "John Smith", value: 1 },
                 { label: "David Wilson", value: 2 },
@@ -281,7 +281,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "reportingManager",
             nextFocusField: "employeeStatus",
-            className: "col-span-6",
+            className: "col-span-4",
             options: [
                 { label: "Full Time", value: "FULL_TIME" },
                 { label: "Part Time", value: "PART_TIME" },
@@ -297,7 +297,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "employmentType",
             nextFocusField: "joiningDate",
-            className: "col-span-6",
+            className: "col-span-4",
             options: [
                 { label: "Active", value: "ACTIVE" },
                 { label: "Inactive", value: "INACTIVE" },
@@ -311,7 +311,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "employeeStatus",
             nextFocusField: "confirmationDate",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "confirmationDate",
@@ -320,7 +320,7 @@ const useEmployeeConfig = () => {
             required: false,
             prevFocusField: "joiningDate",
             nextFocusField: "probationPeriod",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "probationPeriod",
@@ -330,7 +330,7 @@ const useEmployeeConfig = () => {
             required: false,
             suffix: "Months",
             prevFocusField: "confirmationDate",
-            className: "col-span-6",
+            className: "col-span-4",
         },
     ];
 
@@ -342,7 +342,7 @@ const useEmployeeConfig = () => {
             placeHolder: "e.g. john.doe@company.com",
             required: true,
             nextFocusField: "personalEmail",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "personalEmail",
@@ -352,7 +352,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "officialEmail",
             nextFocusField: "mobileNumber",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "mobileNumber",
@@ -362,7 +362,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "personalEmail",
             nextFocusField: "alternateMobile",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "alternateMobile",
@@ -372,7 +372,7 @@ const useEmployeeConfig = () => {
             required: false,
             prevFocusField: "mobileNumber",
             nextFocusField: "emergencyContactName",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "emergencyContactName",
@@ -382,7 +382,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "alternateMobile",
             nextFocusField: "emergencyContactNumber",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "emergencyContactNumber",
@@ -392,7 +392,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "emergencyContactName",
             nextFocusField: "countryId",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "countryId",
@@ -402,7 +402,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "emergencyContactNumber",
             nextFocusField: "stateId",
-            className: "col-span-6",
+            className: "col-span-4",
             options: [
                 { label: "India", value: 1 },
                 { label: "United States", value: 2 },
@@ -416,7 +416,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "countryId",
             nextFocusField: "cityId",
-            className: "col-span-6",
+            className: "col-span-4",
             options: [
                 { label: "Gujarat", value: 1 },
                 { label: "Maharashtra", value: 2 },
@@ -430,7 +430,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "stateId",
             nextFocusField: "postalCode",
-            className: "col-span-6",
+            className: "col-span-4",
             options: [
                 { label: "Ahmedabad", value: 1 },
                 { label: "Surat", value: 2 },
@@ -444,7 +444,7 @@ const useEmployeeConfig = () => {
             required: true,
             prevFocusField: "cityId",
             nextFocusField: "currentAddress",
-            className: "col-span-6",
+            className: "col-span-4",
             maxLength: 10,
         },
         {
@@ -454,7 +454,7 @@ const useEmployeeConfig = () => {
             placeHolder: "Enter Full Address",
             required: true,
             prevFocusField: "postalCode",
-            className: "col-span-12",
+            className: "col-span-8",
             rows: 3,
         },
     ];
@@ -466,7 +466,7 @@ const useEmployeeConfig = () => {
             label: "Aadhaar Number",
             placeHolder: "Enter 12 digit Aadhaar",
             required: true,
-            className: "col-span-6",
+            className: "col-span-3",
             maxLength: 12,
             nextFocusField: "panNumber",
         },
@@ -476,7 +476,7 @@ const useEmployeeConfig = () => {
             label: "PAN Number",
             placeHolder: "Enter PAN",
             required: true,
-            className: "col-span-6",
+            className: "col-span-3",
             maxLength: 10,
             textTransform: "uppercase",
             prevFocusField: "aadhaarNumber",
@@ -487,7 +487,7 @@ const useEmployeeConfig = () => {
             type: "text",
             label: "Passport Number",
             placeHolder: "Enter Passport Number",
-            className: "col-span-6",
+            className: "col-span-3",
             prevFocusField: "panNumber",
             nextFocusField: "drivingLicenseNumber",
         },
@@ -496,7 +496,7 @@ const useEmployeeConfig = () => {
             type: "text",
             label: "Driving License Number",
             placeHolder: "Enter DL Number",
-            className: "col-span-6",
+            className: "col-span-3",
             prevFocusField: "passportNumber",
         },
     ];
@@ -509,7 +509,7 @@ const useEmployeeConfig = () => {
             label: "Bank Name",
             placeHolder: "Select Bank",
             required: true,
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "accountNumber",
@@ -517,7 +517,7 @@ const useEmployeeConfig = () => {
             label: "Account Number",
             placeHolder: "Enter Account Number",
             required: true,
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "ifscCode",
@@ -525,7 +525,7 @@ const useEmployeeConfig = () => {
             label: "IFSC / SWIFT Code",
             placeHolder: "Enter IFSC",
             required: true,
-            className: "col-span-6",
+            className: "col-span-4",
             textTransform: "uppercase",
         },
         {
@@ -533,21 +533,21 @@ const useEmployeeConfig = () => {
             type: "text",
             label: "UAN Number (PF)",
             placeHolder: "Enter UAN",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "pfNumber",
             type: "text",
             label: "PF Number",
             placeHolder: "Enter PF Number",
-            className: "col-span-6",
+            className: "col-span-4",
         },
         {
             id: "esiNumber",
             type: "text",
             label: "ESI Number",
             placeHolder: "Enter ESI Number",
-            className: "col-span-6",
+            className: "col-span-4",
         },
 
         // Compensation
@@ -585,7 +585,7 @@ const useEmployeeConfig = () => {
             label: "Username",
             placeHolder: "e.g. john@company.com",
             required: true,
-            className: "col-span-10",
+            className: "col-span-4",
             nextFocusField: "password",
         },
         {
@@ -607,7 +607,7 @@ const useEmployeeConfig = () => {
             label: "Primary Role",
             placeHolder: "Select Role",
             required: true,
-            className: "col-span-6",
+            className: "col-span-4",
             options: [
                 {
                     label: "Standard Employee",
@@ -633,7 +633,7 @@ const useEmployeeConfig = () => {
             label: "User Group",
             placeHolder: "Select Group",
             required: true,
-            className: "col-span-6",
+            className: "col-span-4",
             options: [
                 {
                     label: "Product Development",

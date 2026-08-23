@@ -1,5 +1,6 @@
 import React from "react";
 import GridCell from "./GridCell";
+import { getColumnStyle } from "./utils";
 
 /**
  * GridRow.jsx
@@ -77,11 +78,7 @@ const GridRow = React.memo(function GridRow({
         <div
           key={col.id || col.field}
           className="hp-grid-cell-outer"
-          style={
-            col.width
-              ? { width: col.width, flex: `0 0 ${col.width}px` }
-              : { flex: 1 }
-          }
+          style={getColumnStyle(col)}
         >
           <GridCell
             ref={(node) => registerCellRef(rowIndex, colIndex, node)}

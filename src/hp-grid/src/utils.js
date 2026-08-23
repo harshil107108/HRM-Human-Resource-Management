@@ -39,3 +39,20 @@ export function ensureRowIds(rows) {
     row && row.id != null ? row : { ...row, id: generateUUID() },
   );
 }
+
+export function getColumnStyle(column) {
+  if (column.width === undefined || column.width === null) {
+    return { flex: "1 1 0", minWidth: 0 };
+  }
+
+  const width =
+    typeof column.width === "number" ? `${column.width}px` : column.width;
+
+  return {
+    width,
+    minWidth: width,
+    maxWidth: width,
+    flex: `0 0 ${width}`,
+    boxSizing: "border-box",
+  };
+}

@@ -10,7 +10,7 @@ import { flushSync } from "react-dom";
 import { registerGrid, unregisterGrid } from "./GridRegistry";
 import GridRow from "./GridRow";
 import { PlusIcon, SearchIcon } from "./icons";
-import { generateUUID, ensureRowIds } from "./utils";
+import { generateUUID, ensureRowIds, getColumnStyle } from "./utils";
 import "./HpGrid.css";
 
 /**
@@ -624,6 +624,9 @@ function HpGrid(props) {
   };
 
   const showToolbar = Boolean(title || icon || searchable || onAddClick);
+  const hasOnlyFixedColumns =
+    colDef.length > 0 &&
+    colDef.every((column) => column.width !== undefined && column.width !== null);
 
   return (
     <div
@@ -664,8 +667,13 @@ function HpGrid(props) {
 
       <div className="hp-grid-table-shell">
         <div className="hp-grid-scroll-area">
-          <div className="hp-grid-scroll-content">
-            <div className="hp-grid-header" style={{ height: headerHeight }}>
+          <div
+            className={`hp-grid-scroll-content ${hasOnlyFixedColumns ? "hp-grid-scroll-content--fixed-columns" : ""}`}
+          >
+            <div
+              className="hp-grid-header"
+              style={{ height: headerHeight }}
+            >
               {selectable && (
                 <div className="hp-grid-cell hp-grid-cell--select-col hp-grid-header-cell">
                   <input
@@ -679,11 +687,7 @@ function HpGrid(props) {
                 <div
                   key={col.id || col.field}
                   className="hp-grid-header-cell"
-                  style={
-                    col.width
-                      ? { width: col.width, flex: `0 0 ${col.width}px` }
-                      : { flex: 1 }
-                  }
+                  style={getColumnStyle(col)}
                 >
                   {col.headerName ?? col.field}
                 </div>

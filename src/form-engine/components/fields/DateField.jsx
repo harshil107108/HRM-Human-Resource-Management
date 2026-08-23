@@ -80,7 +80,7 @@ export default function DateField({ field, form }) {
     required,
     min,
     max,
-emplo    defaultToday = false,
+    defaultToday = false,
   } = field;
 
   const value = useFormStore(form, (snapshot) => snapshot.values[id]);

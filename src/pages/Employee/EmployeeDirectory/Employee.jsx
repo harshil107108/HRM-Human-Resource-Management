@@ -370,15 +370,11 @@ const Employee = () => {
                         <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
                             <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
                             <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
-                                Personal Information
+                                Extended Permissions
                             </h2>
                         </div>
 
-                        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-
-                            <h2 className="mb-5 text-base font-semibold text-slate-900">
-                                Extended Permissions
-                            </h2>
+                        <div className="p-6 shadow-sm">
 
                             <div className="grid grid-cols-4 gap-4">
 

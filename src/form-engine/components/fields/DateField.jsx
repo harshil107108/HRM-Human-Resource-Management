@@ -445,11 +445,11 @@ export default function DateField({ field, form, ...standaloneProps }) {
 
           <div className="flex items-center gap-0.5">
             <input
-              id={`${id}-day`} ref={dayRef} type="text" inputMode="numeric" maxLength={2}
+              id={`${id}-day`} ref={(node) => { dayRef.current = node; form?.methods.registerRef(id, node); }} type="text" inputMode="numeric" maxLength={2}
               placeholder="DD" value={day} disabled={disabled}
               onChange={handleDayChange} onKeyDown={makeKeyDownHandler("day")}
               onBlur={handleBlur} onFocus={(e) => e.target.select()}
-              aria-label="Day" aria-invalid={Boolean(error)} className={`${segmentBase} w-6`}
+              aria-label="Day" aria-invalid={Boolean(displayError)} className={`${segmentBase} w-6`}
             />
             <span className="select-none text-slate-300">/</span>
             <input
@@ -457,7 +457,7 @@ export default function DateField({ field, form, ...standaloneProps }) {
               placeholder="MM" value={month} disabled={disabled}
               onChange={handleMonthChange} onKeyDown={makeKeyDownHandler("month")}
               onBlur={handleBlur} onFocus={(e) => e.target.select()}
-              aria-label="Month" aria-invalid={Boolean(error)} className={`${segmentBase} w-6`}
+              aria-label="Month" aria-invalid={Boolean(displayError)} className={`${segmentBase} w-6`}
             />
             <span className="select-none text-slate-300">/</span>
             <input
@@ -465,7 +465,7 @@ export default function DateField({ field, form, ...standaloneProps }) {
               placeholder="YYYY" value={year} disabled={disabled}
               onChange={handleYearChange} onKeyDown={makeKeyDownHandler("year")}
               onBlur={handleBlur} onFocus={(e) => e.target.select()}
-              aria-label="Year" aria-invalid={Boolean(error)} className={`${segmentBase} w-10`}
+              aria-label="Year" aria-invalid={Boolean(displayError)} className={`${segmentBase} w-10`}
             />
           </div>
 

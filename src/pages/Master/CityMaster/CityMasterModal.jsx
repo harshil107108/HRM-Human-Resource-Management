@@ -1,6 +1,6 @@
 import { HpCommonModal } from "@/hp-common-modal";
 import { Building2 } from "lucide-react";
-import React from "react";
+import React, { useEffect } from "react";
 import useCityMasterConfig from "./useCityMasterConfig";
 import { formMethod, FormRenderer } from "@/form-engine";
 
@@ -14,8 +14,16 @@ const CityMasterModal = ({ mode, onModalClose, open, extraParams }) => {
 
     const handleSave = () => {
         console.log("Save City");
-        console.log(formmethod.getValues());
+        console.log(formmethod)
+        console.log(formmethod.methods.getValues());
+        formmethod.methods.setValue('cityName', "abc")
     };
+
+
+    useEffect(() => {
+        console.log("work")
+    }, [])
+
 
     return (
         <HpCommonModal

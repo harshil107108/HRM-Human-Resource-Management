@@ -1,3 +1,4 @@
+import { useCallback, useSyncExternalStore } from "react";
 
 export class FormStore {
   constructor({ schema = [], initialValue = {} } = {}) {
@@ -35,6 +36,37 @@ export class FormStore {
       },
       getValues: () => this.values,
       getValue: (id) => this.values[id],
+      /**
+       * React-hook-style reactive getter, e.g. react-hook-form's `watch`.
+       * Call it during a component's render:
+       *
+       *   const age = form.methods.watch("age");     // one field
+       *   const all = form.methods.watch();           // whole values object
+       *
+       * The component re-renders only when the watched value actually
+       * changes (not on every unrelated form update), because the
+       * underlying subscription is deduped by useSyncExternalStore.
+       *
+       * NOTE: this is a real React hook under the hood (it calls
+       * useSyncExternalStore), so it must be called unconditionally at
+       * the top level of a function component/hook, every render - same
+       * rule as useState/useEffect. Because the name doesn't start with
+       * "use", ESLint's react-hooks plugin won't lint-check that for
+       * you; if you want that safety net, use the standalone `useWatch`
+       * hook exported from `hooks/useFormStore.js` instead - it's the
+       * same implementation, just named for the linter.
+       */
+      watch: (id) => {
+        const subscribe = useCallback(
+          (onStoreChange) => this.methods.subscribe(onStoreChange),
+          [],
+        );
+        const getSnapshot = useCallback(
+          () => (id === undefined ? this.values : this.values[id]),
+          [id],
+        );
+        return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+      },
       setValue: (id, value, { triggerHooks = true } = {}) => {
         this.values = { ...this.values, [id]: value };
         this.touched = { ...this.touched, [id]: true };

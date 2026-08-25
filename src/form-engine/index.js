@@ -33,4 +33,4 @@ export {
   hasFieldType,
   getRegisteredTypes,
 } from "./core/fieldRegistry";
-export { useFormStore } from "./hooks/useFormStore";
+export { useFormStore, useWatch } from "./hooks/useFormStore";

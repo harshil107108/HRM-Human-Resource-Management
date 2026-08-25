@@ -11,15 +11,19 @@ form-engine/
 │   ├── formMethod.js      # public factory -> formMethod.createForm(...)
 │   └── fieldRegistry.js   # type -> component map (extensible)
 ├── hooks/
-│   └── useFormStore.js    # subscribes a component to a FormStore
+│   └── useFormStore.js    # useFormStore(store, selector) + useWatch(store, id)
 ├── styles/
 │   └── formtheme.js       # shared Tailwind class strings for every field
 ├── components/
 │   ├── FormRenderer.jsx   # <FormRenderer formMethod={form} formSchema={schema} />
 │   └── fields/
 │       ├── NumberField.jsx
-│       ├── SelectWrapper.jsx   # dropdown
-│       └── TextField.jsx       # example of adding a new type
+│       ├── TextField.jsx
+│       ├── SelectWrapper.jsx   # dropdown, single or multi (react-select)
+│       ├── DateField.jsx       # segmented DD/MM/YYYY + calendar dropdown
+│       └── CheckboxField.jsx
+├── __tests__/
+│   └── DateField.test.js
 ├── example/
 │   └── App.jsx             # full working usage example
 └── index.js                # barrel export + default type registration
@@ -27,7 +31,8 @@ form-engine/
 
 > Styling is plain Tailwind utility classes (see `styles/formtheme.js` and
 > the `col-span-*` classes below) - there is no separate CSS file to
-> import. Make sure Tailwind is set up in your app.
+> import. Make sure Tailwind is set up in your app. `SelectWrapper` also
+> requires `react-select` as a dependency.
 
 ## Basic usage
 
@@ -100,10 +105,18 @@ method directly, with nothing hidden behind a class prototype.
 | `onBlur`             | function         | `(form) => void`, fires when the field loses focus                |
 
 `number` fields additionally support `precision`, `min`, `max`.
-`selectWrapper` fields additionally support `options: [{ label, value }]`.
-`date` fields additionally support `min`, `max` (both `"YYYY-MM-DD"` strings)
-and always store/emit their value as `"YYYY-MM-DD"`, ready to pass into
+`selectWrapper` fields additionally support `options: [{ label, value }]`
+and `isMultiSelect` (checkbox-style multi-select with an Apply button);
+it's built on [`react-select`](https://react-select.com), which must be
+installed (`npm i react-select`) for it to work.
+`date` fields additionally support `min`, `max` (both `"YYYY-MM-DD"`
+strings) and `defaultToday`. It renders a segmented DD/MM/YYYY input with
+a calendar dropdown (arrow keys, Home, PageUp/Down, Escape all work) and
+always stores/emits its value as `"YYYY-MM-DD"`, ready to pass into
 `new Date(value)` or any date library.
+`checkbox` fields additionally support `description`, `checkedValue` /
+`uncheckedValue` (defaults `true`/`false`), and `size` (`"xs" | "sm" | "md"
+| "lg" | "xl"` or a number of pixels).
 
 `className` / `wrapperClassName` / `containerClassName` are three names for
 the same thing (all get merged onto the same wrapper `<div>`) - pick
@@ -185,13 +198,53 @@ below.
 
 ```js
 form.methods.getValues(); // { age: 25, city: 'surat' }
-form.methods.getValue("age"); // 25
+form.methods.getValue("age"); // 25 (non-reactive, one-off read)
+form.methods.watch("age"); // 25 (reactive - re-renders on change, see below)
+form.methods.watch(); // whole values object, reactively
 form.methods.setValue("age", 26); // sets value, fires schema onChange
 form.methods.setValue("age", 26, { triggerHooks: false }); // silent update
 form.methods.setValues({ age: 26, city: "surat" });
 form.methods.resetField("age"); // reset just this field
 form.methods.reset(); // reset the whole form
 ```
+
+> Note on naming: it's `focusField` (capital F) and `reset` (not
+> `focusfield`/`rest`) - see the Focus navigation section below.
+
+### Reactively watching a value: `watch` vs `getValue` vs `onFieldChange`
+
+Three different tools for three different needs:
+
+| method | when to use it |
+| --- | --- |
+| `form.methods.getValue(id)` | one-off read - inside an event handler, `onChange`/`onBlur` callback, or `validate` function. Not reactive; doesn't cause re-renders. |
+| `form.methods.watch(id)` | **inside a component's render** - reactively returns the current value and re-renders that component whenever it changes. Same idea as react-hook-form's `watch`. Call `watch()` with no `id` to get the whole values object. |
+| `form.methods.onFieldChange(id, cb)` | imperative side effect from *outside* React's render cycle (e.g. logging, analytics, syncing to localStorage) - fires a callback, does not itself cause a re-render. |
+
+```jsx
+function SalaryPreview({ form }) {
+  // reactive - this component re-renders only when "salary" changes
+  const salary = form.methods.watch("salary");
+  return <p>Monthly: {salary ? (salary / 12).toFixed(2) : "-"}</p>;
+}
+```
+
+`form.methods.watch` is a real React hook internally (it calls
+`useSyncExternalStore`), so call it unconditionally at the top level of a
+component, the same as `useState`. If you'd rather have the react-hooks
+ESLint plugin verify that for you, use the standalone, identically
+behaving `useWatch` export instead:
+
+```jsx
+import { useWatch } from "./form-engine";
+
+function SalaryPreview({ form }) {
+  const salary = useWatch(form, "salary");
+  return <p>Monthly: {salary ? (salary / 12).toFixed(2) : "-"}</p>;
+}
+```
+
+
 
 ### Errors & validation
 
@@ -243,19 +296,19 @@ form.methods.offFieldChange("age", callback); // or call unsubscribe()
 
 ## Extending with new field types
 
-`date` ships as a built-in type (`type: "date"`, native `<input type="date">`).
-To add another type of your own:
+`number`, `text`, `selectWrapper`, `date`, and `checkbox` all ship as
+built-in types already registered in `index.js`. To add one of your own:
 
 ```jsx
 import { registerFieldType } from "./form-engine";
-import CheckboxField from "./CheckboxField";
+import TextareaField from "./TextareaField";
 
-registerFieldType("checkbox", CheckboxField);
+registerFieldType("textarea", TextareaField);
 ```
 
-Then just use `type: "checkbox"` in your schema. `styles/formtheme.js`
-already exports `textareaClass`, `checkboxClass`, and `radioClass` for
-wiring up those field types the same way the built-in ones do.
+Then just use `type: "textarea"` in your schema. `styles/formtheme.js`
+already exports `textareaClass` and `radioClass` for wiring up those field
+types the same way the built-in ones do.
 
 ## Extending `formMethod` with new top-level methods
 

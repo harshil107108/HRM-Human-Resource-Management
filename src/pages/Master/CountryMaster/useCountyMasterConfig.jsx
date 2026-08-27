@@ -1,13 +1,7 @@
 
-const useCountyMasterConfig = ({ handleDelete }) => {
+const useCountyMasterConfig = ({ handleDelete } = {}) => {
 
     const countryListingListingColDef = [
-        {
-            id: "countryId",
-            field: "countryId",
-            headerName: "Id",
-            width: 80,
-        },
         {
             id: "countryName",
             field: "countryName",

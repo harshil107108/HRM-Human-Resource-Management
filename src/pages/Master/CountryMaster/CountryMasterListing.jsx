@@ -4,6 +4,7 @@ import useCountyMasterConfig from './useCountyMasterConfig'
 import useModal from '@/hooks/useModal';
 import CountyMasterModal from './CountyMasterModal';
 import useApiCall from '@/hooks/useApiCall';
+import { api, apiEndpoints } from '@/api/api';
 
 const CountryMasterListing = () => {
 
@@ -12,7 +13,7 @@ const CountryMasterListing = () => {
     const handleDelete = async (id) => {
         const res = await apiCall({
             id: 'deleteListing',
-            api: 'http://localhost:8080/master/country/deleteCountryById',
+            api: api + apiEndpoints.master.country.CountryDeleteByID,
             payload: { _id: id }
         });
 
@@ -29,7 +30,7 @@ const CountryMasterListing = () => {
     const getCountryListing = async () => {
         const res = await apiCall({
             id: 'getCountyListing',
-            api: 'http://localhost:8080/master/country/getCountry',
+            api: api + apiEndpoints?.master?.country?.CountryGetData,
             payload: {}
         });
 
@@ -48,6 +49,14 @@ const CountryMasterListing = () => {
             mode: "add",
         });
     }
+
+    const handleDoubleClick = (data) => {
+        const id = data.data._id;
+        onModalOpen({
+            mode: "edit",
+            id: id
+        });
+    }
     return (
         <>
             {isModalOpen && (
@@ -63,7 +72,7 @@ const CountryMasterListing = () => {
                 rowData={countryListingData}
                 colDef={countryListingListingColDef}
                 style={{ height: '100%' }}
-                // onDoubleClick={handleDoubleClick}
+                onDoubleClick={handleDoubleClick}
                 onAddClick={handleAdd}
                 title="Country"
                 columnFilterable={false}

@@ -7,6 +7,12 @@ const apiEndpoints = {
             CountryGetData: "/master/country/getCountry",
             CountryDeleteByID: "/master/country/deleteCountryById",
             CountryGetByID: "/master/country/getCountryById",
+        },
+        city: {
+            CityAddEdit: "/master/city/addEditCity",
+            CityGetData: "/master/city/getCity",
+            CityDeleteByID: "/master/city/deleteCityById",
+            CityGetByID: "/master/city/getCityById",
         }
     },
 

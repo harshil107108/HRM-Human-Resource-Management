@@ -51,8 +51,6 @@ const CountyMasterModal = ({ onModalClose, onSaved, open, extraParams }) => {
         const data = res.data;
 
         if (data.success) {
-            console.log("API DATA:", data.data);
-
             formmethod.methods.setValues(data.data);
         }
     };

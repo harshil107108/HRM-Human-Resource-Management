@@ -52,7 +52,7 @@ const CountryMasterListing = () => {
 
     const handleDoubleClick = (data) => {
         const id = data.data._id;
-        onModalOpen({
+        onModalOpen({ 
             mode: "edit",
             id: id
         });

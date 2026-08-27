@@ -1,17 +1,17 @@
 import {
-    BarChart3,
-    BriefcaseBusiness,
-    Building2,
-    CalendarCheck2,
-    CalendarDays,
-    Database,
-    GraduationCap,
-    LayoutDashboard,
-    Settings,
-    ShieldCheck,
-    TrendingUp,
-    Users,
-    Wallet
+  BarChart3,
+  BriefcaseBusiness,
+  Building2,
+  CalendarCheck2,
+  CalendarDays,
+  Database,
+  GraduationCap,
+  LayoutDashboard,
+  Settings,
+  ShieldCheck,
+  TrendingUp,
+  Users,
+  Wallet
 } from "lucide-react";
 
 export const NAVIGATION_SCHEMA = [
@@ -53,7 +53,7 @@ export const NAVIGATION_SCHEMA = [
         label: "Designation Master",
         path: "/master/designations",
       },
-      
+
     ],
   },
 
@@ -81,7 +81,7 @@ export const NAVIGATION_SCHEMA = [
         label: "Designations",
         path: "/organization/designations",
       },
-      
+
     ],
   },
 

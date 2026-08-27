@@ -1,28 +1,66 @@
 import { HpCommonModal } from "@/hp-common-modal";
 import { Building2 } from "lucide-react";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import useCityMasterConfig from "./useCityMasterConfig";
 import { formMethod, FormRenderer } from "@/form-engine";
+import useApiCall from "@/hooks/useApiCall";
+import { api, apiEndpoints } from "@/api/api";
 
-const CityMasterModal = ({ mode, onModalClose, open, extraParams }) => {
+const CityMasterModal = ({ onModalClose, open, extraParams }) => {
     const { citySchema, initialValue } = useCityMasterConfig();
 
-    const formmethod = formMethod.createForm({
-        schema: [...citySchema],
-        initialValue,
-    });
+    const { apiCall, isPending } = useApiCall();
 
-    const handleSave = () => {
-        console.log("Save City");
-        console.log(formmethod)
-        console.log(formmethod.methods.getValues());
-        formmethod.methods.setValue('cityName', "abc")
+    const cityId = extraParams?.id;
+    const mode = extraParams?.mode;
+
+    const formmethod = useMemo(() => {
+        return formMethod.createForm({
+            schema: [...citySchema],
+            initialValue,
+        });
+    }, []);
+
+    const handleSave = async () => {
+        const data = formmethod.methods.getValues();
+
+        const payload = cityId
+            ? { ...data, _id: cityId }
+            : data;
+
+        const res = await apiCall({
+            id: 'addEditCountry',
+            api: api + apiEndpoints.master.city.CityAddEdit,
+            payload,
+        });
+
+        if (res.success) {
+            onModalClose();
+            await onSaved?.();
+        }
+    };
+
+
+    const getDataById = async () => {
+        const res = await apiCall({
+            id: 'addEditCity',
+            api: api + apiEndpoints.master.city.CityGetByID,
+            payload: { _id: cityId },
+        });
+
+        const data = res.data;
+
+        if (data.success) {
+            formmethod.methods.setValues(data.data);
+        }
     };
 
 
     useEffect(() => {
-        console.log("work")
-    }, [])
+        if (open && mode === "edit" && cityId) {
+            getDataById();
+        }
+    }, [open, mode, cityId]);
 
 
     return (

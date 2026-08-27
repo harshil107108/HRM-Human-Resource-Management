@@ -1,6 +1,6 @@
-import React from 'react'
 
-const useCountyMasterConfig = () => {
+const useCountyMasterConfig = ({ handleDelete }) => {
+
     const countryListingListingColDef = [
         {
             id: "countryId",
@@ -38,6 +38,17 @@ const useCountyMasterConfig = () => {
             headerName: "Nationality",
             width: 180,
         },
+
+        {
+            id: "action",
+            field: "action",
+            headerName: "Action",
+            width: 60,
+            type: "actions",
+            onClick: (data) => {
+                handleDelete(data._id);
+            }
+        }
     ];
 
     const countrySchema = [
@@ -96,99 +107,7 @@ const useCountyMasterConfig = () => {
         },
     ];
 
-    const countryRowData = [
-        {
-            countryId: 1,
-            countryName: "India",
-            countryCode: "IN",
-            isoCode: "IND",
-            phoneCode: "+91",
-            nationality: "Indian",
-            isActive: true,
-        },
-        {
-            countryId: 2,
-            countryName: "United States",
-            countryCode: "US",
-            isoCode: "USA",
-            phoneCode: "+1",
-            nationality: "American",
-            isActive: true,
-        },
-        {
-            countryId: 3,
-            countryName: "United Kingdom",
-            countryCode: "GB",
-            isoCode: "GBR",
-            phoneCode: "+44",
-            nationality: "British",
-            isActive: true,
-        },
-        {
-            countryId: 4,
-            countryName: "Canada",
-            countryCode: "CA",
-            isoCode: "CAN",
-            phoneCode: "+1",
-            nationality: "Canadian",
-            isActive: true,
-        },
-        {
-            countryId: 5,
-            countryName: "Australia",
-            countryCode: "AU",
-            isoCode: "AUS",
-            phoneCode: "+61",
-            nationality: "Australian",
-            isActive: true,
-        },
-        {
-            countryId: 6,
-            countryName: "Germany",
-            countryCode: "DE",
-            isoCode: "DEU",
-            phoneCode: "+49",
-            nationality: "German",
-            isActive: true,
-        },
-        {
-            countryId: 7,
-            countryName: "France",
-            countryCode: "FR",
-            isoCode: "FRA",
-            phoneCode: "+33",
-            nationality: "French",
-            isActive: true,
-        },
-        {
-            countryId: 8,
-            countryName: "Japan",
-            countryCode: "JP",
-            isoCode: "JPN",
-            phoneCode: "+81",
-            nationality: "Japanese",
-            isActive: true,
-        },
-        {
-            countryId: 9,
-            countryName: "Singapore",
-            countryCode: "SG",
-            isoCode: "SGP",
-            phoneCode: "+65",
-            nationality: "Singaporean",
-            isActive: true,
-        },
-        {
-            countryId: 10,
-            countryName: "United Arab Emirates",
-            countryCode: "AE",
-            isoCode: "ARE",
-            phoneCode: "+971",
-            nationality: "Emirati",
-            isActive: false,
-        },
-    ];
-    return { countryListingListingColDef, countrySchema, countryRowData };
+    return { countryListingListingColDef, countrySchema };
 }
 
 export default useCountyMasterConfig

@@ -203,6 +203,10 @@ function HpGrid(props) {
   // non-empty value are considered "active" - see displayRows below.
   const [columnFilters, setColumnFiltersState] = useState({});
 
+  useEffect(() => {
+    setRowDataState(ensureRowIds(initialRowData));
+  }, [initialRowData]);
+
   // Keep latest state in refs so imperative API methods (which are only
   // created once) always read fresh data instead of a stale closure.
   //

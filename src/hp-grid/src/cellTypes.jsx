@@ -192,6 +192,16 @@ registerCellType("custom", {
 registerCellType("actions", {
   formatView: (value, colDef, row, rowIndex) => (
     <div className="hp-grid-actions">
+      {typeof colDef.onClick === "function" && (
+        <button
+          type="button"
+          className="hp-grid-action-btn hp-grid-action-btn--delete"
+          title={colDef.actionLabel || "Delete"}
+          onClick={() => colDef.onClick(row, rowIndex)}
+        >
+          <TrashIcon />
+        </button>
+      )}
       {typeof colDef.onEdit === "function" && (
         <button
           type="button"

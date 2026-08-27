@@ -389,6 +389,8 @@
 .hp-grid-actions {
   display: flex;
   align-items: center;
+  justify-content: center;
+  width: 100%;
   gap: 6px;
 }
 
@@ -396,11 +398,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 5px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   border: none;
   cursor: pointer;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+
+.hp-grid-action-btn:hover {
+  transform: translateY(-1px);
 }
 
 .hp-grid-action-btn--edit {

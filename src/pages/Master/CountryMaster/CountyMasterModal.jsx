@@ -3,19 +3,31 @@ import { Building2 } from 'lucide-react'
 import React from 'react'
 import useCountyMasterConfig from './useCountyMasterConfig'
 import { formMethod, FormRenderer } from "@/form-engine";
+import useApiCall from '@/hooks/useApiCall';
 
-const CountyMasterModal = ({ mode, onModalClose, open, extraParams }) => {
-
+const CountyMasterModal = ({ mode, onModalClose, onSaved, open, extraParams }) => {
 
     const { countrySchema, initialValue } = useCountyMasterConfig();
+    const { apiCall, isPending } = useApiCall()
 
     const formmethod = formMethod.createForm({
         schema: [...countrySchema],
         initialValue,
     });
 
-    const handleSave = () => {
-        console.log("Save")
+    const handleSave = async () => {
+        const data = formmethod.methods.getValues();
+
+        const res = await apiCall({
+            id: 'addEditCountry',
+            api: 'http://localhost:8080/master/country/addEditCountry',
+            payload: data
+        });
+
+        if (res.success) {
+            onModalClose();
+            await onSaved?.();
+        }
     }
 
     return (
@@ -30,7 +42,7 @@ const CountyMasterModal = ({ mode, onModalClose, open, extraParams }) => {
                 // loading={loading}
                 onSave={handleSave}
                 onClose={onModalClose}
-                // onClear={() => formMethod.reset()}
+                onClear={() => formmethod.methods.reset()}
                 showClearButton
                 confirmBeforeClose
             >

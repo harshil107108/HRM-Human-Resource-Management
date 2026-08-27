@@ -24,11 +24,11 @@ export function PencilIcon(props) {
 
 export function TrashIcon(props) {
   return (
-    <svg viewBox="0 0 20 20" width="14" height="14" fill="none" {...props}>
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" {...props}>
       <path
-        d="M4 6h12M8 6V4.5A1.5 1.5 0 0 1 9.5 3h1A1.5 1.5 0 0 1 12 4.5V6m-6.5 0 0.6 9a1.5 1.5 0 0 0 1.5 1.4h3.8a1.5 1.5 0 0 0 1.5-1.4l0.6-9"
+        d="M4 7h16m-10 0V5.5A1.5 1.5 0 0 1 11.5 4h1A1.5 1.5 0 0 1 14 5.5V7m-8 0 .8 12.2A2 2 0 0 0 8.8 21h6.4a2 2 0 0 0 2-1.8L18 7M10 11v6m4-6v6"
         stroke="currentColor"
-        strokeWidth="1.4"
+        strokeWidth="1.8"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

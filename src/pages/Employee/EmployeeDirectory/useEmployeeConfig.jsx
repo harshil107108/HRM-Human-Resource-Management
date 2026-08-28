@@ -655,19 +655,12 @@ const useEmployeeConfig = () => {
 
     return {
         employeeListingColDef,
-
         personalInformationSchema,
-
         organizationInformationSchema,
-
         contactInformationSchema,
-
         documentInformationSchema,
-
         payrollInformationSchema,
-
         accessInformationSchema,
-
         reviewInformationSchema,
     };
 };

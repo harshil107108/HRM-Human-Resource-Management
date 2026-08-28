@@ -9,6 +9,7 @@ import {
 import PermissionCard from "./PermissionCard";
 import UploadCard from "./UploadCard";
 import useEmployeeConfig from "./useEmployeeConfig";
+import { Navigate, useNavigate } from "react-router-dom";
 
 
 const Employee = () => {
@@ -20,6 +21,8 @@ const Employee = () => {
         orgChartAdmin: false,
         directoryAccess: true,
     });
+
+    const navigate = useNavigate();
 
     const togglePermission = (key, value) => {
         setPermissions((prev) => ({
@@ -122,6 +125,10 @@ const Employee = () => {
         ],
         initialValue,
     });
+
+    const handleBack = () => {
+        navigate(-1);
+    }
 
 
 
@@ -421,7 +428,9 @@ const Employee = () => {
 
 
 
-                    <HpFooter />
+                    <HpFooter
+                        onBack={handleBack}
+                    />
 
                 </div>
             </div >

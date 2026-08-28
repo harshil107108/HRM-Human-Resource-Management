@@ -29,6 +29,13 @@ const apiEndpoints = {
             HolidayDeleteByID: "/master/holiday/deleteHolidayById",
             HolidayGetByID: "/master/holiday/getHolidayById",
             HolidayHelp: "/master/holiday/getHolidayHelp",
+        },
+        employee: {
+            EmployeeAddEdit: "/employee/addEditEmployee",
+            EmployeeGetData: "/employee/getEmployee",
+            EmployeeDeleteByID: "/employee/deleteEmployeeById",
+            EmployeeGetByID: "/employee/getEmployeeById",
+            EmployeeHelp: "/employee/getEmployeeHelp",
         }
 
     },

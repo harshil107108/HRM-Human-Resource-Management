@@ -7,6 +7,16 @@ import path from "path";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
 
+  server: {
+    proxy: {
+      "/api": {
+        target: "https://hrm-backend-topaz.vercel.app",
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -45,7 +55,7 @@ export default defineConfig({
       // Custom Libraries
       "@lib": path.resolve(__dirname, "./src/lib"),
 
-      
+
     },
   },
 });

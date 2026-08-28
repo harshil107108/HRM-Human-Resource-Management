@@ -22,6 +22,13 @@ const apiEndpoints = {
             StateDeleteByID: "/master/state/deleteStateById",
             StateGetByID: "/master/state/getStateById",
             StateHelp: "/master/state/getStateHelp",
+        },
+        holiday: {
+            HolidayAddEdit: "/master/holiday/addEditHoliday",
+            HolidayGetData: "/master/holiday/getHoliday",
+            HolidayDeleteByID: "/master/holiday/deleteHolidayById",
+            HolidayGetByID: "/master/holiday/getHolidayById",
+            HolidayHelp: "/master/holiday/getHolidayHelp",
         }
 
     },

@@ -23,17 +23,11 @@ import EmployeeListing from "@/pages/Employee/EmployeeDirectory/EmployeeListing"
 import Employee from "@/pages/Employee/EmployeeDirectory/Employee";
 
 const router = createBrowserRouter([
-  // ===========================
-  // Authentication
-  // ===========================
   {
     path: "/login",
     element: <Login />,
   },
 
-  // ===========================
-  // Main Layout
-  // ===========================
   {
     path: "/",
     element: <MainLayout />,
@@ -386,9 +380,7 @@ const router = createBrowserRouter([
     ],
   },
 
-  // ===========================
-  // 404
-  // ===========================
+
   {
     path: "*",
     element: <UnderConstruction moduleName="404 - Page Not Found" />,

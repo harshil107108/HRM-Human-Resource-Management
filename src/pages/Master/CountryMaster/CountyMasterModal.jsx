@@ -33,6 +33,7 @@ const CountyMasterModal = ({ onModalClose, onSaved, open, extraParams }) => {
             id: 'addEditCountry',
             api: api + apiEndpoints.master.country.CountryAddEdit,
             payload,
+            showSuccessAlert: true
         });
 
         if (res.success) {

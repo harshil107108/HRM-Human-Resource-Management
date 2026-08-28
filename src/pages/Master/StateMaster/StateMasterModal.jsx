@@ -1,20 +1,64 @@
 import { HpCommonModal } from "@/hp-common-modal";
 import { Building2 } from "lucide-react";
-import React from "react";
+import React, { useMemo, useEffect } from "react";
 import useStateMasterConfig from "./useStateMasterConfig";
 import { formMethod, FormRenderer } from "@/form-engine";
+import useApiCall from "@/hooks/useApiCall";
+import { api, apiEndpoints } from "@/api/api";
 
-const StateMasterModal = ({ mode, onModalClose, open, extraParams }) => {
+const StateMasterModal = ({ onModalClose, onSaved, open, extraParams }) => {
     const { stateSchema, initialValue } = useStateMasterConfig();
 
-    const formmethod = formMethod.createForm({
-        schema: [...stateSchema],
-        initialValue,
-    });
+    const { apiCall, isPending } = useApiCall();
 
-    const handleSave = () => {
-        console.log("Save State");
+    const StateId = extraParams?.id;
+    const mode = extraParams?.mode;
+
+    const formmethod = useMemo(() => {
+        return formMethod.createForm({
+            schema: [...stateSchema],
+            initialValue,
+        });
+    }, []);
+
+    const handleSave = async () => {
+        const data = formmethod.methods.getValues();
+
+        const payload = StateId
+            ? { ...data, _id: StateId }
+            : data;
+
+        const res = await apiCall({
+            id: 'addEditCountry',
+            api: api + apiEndpoints.master.state.StateAddEdit,
+            payload,
+        });
+
+        if (res.success) {
+            onModalClose();
+            await onSaved?.();
+        }
     };
+
+    const getDataById = async () => {
+        const res = await apiCall({
+            id: 'addEditCity',
+            api: api + apiEndpoints.master.state.StateGetByID,
+            payload: { _id: StateId },
+        });
+
+        const data = res.data;
+
+        if (data.success) {
+            formmethod.methods.setValues(data.data);
+        }
+    };
+
+    useEffect(() => {
+        if (open && mode === "edit" && StateId) {
+            getDataById();
+        }
+    }, [open, mode, StateId]);
 
     return (
         <HpCommonModal

@@ -1,13 +1,9 @@
+import { api, apiEndpoints } from "@/api/api";
 import React from "react";
 
 const useStateMasterConfig = () => {
     const stateListingColDef = [
-        {
-            id: "stateId",
-            field: "stateId",
-            headerName: "Id",
-            width: 80,
-        },
+
         {
             id: "countryName",
             field: "countryName",
@@ -49,12 +45,10 @@ const useStateMasterConfig = () => {
             required: true,
             nextFocusField: "stateCode",
             className: "col-span-6",
-            options: [
-                { label: "India", value: 1 },
-                { label: "United States", value: 2 },
-                { label: "United Kingdom", value: 3 },
-                { label: "Canada", value: 4 },
-            ],
+            api: api + apiEndpoints.master.country.CountryHelp,
+            labelKey: "countryName",
+            valueKey: "_id",
+
         },
         {
             id: "stateCode",
@@ -100,113 +94,11 @@ const useStateMasterConfig = () => {
         },
     ];
 
-    const stateRowData = [
-        {
-            stateId: 1,
-            countryId: 1,
-            countryName: "India",
-            stateCode: "GJ",
-            stateName: "Gujarat",
-            gstStateCode: "24",
-            capital: "Gandhinagar",
-            isActive: true,
-        },
-        {
-            stateId: 2,
-            countryId: 1,
-            countryName: "India",
-            stateCode: "MH",
-            stateName: "Maharashtra",
-            gstStateCode: "27",
-            capital: "Mumbai",
-            isActive: true,
-        },
-        {
-            stateId: 3,
-            countryId: 1,
-            countryName: "India",
-            stateCode: "RJ",
-            stateName: "Rajasthan",
-            gstStateCode: "08",
-            capital: "Jaipur",
-            isActive: true,
-        },
-        {
-            stateId: 4,
-            countryId: 1,
-            countryName: "India",
-            stateCode: "DL",
-            stateName: "Delhi",
-            gstStateCode: "07",
-            capital: "New Delhi",
-            isActive: true,
-        },
-        {
-            stateId: 5,
-            countryId: 1,
-            countryName: "India",
-            stateCode: "KA",
-            stateName: "Karnataka",
-            gstStateCode: "29",
-            capital: "Bengaluru",
-            isActive: true,
-        },
-        {
-            stateId: 6,
-            countryId: 2,
-            countryName: "United States",
-            stateCode: "CA",
-            stateName: "California",
-            gstStateCode: "-",
-            capital: "Sacramento",
-            isActive: true,
-        },
-        {
-            stateId: 7,
-            countryId: 2,
-            countryName: "United States",
-            stateCode: "TX",
-            stateName: "Texas",
-            gstStateCode: "-",
-            capital: "Austin",
-            isActive: true,
-        },
-        {
-            stateId: 8,
-            countryId: 3,
-            countryName: "United Kingdom",
-            stateCode: "ENG",
-            stateName: "England",
-            gstStateCode: "-",
-            capital: "London",
-            isActive: true,
-        },
-        {
-            stateId: 9,
-            countryId: 4,
-            countryName: "Canada",
-            stateCode: "ON",
-            stateName: "Ontario",
-            gstStateCode: "-",
-            capital: "Toronto",
-            isActive: true,
-        },
-        {
-            stateId: 10,
-            countryId: 1,
-            countryName: "India",
-            stateCode: "TN",
-            stateName: "Tamil Nadu",
-            gstStateCode: "33",
-            capital: "Chennai",
-            isActive: false,
-        },
-    ];
+
 
     return {
         stateListingColDef,
         stateSchema,
-        stateRowData,
     };
 };
 

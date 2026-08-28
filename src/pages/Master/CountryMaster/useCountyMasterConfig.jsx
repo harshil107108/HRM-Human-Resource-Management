@@ -87,6 +87,7 @@ const useCountyMasterConfig = ({ handleDelete } = {}) => {
             required: false,
             prevFocusField: "isoCode",
             nextFocusField: "nationality",
+            maxLength: 2,
             className: "col-span-6",
         },
         {

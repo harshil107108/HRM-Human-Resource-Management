@@ -173,6 +173,7 @@ export default function useApiCall() {
       params,
       config = {},
       silent = false,
+      showSuccessAlert = false,
     }) => {
       if (!api) {
         throw new Error(
@@ -217,12 +218,14 @@ export default function useApiCall() {
           data = response.data;
         }
 
-        if (mergedConfig.showSuccessAlert) {
+        if (showSuccessAlert || mergedConfig.showSuccessAlert) {
           Swal.fire({
             icon: "success",
             title: mergedConfig.successTitle,
-            timer: 1500,
+            text: "Data saved successfully!",
+            timer: 1000,
             showConfirmButton: false,
+            timerProgressBar: true,
             ...mergedConfig.swalSuccessOptions,
           });
         }

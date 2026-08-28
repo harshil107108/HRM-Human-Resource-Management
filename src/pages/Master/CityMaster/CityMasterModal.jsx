@@ -12,7 +12,7 @@ const CityMasterModal = ({ onModalClose, open, extraParams }) => {
     const { apiCall, isPending } = useApiCall();
 
     const cityId = extraParams?.id;
-    const mode = extraParams?.mode;
+    const mode = extraParams?.mode; 
 
     const formmethod = useMemo(() => {
         return formMethod.createForm({

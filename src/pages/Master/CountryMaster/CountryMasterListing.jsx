@@ -5,22 +5,39 @@ import useModal from '@/hooks/useModal';
 import CountyMasterModal from './CountyMasterModal';
 import useApiCall from '@/hooks/useApiCall';
 import { api, apiEndpoints } from '@/api/api';
+import useAlert from '@/hooks/useAlert';
 
 const CountryMasterListing = () => {
-
+ 
     const { apiCall, isPending } = useApiCall();
+    const { deleteAlert, successAlert } = useAlert();
 
-    const handleDelete = async (id) => {
-        const res = await apiCall({
-            id: 'deleteListing',
-            api: api + apiEndpoints.master.country.CountryDeleteByID,
-            payload: { _id: id }
+    const handleDelete = (id) => {
+        deleteAlert({
+            title: "Delete Country?",
+            text: "Are you sure you want to delete this country? This action cannot be undone.",
+
+            confirmButtonText: "Delete",
+            cancelButtonText: "Cancel",
+
+            onClick: async () => {
+                const res = await apiCall({
+                    id: "deleteListing",
+                    api: api + apiEndpoints.master.country.CountryDeleteByID,
+                    payload: { _id: id },
+                });
+
+                if (res.success) {
+                    successAlert({
+                        title: "Country deleted",
+                        text: "Country has been deleted successfully.",
+                    });
+
+                    getCountryListing();
+                }
+            },
         });
-
-        if (res.success) {
-            getCountryListing();
-        }
-    }
+    };
 
     const { countryListingListingColDef } = useCountyMasterConfig({ handleDelete });
     const { isModalOpen, extraParams, onModalOpen, onModalClose } = useModal();
@@ -52,7 +69,7 @@ const CountryMasterListing = () => {
 
     const handleDoubleClick = (data) => {
         const id = data.data._id;
-        onModalOpen({ 
+        onModalOpen({
             mode: "edit",
             id: id
         });

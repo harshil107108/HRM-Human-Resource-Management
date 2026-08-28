@@ -6,13 +6,13 @@ import { formMethod, FormRenderer } from "@/form-engine";
 import useApiCall from "@/hooks/useApiCall";
 import { api, apiEndpoints } from "@/api/api";
 
-const CityMasterModal = ({ onModalClose, open, extraParams }) => {
+const CityMasterModal = ({ onModalClose, open, extraParams, onSaved }) => {
     const { citySchema, initialValue } = useCityMasterConfig();
 
-    const { apiCall, isPending } = useApiCall();
+    const { apiCall } = useApiCall();
 
     const cityId = extraParams?.id;
-    const mode = extraParams?.mode; 
+    const mode = extraParams?.mode;
 
     const formmethod = useMemo(() => {
         return formMethod.createForm({
@@ -32,6 +32,7 @@ const CityMasterModal = ({ onModalClose, open, extraParams }) => {
             id: 'addEditCountry',
             api: api + apiEndpoints.master.city.CityAddEdit,
             payload,
+            showSuccessAlert: true
         });
 
         if (res.success) {
@@ -51,7 +52,10 @@ const CityMasterModal = ({ onModalClose, open, extraParams }) => {
         const data = res.data;
 
         if (data.success) {
-            formmethod.methods.setValues(data.data);
+            formmethod.methods.setValues({
+                ...data.data,
+                countryId: data.data.countryId._id
+            });
         }
     };
 
@@ -71,6 +75,7 @@ const CityMasterModal = ({ onModalClose, open, extraParams }) => {
             icon={<Building2 size={20} />}
             onSave={handleSave}
             onClose={onModalClose}
+            onClear={() => formmethod.methods.reset()}
             showClearButton
             confirmBeforeClose
         >

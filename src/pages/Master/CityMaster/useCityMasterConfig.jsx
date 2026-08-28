@@ -1,42 +1,38 @@
 import React from "react";
+import { api, apiEndpoints } from "@/api/api";
 
-const useCityMasterConfig = () => {
+const useCityMasterConfig = ({ handleDelete } = {}) => {
     const cityListingColDef = [
-        {
-            id: "cityId",
-            field: "cityId",
-            headerName: "Id",
-            width: 80,
-        },
+
         {
             id: "countryName",
             field: "countryName",
             headerName: "Country",
-            width: 180,
+            width: 120,
         },
         {
             id: "stateName",
             field: "stateName",
             headerName: "State",
-            width: 180,
+            width: 120,
         },
         {
             id: "cityCode",
             field: "cityCode",
             headerName: "City Code",
-            width: 130,
+            width: 100,
         },
         {
             id: "cityName",
             field: "cityName",
             headerName: "City Name",
-            width: 220,
+            width: 120,
         },
         {
             id: "postalPrefix",
             field: "postalPrefix",
             headerName: "Postal Prefix",
-            width: 140,
+            width: 100,
         },
         {
             id: "latitude",
@@ -49,7 +45,16 @@ const useCityMasterConfig = () => {
             field: "longitude",
             headerName: "Longitude",
             width: 140,
-        },
+        }, {
+            id: "action",
+            field: "action",
+            headerName: "Action",
+            width: 60,
+            type: "actions",
+            onClick: (data) => {
+                handleDelete(data._id);
+            }
+        }
     ];
 
     const citySchema = [
@@ -61,11 +66,10 @@ const useCityMasterConfig = () => {
             required: true,
             nextFocusField: "stateId",
             className: "col-span-6",
-            options: [
-                { label: "India", value: 1 },
-                { label: "United States", value: 2 },
-                { label: "Canada", value: 3 },
-            ],
+            api: api + apiEndpoints.master.country.CountryHelp,
+            labelKey: "countryName",
+            valueKey: "_id",
+
         },
         {
             id: "stateId",
@@ -76,11 +80,10 @@ const useCityMasterConfig = () => {
             prevFocusField: "countryId",
             nextFocusField: "cityCode",
             className: "col-span-6",
-            options: [
-                { label: "Gujarat", value: 1 },
-                { label: "Maharashtra", value: 2 },
-                { label: "Rajasthan", value: 3 },
-            ],
+            api: api + apiEndpoints.master.state.StateHelp,
+            labelKey: "stateName",
+            valueKey: "_id",
+
         },
         {
             id: "cityCode",

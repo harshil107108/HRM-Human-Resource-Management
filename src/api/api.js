@@ -1,4 +1,4 @@
-const api = import.meta.env.VITE_API_URL;
+const api = "http://localhost:8080";
 
 const apiEndpoints = {
     master: {

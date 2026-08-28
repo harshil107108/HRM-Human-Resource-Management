@@ -35,7 +35,7 @@ const StateMasterListing = () => {
 
     const { stateListingColDef } = useStateMasterConfig({ handleDelete });
     const { isModalOpen, extraParams, onModalOpen, onModalClose } = useModal();
-    const { apiCall, isPending } = useApiCall();
+    const { apiCall } = useApiCall();
     const { deleteAlert, successAlert } = useAlert();
     const [stateListingData, setStateListingData] = useState([])
 

@@ -8,7 +8,7 @@ import { api, apiEndpoints } from '@/api/api';
 import useAlert from '@/hooks/useAlert';
 
 const CountryMasterListing = () => {
- 
+
     const { apiCall, isPending } = useApiCall();
     const { deleteAlert, successAlert } = useAlert();
 

@@ -1,26 +1,26 @@
 import { api, apiEndpoints } from "@/api/api";
 import React from "react";
 
-const useStateMasterConfig = () => {
+const useStateMasterConfig = ({ handleDelete } = {}) => {
     const stateListingColDef = [
-
         {
-            id: "countryName",
-            field: "countryName",
-            headerName: "Country",
-            width: 180,
+            id: "stateName",
+            field: "stateName",
+            headerName: "State Name",
+            width: 120,
         },
         {
             id: "stateCode",
             field: "stateCode",
             headerName: "State Code",
-            width: 130,
+            width: 90,
         },
+
         {
-            id: "stateName",
-            field: "stateName",
-            headerName: "State Name",
-            width: 220,
+            id: "countryName",
+            field: "countryName",
+            headerName: "Country",
+            width: 100,
         },
         {
             id: "gstStateCode",
@@ -32,8 +32,18 @@ const useStateMasterConfig = () => {
             id: "capital",
             field: "capital",
             headerName: "Capital",
-            width: 180,
+            width: 120,
         },
+        {
+            id: "action",
+            field: "action",
+            headerName: "Action",
+            width: 60,
+            type: "actions",
+            onClick: (data) => {
+                handleDelete(data._id);
+            }
+        }
     ];
 
     const stateSchema = [

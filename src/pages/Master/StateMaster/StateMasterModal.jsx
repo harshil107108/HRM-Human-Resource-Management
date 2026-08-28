@@ -32,6 +32,8 @@ const StateMasterModal = ({ onModalClose, onSaved, open, extraParams }) => {
             id: 'addEditCountry',
             api: api + apiEndpoints.master.state.StateAddEdit,
             payload,
+            showSuccessAlert: true
+
         });
 
         if (res.success) {
@@ -42,15 +44,17 @@ const StateMasterModal = ({ onModalClose, onSaved, open, extraParams }) => {
 
     const getDataById = async () => {
         const res = await apiCall({
-            id: 'addEditCity',
+            id: "getStateById",
             api: api + apiEndpoints.master.state.StateGetByID,
             payload: { _id: StateId },
         });
 
-        const data = res.data;
-
-        if (data.success) {
-            formmethod.methods.setValues(data.data);
+        if (res.success) {
+            const data = res.data;
+            formmethod.methods.setValues({
+                ...data.data,
+                countryId: data.data.countryId?._id || "",
+            });
         }
     };
 
@@ -67,6 +71,7 @@ const StateMasterModal = ({ onModalClose, onSaved, open, extraParams }) => {
             size="md"
             icon={<Building2 size={20} />}
             onSave={handleSave}
+            onClear={() => formmethod.methods.reset()}
             onClose={onModalClose}
             showClearButton
             confirmBeforeClose

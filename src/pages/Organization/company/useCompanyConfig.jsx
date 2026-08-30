@@ -1,6 +1,7 @@
 import React from "react";
+import { api, apiEndpoints } from "@/api/api";
 
-const useCompanyConfig = () => {
+const useCompanyConfig = ({ handleDelete } = {}) => {
   const businessInfoSchema1 = [
     {
       id: "gstNumber",
@@ -31,13 +32,40 @@ const useCompanyConfig = () => {
     }
   ];
 
-  const businessInfoSchema2 = [
+  const AdditionalBusinessInformation = [
     {
       id: "industryname",
       type: "selectWrapper",
       label: "Industry",
       placeHolder: "Select Industry",
       nextFocusField: "establishDate",
+      options: [
+        { label: "Information Technology", value: "IT" },
+        { label: "Software & Technology", value: "SOFTWARE" },
+        { label: "Banking & Finance", value: "BANKING_FINANCE" },
+        { label: "Insurance", value: "INSURANCE" },
+        { label: "Healthcare", value: "HEALTHCARE" },
+        { label: "Pharmaceuticals", value: "PHARMACEUTICALS" },
+        { label: "Manufacturing", value: "MANUFACTURING" },
+        { label: "Construction", value: "CONSTRUCTION" },
+        { label: "Real Estate", value: "REAL_ESTATE" },
+        { label: "Retail", value: "RETAIL" },
+        { label: "Wholesale & Distribution", value: "WHOLESALE_DISTRIBUTION" },
+        { label: "Education", value: "EDUCATION" },
+        { label: "Telecommunications", value: "TELECOMMUNICATIONS" },
+        { label: "Transportation & Logistics", value: "TRANSPORTATION_LOGISTICS" },
+        { label: "Hospitality & Tourism", value: "HOSPITALITY_TOURISM" },
+        { label: "Food & Beverage", value: "FOOD_BEVERAGE" },
+        { label: "Automotive", value: "AUTOMOTIVE" },
+        { label: "Energy & Utilities", value: "ENERGY_UTILITIES" },
+        { label: "Agriculture", value: "AGRICULTURE" },
+        { label: "Media & Entertainment", value: "MEDIA_ENTERTAINMENT" },
+        { label: "Consulting", value: "CONSULTING" },
+        { label: "Legal Services", value: "LEGAL_SERVICES" },
+        { label: "Professional Services", value: "PROFESSIONAL_SERVICES" },
+        { label: "E-Commerce", value: "E_COMMERCE" },
+        { label: "Other", value: "OTHER" },
+      ]
     },
     {
       id: "establishDate",
@@ -135,33 +163,35 @@ const useCompanyConfig = () => {
       id: "country",
       type: "selectWrapper",
       label: "Country",
-      multiSelect: true,
       placeHolder: "Select Country",
-      options: [
-        { label: "United States", value: "US" },
-        { label: "India", value: "IN" },
-        { label: "United Kingdom", value: "UK" },
-        { label: "Canada", value: "CA" },
-      ],
+      api: api + apiEndpoints.master.country.CountryHelp,
+      labelKey: "countryName",
+      valueKey: "_id",
       required: true,
       prevFocusField: "addressLine2",
       nextFocusField: "state",
     },
     {
       id: "state",
-      type: "text",
+      type: "selectWrapper",
       label: "State / Province",
       placeHolder: "Enter state",
       required: true,
+      api: api + apiEndpoints.master.state.StateHelp,
+      labelKey: "stateName",
+      valueKey: "_id",
       prevFocusField: "country",
       nextFocusField: "city",
     },
     {
       id: "city",
-      type: "text",
+      type: "selectWrapper",
       label: "City",
       placeHolder: "City name",
       required: true,
+      api: api + apiEndpoints.master.city.CityHelp,
+      labelKey: "cityName",
+      valueKey: "_id",
       prevFocusField: "state",
       nextFocusField: "postalCode",
     },
@@ -177,12 +207,7 @@ const useCompanyConfig = () => {
   ];
 
   const companyListingColDef = [
-    {
-      id: "companyid",
-      field: "companyid",
-      headerName: "Id",
-      width: 60,
-    },
+
     {
       id: "companyName",
       field: "companyName",
@@ -193,7 +218,7 @@ const useCompanyConfig = () => {
       id: "legalName",
       field: "legalName",
       headerName: "Legal Name",
-      width: 220,
+      width: 160,
     },
     {
       id: "companyCode",
@@ -223,7 +248,7 @@ const useCompanyConfig = () => {
       id: "registrationNumber",
       field: "registrationNumber",
       headerName: "Registration Number",
-      width: 220,
+      width: 180,
     },
     {
       id: "panNumber",
@@ -238,12 +263,6 @@ const useCompanyConfig = () => {
       width: 190,
     },
     {
-      id: "companySize",
-      field: "companySize",
-      headerName: "Company Size",
-      width: 120,
-    },
-    {
       id: "addressLine1",
       field: "addressLine1",
       headerName: "AddressLine1",
@@ -256,20 +275,20 @@ const useCompanyConfig = () => {
       width: 220,
     },
     {
-      id: "country",
-      field: "country",
+      id: "countryName",
+      field: "countryName",
       headerName: "Country",
       width: 120,
     },
     {
-      id: "state",
-      field: "state",
+      id: "stateName",
+      field: "stateName",
       headerName: "State",
       width: 120,
     },
     {
-      id: "city",
-      field: "city",
+      id: "cityName",
+      field: "cityName",
       headerName: "City",
       width: 120,
     },
@@ -278,12 +297,21 @@ const useCompanyConfig = () => {
       field: "postalCode",
       headerName: "PostalCode",
       width: 120,
-    },
+    }, {
+      id: "action",
+      field: "action",
+      headerName: "Action",
+      width: 60,
+      type: "actions",
+      onClick: (data) => {
+        handleDelete(data._id);
+      }
+    }
   ]
 
   return {
     businessInfoSchema1,
-    businessInfoSchema2,
+    AdditionalBusinessInformation,
     basicInfoSchema,
     addressSchema,
     companyListingColDef

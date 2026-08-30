@@ -26,7 +26,7 @@ const CityMasterListing = () => {
                 const res = await apiCall({
                     id: 'deleteListing',
                     api: api + apiEndpoints.master.city.CityDeleteByID,
-                    payload: { _id: id }
+                    payload: { _id: id } 
                 });
 
 

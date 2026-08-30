@@ -346,19 +346,19 @@ export default function SelectWrapper({ field, form }) {
               data.value
             );
           }}
-          className={`flex cursor - pointer items - center gap - 2 rounded px - 3 py - 3 text - sm ${isSelected
-            ? "bg-blue-50"
+          className={`flex cursor-pointer items-center gap-2 border-b border-slate-100 px-3 py-1.5 text-sm transition-colors duration-100 last:border-b-0 ${isSelected
+            ? "bg-sky-50"
             : "hover:bg-slate-50"
-            } `}
+            }`}
         >
           <input
             type="checkbox"
             checked={isSelected}
             readOnly
-            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
+            className="h-4 w-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-2 focus:ring-sky-200 focus:ring-offset-0"
           />
 
-          <span className="text-slate-700">
+          <span className="truncate text-slate-700">
             {data.label}
           </span>
         </div>
@@ -378,7 +378,7 @@ export default function SelectWrapper({ field, form }) {
     ({ children }) => (
       <div>
         {isMultiSelect && (
-          <div className="flex items-center gap-2 border-b border-slate-200 px-2 py-2">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 px-3 py-2.5">
             <input
               type="checkbox"
               checked={
@@ -389,33 +389,37 @@ export default function SelectWrapper({ field, form }) {
               onChange={
                 handleSelectAll
               }
-              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
+              className="h-4 w-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-2 focus:ring-sky-200 focus:ring-offset-0"
             />
 
-            <span className="text-sm font-medium text-slate-700">
-              Select All
+            <span className="text-sm font-medium text-slate-600">
+              Select all
             </span>
+
+            {draftValues.length > 0 && (
+              <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+                {draftValues.length} selected
+              </span>
+            )}
           </div>
         )}
 
-        <div className="max-h-56 overflow-y-auto py-1">
+        <div className="max-h-60 overflow-y-auto py-1.5">
           {children}
         </div>
 
         {isMultiSelect && (
-          <div className="border-t border-slate-200 px-2 py-2">
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onMouseDown={(event) =>
-                  event.preventDefault()
-                }
-                onClick={handleApply}
-                className="rounded bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700"
-              >
-                Apply
-              </button>
-            </div>
+          <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-3 py-2.5">
+            <button
+              type="button"
+              onMouseDown={(event) =>
+                event.preventDefault()
+              }
+              onClick={handleApply}
+              className="rounded-md bg-sky-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-sky-700 active:bg-sky-800"
+            >
+              Apply
+            </button>
           </div>
         )}
       </div>
@@ -616,10 +620,11 @@ const customStyles = (error) => ({
 
   menu: (base) => ({
     ...base,
+    marginTop: 6,
     borderRadius: 10,
     overflow: "hidden",
     boxShadow:
-      "0 12px 28px rgba(15, 23, 42, 0.12)",
+      "0 16px 32px -8px rgba(15, 23, 42, 0.16), 0 4px 8px -2px rgba(15, 23, 42, 0.06)",
     border:
       "1px solid #e2e8f0",
     backgroundColor: "#fff",
@@ -627,8 +632,8 @@ const customStyles = (error) => ({
 
   menuList: (base) => ({
     ...base,
-    padding: 4,
-    maxHeight: 220,
+    padding: 6,
+    maxHeight: 240,
     scrollbarWidth: "thin",
     scrollbarColor:
       "#cbd5e1 transparent",
@@ -637,9 +642,10 @@ const customStyles = (error) => ({
 
   option: (base, state) => ({
     ...base,
-    padding: "6px 8px",
-    borderRadius: 5,
-    marginBottom: 2,
+    padding: "10px 12px",
+    borderRadius: 0,
+    borderBottom: "1px solid #f1f5f9",
+    marginBottom: 0,
     cursor: "pointer",
     backgroundColor:
       state.isSelected
@@ -648,13 +654,21 @@ const customStyles = (error) => ({
           ? "#f8fafc"
           : "#fff",
     color: "#0f172a",
-    fontSize: 11,
-    fontWeight: 700,
-    transition: "all .15s ease",
+    fontSize: 13.5,
+    fontWeight: state.isSelected ? 600 : 500,
+    transition: "background-color .1s ease",
   }),
 
   noOptionsMessage: (base) => ({
     ...base,
     color: "#94a3b8",
+    fontSize: 13.5,
+    padding: "12px 8px",
+  }),
+
+  loadingMessage: (base) => ({
+    ...base,
+    color: "#94a3b8",
+    fontSize: 13.5,
   }),
 });

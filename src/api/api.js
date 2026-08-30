@@ -48,7 +48,16 @@ const apiEndpoints = {
             EmployeeGetByID: "/employee/getEmployeeById",
             EmployeeHelp: "/employee/getEmployeeHelp",
         }
+    },
 
+    organization: {
+        company: {
+            CompanyAddEdit: "/organization/company/addEditCompany",
+            CompanyGetData: "/organization/company/getCompany",
+            CompanyDeleteByID: "/organization/company/deleteCompanyById",
+            CompanyGetByID: "/organization/company/getCompanyById",
+            CompanyHelp: "/organization/company/getCompanyHelp",
+        }
     },
 
     user: {

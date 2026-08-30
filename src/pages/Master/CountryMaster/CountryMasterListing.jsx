@@ -6,6 +6,7 @@ import CountyMasterModal from './CountyMasterModal';
 import useApiCall from '@/hooks/useApiCall';
 import { api, apiEndpoints } from '@/api/api';
 import useAlert from '@/hooks/useAlert';
+import useDocumentTitle from '@/hooks/useDocumentTitle';
 
 const CountryMasterListing = () => {
 
@@ -74,6 +75,8 @@ const CountryMasterListing = () => {
             id: id
         });
     }
+
+    useDocumentTitle("orvexa | Country Master")
     return (
         <>
             {isModalOpen && (

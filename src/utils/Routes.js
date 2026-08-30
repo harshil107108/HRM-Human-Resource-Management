@@ -46,6 +46,10 @@ export const NAVIGATION_SCHEMA = [
         path: "/master/holidays",
       },
       {
+        label: "Bank Master",
+        path: "/master/bank",
+      },
+      {
         label: "Department Master",
         path: "/master/departments",
       },

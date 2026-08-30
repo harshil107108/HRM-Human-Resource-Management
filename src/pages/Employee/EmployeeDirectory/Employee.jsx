@@ -1,19 +1,16 @@
 import { useState } from "react";
-
 import { formMethod, FormRenderer } from "@/form-engine";
 import HpFooter from "@/hooks/HpFooter";
 import HpHeader from "@/hooks/HpHeader";
-import {
-    User
-} from "lucide-react";
+import { User } from "lucide-react";
 import PermissionCard from "./PermissionCard";
 import UploadCard from "./UploadCard";
 import useEmployeeConfig from "./useEmployeeConfig";
 import { Navigate, useNavigate } from "react-router-dom";
-
+import useApiCall from "@/hooks/useApiCall";
+import { api, apiEndpoints } from "@/api/api";
 
 const Employee = () => {
-
 
     const [permissions, setPermissions] = useState({
         financialView: false,
@@ -23,6 +20,7 @@ const Employee = () => {
     });
 
     const navigate = useNavigate();
+    const { apiCall } = useApiCall();
 
     const togglePermission = (key, value) => {
         setPermissions((prev) => ({
@@ -56,8 +54,7 @@ const Employee = () => {
     } = useEmployeeConfig();
 
     const initialValue = {
-        // Personal
-        employeeId: "EMP-0001",
+        employeeId: "12323",
         profilePhoto: null,
         firstName: "",
         middleName: "",
@@ -66,8 +63,6 @@ const Employee = () => {
         dateOfBirth: "",
         maritalStatus: "",
         bloodGroup: "",
-
-        // Organization
         company: "",
         branch: "",
         department: "",
@@ -75,8 +70,6 @@ const Employee = () => {
         reportingManager: "",
         employmentType: "",
         joiningDate: "",
-
-        // Contact
         mobileNumber: "",
         alternateNumber: "",
         personalEmail: "",
@@ -87,29 +80,21 @@ const Employee = () => {
         state: "",
         city: "",
         postalCode: "",
-
-        // Documents
         aadhaarNumber: "",
         panNumber: "",
         passportNumber: "",
         uanNumber: "",
         esicNumber: "",
-
-        // Payroll
         bankName: "",
         accountNumber: "",
         ifscCode: "",
         salaryStructure: "",
         paymentMode: "",
-
-        // Access
         username: "",
         password: "",
         confirmPassword: "",
         role: "",
         allowLogin: true,
-
-        // Review
         remarks: "",
     };
 
@@ -126,11 +111,22 @@ const Employee = () => {
         initialValue,
     });
 
+    const handleSave = async () => {
+        const payload = formmethod.methods.getValues();
+        const res = await apiCall({
+            id: "employeeAddEdit",
+            api: api + apiEndpoints.employee.employee.EmployeeAddEdit,
+            payload
+        });
+    }
+
+    const handleClear = () => {
+        formmethod.methods.reset();
+    }
+
     const handleBack = () => {
         navigate(-1);
     }
-
-
 
     return (
         <>
@@ -144,7 +140,6 @@ const Employee = () => {
 
                     <div className="mb-4 overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
 
-                        {/* Card Header */}
                         <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
                             <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
                             <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
@@ -430,6 +425,8 @@ const Employee = () => {
 
                     <HpFooter
                         onBack={handleBack}
+                        onClear={handleClear}
+                        onSave={handleSave}
                     />
 
                 </div>

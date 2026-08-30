@@ -21,6 +21,7 @@ import CityMasterListing from "@/pages/Master/CityMaster/CityMasterListing";
 import HolidayMasterListing from "@/pages/Master/HolidayMaster/HolidayMasterListing";
 import EmployeeListing from "@/pages/Employee/EmployeeDirectory/EmployeeListing";
 import Employee from "@/pages/Employee/EmployeeDirectory/Employee";
+import BankMasterListing from "@/pages/Master/BankMaster/BankMasterListing";
 
 const router = createBrowserRouter([
   {
@@ -65,6 +66,10 @@ const router = createBrowserRouter([
       {
         path: "master/holidays",
         element: <HolidayMasterListing />,
+      },
+      {
+        path: "master/bank",
+        element: <BankMasterListing />,
       },
       {
         path: "master/departments",

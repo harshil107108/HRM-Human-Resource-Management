@@ -30,6 +30,17 @@ const apiEndpoints = {
             HolidayGetByID: "/master/holiday/getHolidayById",
             HolidayHelp: "/master/holiday/getHolidayHelp",
         },
+        bank: {
+            BankAddEdit: "/master/bank/addEditBank",
+            BankGetData: "/master/bank/getBank",
+            BankDeleteByID: "/master/bank/deleteBankById",
+            BankGetByID: "/master/bank/getBankById",
+            BankHelp: "/master/bank/getBankHelp",
+        },
+
+    },
+
+    employee: {
         employee: {
             EmployeeAddEdit: "/employee/addEditEmployee",
             EmployeeGetData: "/employee/getEmployee",

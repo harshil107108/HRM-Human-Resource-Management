@@ -6,6 +6,7 @@ import StateMasterModal from "./StateMasterModal";
 import useApiCall from '@/hooks/useApiCall';
 import { api, apiEndpoints } from '@/api/api';
 import useAlert from '@/hooks/useAlert';
+import useDocumentTitle from "@/hooks/useDocumentTitle";
 
 const StateMasterListing = () => {
     const handleDelete = (id) => {
@@ -76,6 +77,8 @@ const StateMasterListing = () => {
             id: id
         });
     }
+
+    useDocumentTitle("orvexa | State Master")
 
     return (
         <>

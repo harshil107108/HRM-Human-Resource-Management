@@ -1,6 +1,6 @@
 import React from "react";
 
-const useEmployeeConfig = () => {
+const useEmployeeConfig = ({ handleDelete } = {}) => {
     const employeeListingColDef = [
         {
             id: "employeeName",
@@ -74,6 +74,16 @@ const useEmployeeConfig = () => {
             headerName: "Status",
             width: 120,
         },
+        {
+            id: "action",
+            field: "action",
+            headerName: "Action",
+            width: 60,
+            type: "actions",
+            onClick: (data) => {
+                handleDelete(data._id);
+            }
+        }
     ];
 
     const personalInformationSchema = [

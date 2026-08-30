@@ -1,163 +1,46 @@
 import { HpGrid } from "@/hp-grid/src";
 import { useLocation, useNavigate } from "react-router-dom";
 import useEmployeeConfig from "./useEmployeeConfig";
+import useAlert from "@/hooks/useAlert";
+import { useState, useEffect } from "react";
+import { api, apiEndpoints } from "@/api/api";
+import useApiCall from "@/hooks/useApiCall";
 
 const EmployeeListing = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const { employeeListingColDef } = useEmployeeConfig();
+    const { deleteAlert, successAlert } = useAlert()
+    const { apiCall } = useApiCall();
 
-    const employeeRowData = [
-        {
-            employeeId: "EMP-0001",
-            employeeCode: "EMP-0001",
-            firstName: "Harshil",
-            lastName: "Prajapati",
-            fullName: "Harshil Prajapati",
-            gender: "Male",
-            companyName: "Orvexa Technologies",
-            branchName: "Ahmedabad Head Office",
-            departmentName: "Development",
-            designationName: "React Developer",
-            reportingManager: "Amit Shah",
-            mobileNumber: "+91 9876543210",
-            workEmail: "harshil@orvexa.com",
-            joiningDate: "15 Jan 2026",
-            employmentType: "Full Time",
-            status: "Active",
-        },
-        {
-            employeeId: "EMP-0002",
-            employeeCode: "EMP-0002",
-            firstName: "Priya",
-            lastName: "Patel",
-            fullName: "Priya Patel",
-            gender: "Female",
-            companyName: "Orvexa Technologies",
-            branchName: "Ahmedabad Head Office",
-            departmentName: "Human Resource",
-            designationName: "HR Executive",
-            reportingManager: "Neha Patel",
-            mobileNumber: "+91 9898989898",
-            workEmail: "priya.patel@orvexa.com",
-            joiningDate: "10 Nov 2025",
-            employmentType: "Full Time",
-            status: "Active",
-        },
-        {
-            employeeId: "EMP-0003",
-            employeeCode: "EMP-0003",
-            firstName: "Rahul",
-            lastName: "Shah",
-            fullName: "Rahul Shah",
-            gender: "Male",
-            companyName: "Orvexa Technologies",
-            branchName: "Surat Branch",
-            departmentName: "Finance",
-            designationName: "Accountant",
-            reportingManager: "Ketan Mehta",
-            mobileNumber: "+91 9811111111",
-            workEmail: "rahul.shah@orvexa.com",
-            joiningDate: "01 Aug 2024",
-            employmentType: "Permanent",
-            status: "Active",
-        },
-        {
-            employeeId: "EMP-0004",
-            employeeCode: "EMP-0004",
-            firstName: "Sneha",
-            lastName: "Joshi",
-            fullName: "Sneha Joshi",
-            gender: "Female",
-            companyName: "Orvexa Technologies",
-            branchName: "Vadodara Branch",
-            departmentName: "Sales",
-            designationName: "Sales Executive",
-            reportingManager: "Rohit Desai",
-            mobileNumber: "+91 9822222222",
-            workEmail: "sneha.joshi@orvexa.com",
-            joiningDate: "20 Mar 2025",
-            employmentType: "Full Time",
-            status: "Probation",
-        },
-        {
-            employeeId: "EMP-0005",
-            employeeCode: "EMP-0005",
-            firstName: "Vivek",
-            lastName: "Trivedi",
-            fullName: "Vivek Trivedi",
-            gender: "Male",
-            companyName: "Orvexa Technologies",
-            branchName: "Rajkot Branch",
-            departmentName: "IT Support",
-            designationName: "System Administrator",
-            reportingManager: "Amit Shah",
-            mobileNumber: "+91 9833333333",
-            workEmail: "vivek.trivedi@orvexa.com",
-            joiningDate: "05 Jul 2023",
-            employmentType: "Permanent",
-            status: "Active",
-        },
-        {
-            employeeId: "EMP-0006",
-            employeeCode: "EMP-0006",
-            firstName: "Riya",
-            lastName: "Mehta",
-            fullName: "Riya Mehta",
-            gender: "Female",
-            companyName: "Orvexa Technologies",
-            branchName: "Ahmedabad Head Office",
-            departmentName: "Marketing",
-            designationName: "Digital Marketing Executive",
-            reportingManager: "Anjali Shah",
-            mobileNumber: "+91 9844444444",
-            workEmail: "riya.mehta@orvexa.com",
-            joiningDate: "18 Feb 2026",
-            employmentType: "Contract",
-            status: "Active",
-        },
-        {
-            employeeId: "EMP-0007",
-            employeeCode: "EMP-0007",
-            firstName: "Karan",
-            lastName: "Patel",
-            fullName: "Karan Patel",
-            gender: "Male",
-            companyName: "Orvexa Technologies",
-            branchName: "Surat Branch",
-            departmentName: "Development",
-            designationName: "Backend Developer",
-            reportingManager: "Amit Shah",
-            mobileNumber: "+91 9855555555",
-            workEmail: "karan.patel@orvexa.com",
-            joiningDate: "09 Sep 2025",
-            employmentType: "Full Time",
-            status: "Notice Period",
-        },
-        {
-            employeeId: "EMP-0008",
-            employeeCode: "EMP-0008",
-            firstName: "Nidhi",
-            lastName: "Dave",
-            fullName: "Nidhi Dave",
-            gender: "Female",
-            companyName: "Orvexa Technologies",
-            branchName: "Ahmedabad Head Office",
-            departmentName: "Quality Assurance",
-            designationName: "QA Engineer",
-            reportingManager: "Rakesh Patel",
-            mobileNumber: "+91 9866666666",
-            workEmail: "nidhi.dave@orvexa.com",
-            joiningDate: "12 Dec 2024",
-            employmentType: "Full Time",
-            status: "Active",
-        },
-    ];
+    const handleDelete = async (id) => {
+        deleteAlert({
+            title: "Delete Employee?",
+            text: "Are you sure you want to delete this Employee? This action cannot be undone.",
+            confirmButtonText: "Delete",
+            cancelButtonText: "Cancel",
+            onClick: async () => {
+                const res = await apiCall({
+                    id: 'deleteListing',
+                    api: api + apiEndpoints.employee.employee.EmployeeDeleteByID,
+                    payload: { _id: id }
+                });
 
-    const handleAdd = () => {
-        navigate(`${location.pathname}/addedit`);
-    };
+                if (res.success) {
+                    successAlert({
+                        title: "Employee deleted",
+                        text: "Employee has been deleted successfully.",
+                    });
+                    getCityListing();
+                }
+            },
+        });
+    }
+
+    const { employeeListingColDef } = useEmployeeConfig({ handleDelete });
+    const [EmployeeListingData, setEmployeeListingData] = useState([])
+
+    const handleAdd = () => { navigate(`${location.pathname}/addedit`); };
 
     const handleDoubleClick = (params) => {
         const { data } = params;
@@ -169,11 +52,28 @@ const EmployeeListing = () => {
         });
     };
 
+    const getEmployeeListing = async () => {
+        const res = await apiCall({
+            id: "getCityListing",
+            api: api + apiEndpoints.employee.employee.EmployeeGetData,
+            payload: {}
+        });
+
+        if (res?.success) {
+            const data = res.data.data;
+            setEmployeeListingData(data);
+        }
+    };
+
+    useEffect(() => {
+        getEmployeeListing();
+    }, [])
+
     return (
         <HpGrid
             id="employeeListing"
             title="Employee"
-            rowData={employeeRowData}
+            rowData={EmployeeListingData}
             colDef={employeeListingColDef}
             style={{ height: "100%" }}
             onAddClick={handleAdd}

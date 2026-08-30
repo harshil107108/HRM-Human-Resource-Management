@@ -7,6 +7,7 @@ import useApiCall from "@/hooks/useApiCall";
 import { api, apiEndpoints } from "@/api/api";
 import useAlert from "@/hooks/useAlert";
 import { formatDateForInput } from "@/utils/dateUtils";
+import useDocumentTitle from "@/hooks/useDocumentTitle";
 
 const HolidayMasterListing = () => {
     const { apiCall } = useApiCall();
@@ -91,6 +92,8 @@ const HolidayMasterListing = () => {
             id: id,
         });
     };
+
+    useDocumentTitle("orvexa | Holiday Master")
 
     return (
         <>

@@ -1,23 +1,23 @@
 import { HpGrid } from "@/hp-grid/src";
 import React from "react";
-import useCityMasterConfig from "./useCityMasterConfig";
+import useBankMasterConfig from "./useBankMasterConfig";
 import useModal from "@/hooks/useModal";
-import CityMasterModal from "./CityMasterModal";
+import BankMasterModal from "./BankMasterModal";
 import { api, apiEndpoints } from "@/api/api";
 import { useState, useEffect } from "react";
 import useApiCall from "@/hooks/useApiCall";
 import useAlert from "@/hooks/useAlert";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
 
-const CityMasterListing = () => {
+const BankMasterListing = () => {
 
     const { deleteAlert, successAlert } = useAlert()
 
     const handleDelete = async (id) => {
 
         deleteAlert({
-            title: "Delete City?",
-            text: "Are you sure you want to delete this city? This action cannot be undone.",
+            title: "Delete Bank?",
+            text: "Are you sure you want to delete this bank? This action cannot be undone.",
 
             confirmButtonText: "Delete",
             cancelButtonText: "Cancel",
@@ -25,27 +25,27 @@ const CityMasterListing = () => {
             onClick: async () => {
                 const res = await apiCall({
                     id: 'deleteListing',
-                    api: api + apiEndpoints.master.city.CityDeleteByID,
+                    api: api + apiEndpoints.master.bank.BankDeleteByID,
                     payload: { _id: id }
                 });
 
 
                 if (res.success) {
                     successAlert({
-                        title: "City deleted",
-                        text: "City has been deleted successfully.",
+                        title: "Bank deleted",
+                        text: "Bank has been deleted successfully.",
                     });
 
-                    getCityListing();
+                    getBankListing();
                 }
             },
         });
     }
 
-    const { cityListingColDef } = useCityMasterConfig({ handleDelete });
+    const { bankListingColDef } = useBankMasterConfig({ handleDelete });
 
     const { isModalOpen, extraParams, onModalOpen, onModalClose } = useModal();
-    const [CityListingData, setCityListingData] = useState([])
+    const [BankListingData, setBankListingData] = useState([])
 
     const { apiCall } = useApiCall();
 
@@ -63,52 +63,47 @@ const CityMasterListing = () => {
         });
     }
 
-    const getCityListing = async () => {
+    const getBankListing = async () => {
         const res = await apiCall({
-            id: "getCityListing",
-            api: api + apiEndpoints.master.city.CityGetData,
+            id: "getBankListing",
+            api: api + apiEndpoints.master.bank.BankGetData,
             payload: {}
         });
 
         if (res?.success) {
-            const data = res.data.data.map((city) => ({
-                ...city,
-                countryName: city.countryId?.countryName || "",
-                stateName: city.stateId?.stateName || "",
-            }));
-
-            setCityListingData(data);
+            const data = res.data.data;
+            setBankListingData(data);
         }
     };
 
     useEffect(() => {
-        getCityListing();
+        getBankListing();
     }, [])
 
-    useDocumentTitle("orvexa | City Master")
+    useDocumentTitle("orvexa | Bank Master")
 
     return (
         <>
             {isModalOpen && (
-                <CityMasterModal
+                <BankMasterModal
                     open={isModalOpen}
                     onModalClose={onModalClose}
                     extraParams={extraParams}
-                    onSaved={getCityListing}
+                    onSaved={getBankListing}
                 />
             )}
 
             <HpGrid
-                id="cityListing"
-                rowData={CityListingData}
-                colDef={cityListingColDef}
+                id="bankListing"
+                rowData={BankListingData}
+                colDef={bankListingColDef}
                 style={{ height: "100%" }}
                 onDoubleClick={handleDoubleClick}
                 onAddClick={handleAdd}
-                title="City"
+                title="Bank"
             />
         </>
     );
 };
 
-export default CityMasterListing;
+export default BankMasterListing;

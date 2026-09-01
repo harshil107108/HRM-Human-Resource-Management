@@ -65,6 +65,95 @@ const form = formMethod.createForm({ schema: userSchema, initialValue });
 <FormRenderer formMethod={form} formSchema={userSchema} />;
 ```
 
+## Save workflow: `handleFormSave`
+
+The form engine includes a centralized save workflow so every screen can reuse the same validation + error + submission behavior.
+
+```jsx
+const form = formMethod.createForm({
+  schema: countrySchema,
+  initialValue,
+});
+
+const handleSave = async (data) => {
+  const payload = { ...data };
+
+  const res = await apiCall({
+    id: "addEditCountry",
+    api: api + apiEndpoints.master.country.CountryAddEdit,
+    payload,
+    showSuccessAlert: false,
+  });
+
+  if (!res.success) {
+    throw new Error(res.message || "Failed to save country");
+  }
+
+  return res;
+};
+
+const result = await form.methods.handleFormSave(handleSave, {
+  successMessage: "Country saved successfully",
+  onSuccess: async () => {
+    onModalClose();
+    await onSaved?.();
+  },
+});
+
+if (!result.success) {
+  return;
+}
+```
+
+### What this does automatically
+
+- validates all fields in schema order
+- sets field errors on the store
+- focuses the first invalid field
+- shows a reusable toast notification
+- prevents duplicate submissions while saving
+- returns a predictable result object
+
+```js
+{
+  success: false,
+  type: "validation",
+  errors: { countryName: "Country Name is required" },
+  message: "Country Name is required"
+}
+```
+
+## Country master example
+
+```jsx
+const form = formMethod.createForm({
+  schema: countrySchema,
+  initialValue,
+});
+
+const handleSave = async () => {
+  await form.methods.handleFormSave(async (data) => {
+    const response = await apiCall({
+      id: "addEditCountry",
+      api: api + apiEndpoints.master.country.CountryAddEdit,
+      payload: {
+        ...data,
+        _id: countryId,
+      },
+      showSuccessAlert: false,
+    });
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to save country");
+    }
+
+    return response;
+  }, {
+    successMessage: "Country saved successfully",
+  });
+};
+```
+
 ## The `form` object shape
 
 `formMethod.createForm(...)` returns a `FormStore` instance shaped like:

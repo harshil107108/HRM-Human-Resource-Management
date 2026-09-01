@@ -3,7 +3,6 @@ import Select from "react-select";
 import { useFormStore } from "../../hooks/useFormStore";
 import {
   labelClass,
-  errorClass,
   wrapperClass,
 } from "../../styles/formtheme";
 
@@ -41,6 +40,7 @@ export default function SelectWrapper({ field, form }) {
   const [options, setOptions] = useState(staticOptions);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [draftValues, setDraftValues] = useState([]);
@@ -489,7 +489,14 @@ export default function SelectWrapper({ field, form }) {
     error || apiError;
 
   return (
-    <div className={wrapperClass}>
+    <div className={`${wrapperClass} relative`}>
+      {displayError && isFocused && (
+        <div className="pointer-events-none absolute -top-9 left-0 z-20 max-w-[220px] rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold leading-4 text-red-700 shadow-lg">
+          <span className="absolute -bottom-1.5 left-3 h-2.5 w-2.5 rotate-45 border-b border-r border-red-200 bg-red-50" />
+          {displayError}
+        </div>
+      )}
+
       {label && (
         <label className={labelClass}>
           {label}
@@ -520,10 +527,16 @@ export default function SelectWrapper({ field, form }) {
         onChange={handleChange}
         onFocus={
           isMultiSelect
-            ? handleFocus
-            : undefined
+            ? () => {
+              setIsFocused(true);
+              handleFocus();
+            }
+            : () => setIsFocused(true)
         }
-        onBlur={handleBlur}
+        onBlur={(event) => {
+          setIsFocused(false);
+          handleBlur(event);
+        }}
         onKeyDown={handleKeyDown}
         isDisabled={
           disabled || loading
@@ -572,11 +585,6 @@ export default function SelectWrapper({ field, form }) {
         )}
       />
 
-      {displayError && (
-        <p className={errorClass}>
-          {displayError}
-        </p>
-      )}
     </div>
   );
 }

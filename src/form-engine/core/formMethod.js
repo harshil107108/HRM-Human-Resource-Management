@@ -1,5 +1,5 @@
 
-import { FormStore } from "./FormStore";
+import { FormStore } from "./FormStore.js";
 
 const formMethod = {
   /**

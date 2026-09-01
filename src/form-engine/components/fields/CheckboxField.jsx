@@ -1,8 +1,7 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { useFormStore } from "../../hooks/useFormStore";
 import {
     checkboxClass,
-    errorClass,
     labelClass,
     wrapperClass,
 } from "../../styles/formtheme";
@@ -28,6 +27,7 @@ export default function CheckboxField({ field, form }) {
 
     const value = useFormStore(form, (snapshot) => snapshot.values[id]);
     const error = useFormStore(form, (snapshot) => snapshot.errors[id]);
+    const [isFocused, setIsFocused] = useState(false);
 
     const resolvedSize = field.size ?? field.checkboxSize ?? "md";
     const sizeClass =
@@ -77,7 +77,13 @@ export default function CheckboxField({ field, form }) {
     );
 
     return (
-        <div className={`${wrapperClass} gap-2`}>
+        <div className={`${wrapperClass} relative gap-2`}>
+            {error && isFocused && (
+                <div className="pointer-events-none absolute -top-8 left-0 z-20 max-w-[220px] rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold leading-4 text-red-700 shadow-lg">
+                    <span className="absolute -bottom-1.5 left-3 h-2.5 w-2.5 rotate-45 border-b border-r border-red-200 bg-red-50" />
+                    {error}
+                </div>
+            )}
             <label
                 htmlFor={id}
                 className="flex cursor-pointer items-center gap-3 rounded-md p-1"
@@ -90,7 +96,11 @@ export default function CheckboxField({ field, form }) {
                         checked={Boolean(isChecked)}
                         disabled={disabled}
                         onChange={handleChange}
-                        onBlur={handleBlur}
+                        onBlur={(event) => {
+                            setIsFocused(false);
+                            handleBlur(event);
+                        }}
+                        onFocus={() => setIsFocused(true)}
                         onKeyDown={handleKeyDown}
                         aria-invalid={Boolean(error)}
                         className="peer sr-only"

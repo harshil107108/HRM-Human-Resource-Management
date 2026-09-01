@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormStore } from "../../hooks/useFormStore";
 import {
-  errorClass,
   inputClass,
   labelClass,
   wrapperClass,
@@ -183,6 +182,7 @@ export default function DateField({ field, form, ...standaloneProps }) {
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
   const [error, setError] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => {
     const t = new Date();
@@ -420,7 +420,14 @@ export default function DateField({ field, form, ...standaloneProps }) {
     "h-7 bg-transparent text-center text-xs font-semibold text-slate-800 outline-none tabular-nums placeholder:text-slate-400 disabled:cursor-not-allowed disabled:text-slate-500";
 
   return (
-    <div className={wrapperClass} ref={wrapperRef}>
+    <div className={`${wrapperClass} relative`} ref={wrapperRef}>
+      {displayError && isFocused && (
+        <div className="pointer-events-none absolute -top-9 left-0 z-20 max-w-[220px] rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold leading-4 text-red-700 shadow-lg">
+          <span className="absolute -bottom-1.5 left-3 h-2.5 w-2.5 rotate-45 border-b border-r border-red-200 bg-red-50" />
+          {displayError}
+        </div>
+      )}
+
       {label && (
         <label htmlFor={`${id}-day`} className={labelClass}>
           {label}
@@ -448,7 +455,14 @@ export default function DateField({ field, form, ...standaloneProps }) {
               id={`${id}-day`} ref={(node) => { dayRef.current = node; form?.methods.registerRef(id, node); }} type="text" inputMode="numeric" maxLength={2}
               placeholder="DD" value={day} disabled={disabled}
               onChange={handleDayChange} onKeyDown={makeKeyDownHandler("day")}
-              onBlur={handleBlur} onFocus={(e) => e.target.select()}
+              onBlur={(event) => {
+                setIsFocused(false);
+                handleBlur(event);
+              }}
+              onFocus={(e) => {
+                setIsFocused(true);
+                e.target.select();
+              }}
               aria-label="Day" aria-invalid={Boolean(displayError)} className={`${segmentBase} w-6`}
             />
             <span className="select-none text-slate-300">/</span>
@@ -456,7 +470,14 @@ export default function DateField({ field, form, ...standaloneProps }) {
               ref={monthRef} type="text" inputMode="numeric" maxLength={2}
               placeholder="MM" value={month} disabled={disabled}
               onChange={handleMonthChange} onKeyDown={makeKeyDownHandler("month")}
-              onBlur={handleBlur} onFocus={(e) => e.target.select()}
+              onBlur={(event) => {
+                setIsFocused(false);
+                handleBlur(event);
+              }}
+              onFocus={(e) => {
+                setIsFocused(true);
+                e.target.select();
+              }}
               aria-label="Month" aria-invalid={Boolean(displayError)} className={`${segmentBase} w-6`}
             />
             <span className="select-none text-slate-300">/</span>
@@ -464,7 +485,14 @@ export default function DateField({ field, form, ...standaloneProps }) {
               ref={yearRef} type="text" inputMode="numeric" maxLength={4}
               placeholder="YYYY" value={year} disabled={disabled}
               onChange={handleYearChange} onKeyDown={makeKeyDownHandler("year")}
-              onBlur={handleBlur} onFocus={(e) => e.target.select()}
+              onBlur={(event) => {
+                setIsFocused(false);
+                handleBlur(event);
+              }}
+              onFocus={(e) => {
+                setIsFocused(true);
+                e.target.select();
+              }}
               aria-label="Year" aria-invalid={Boolean(displayError)} className={`${segmentBase} w-10`}
             />
           </div>
@@ -551,7 +579,6 @@ export default function DateField({ field, form, ...standaloneProps }) {
         )}
       </div>
 
-      {displayError && <p className={errorClass}>{displayError}</p>}
       {!displayError && (min || max) && (
         <p className="mt-1 text-[11px] font-semibold text-slate-500">
           {min && max ? `Allowed: ${formatDisplay(min)} – ${formatDisplay(max)}`

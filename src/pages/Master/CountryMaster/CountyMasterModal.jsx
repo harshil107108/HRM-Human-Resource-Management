@@ -23,23 +23,35 @@ const CountyMasterModal = ({ onModalClose, onSaved, open, extraParams }) => {
     }, []);
 
     const handleSave = async () => {
-        const data = formmethod.methods.getValues();
+        const result = await formmethod.methods.handleFormSave(
+            async (data) => {
+                const payload = countryId
+                    ? { ...data, _id: countryId }
+                    : data;
 
-        const payload = countryId
-            ? { ...data, _id: countryId }
-            : data;
+                const res = await apiCall({
+                    id: 'addEditCountry',
+                    api: api + apiEndpoints.master.country.CountryAddEdit,
+                    payload,
+                    showSuccessAlert: true,
+                });
 
-        const res = await apiCall({
-            id: 'addEditCountry',
-            api: api + apiEndpoints.master.country.CountryAddEdit,
-            payload,
-            showSuccessAlert: true
-        });
+                if (!res?.success) {
+                    throw new Error(res?.message || 'Failed to save country');
+                }
 
-        if (res.success) {
-            onModalClose();
-            await onSaved?.();
-        }
+                return res;
+            },
+            {
+                successMessage: 'Country saved successfully',
+                onSuccess: async () => {
+                    onModalClose();
+                    await onSaved?.();
+                },
+            },
+        );
+
+        return result;
     };
 
     const getDataById = async () => {
@@ -70,6 +82,7 @@ const CountyMasterModal = ({ onModalClose, onSaved, open, extraParams }) => {
             onSave={handleSave}
             onClose={onModalClose}
             onClear={() => formmethod.methods.reset()}
+            loading={formmethod.methods.isSubmitting()}
             showClearButton
             confirmBeforeClose
         >

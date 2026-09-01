@@ -8,6 +8,10 @@ export class FormStore {
     this.values = { ...initialValue };
     this.errors = {};
     this.touched = {};
+    this.isSubmittingFlag = false;
+    this.notifications = {
+      queue: [],
+    };
 
     this._private = {
       schemaMap: new Map(schema.map((field) => [field.id, field])),
@@ -18,6 +22,49 @@ export class FormStore {
     };
 
     this._private._snapshot = this._buildSnapshot();
+
+    const normalizeErrorState = (nextErrors = {}) => {
+      const safeErrors = {};
+      Object.keys(nextErrors).forEach((key) => {
+        if (nextErrors[key] !== undefined && nextErrors[key] !== null && nextErrors[key] !== "") {
+          safeErrors[key] = String(nextErrors[key]);
+        }
+      });
+      return safeErrors;
+    };
+
+    const isEmptyValue = (value, field = {}) => {
+      if (value === undefined || value === null) return true;
+      if (typeof value === "string") return value.trim() === "";
+      if (field.type === "checkbox" && value === false) return true;
+      return false;
+    };
+
+    const resolveFieldMessage = (field, fallbackMessage) => {
+      if (field.requiredMessage) return field.requiredMessage;
+      if (field.message) return field.message;
+      return fallbackMessage;
+    };
+
+    const runFieldValidation = (field, value, allValues, errors) => {
+      if (field.required) {
+        const requiredValue = value;
+        if (isEmptyValue(requiredValue, field)) {
+          errors[field.id] = resolveFieldMessage(
+            field,
+            `${field.label || field.id} is required`,
+          );
+          return;
+        }
+      }
+
+      if (typeof field.validate === "function") {
+        const customMessage = field.validate(value, allValues, this);
+        if (customMessage) {
+          errors[field.id] = customMessage;
+        }
+      }
+    };
 
     this.methods = {
       subscribe: (listener) => {
@@ -156,7 +203,7 @@ export class FormStore {
         this.emit();
       },
       setErrors: (errorsObject) => {
-        this.errors = { ...errorsObject };
+        this.errors = normalizeErrorState(errorsObject);
         this.emit();
       },
       clearError: (id) => {
@@ -173,26 +220,138 @@ export class FormStore {
         const errors = {};
 
         this.schema.forEach((field) => {
+          if (!field || !field.id) return;
           const value = this.values[field.id];
-          const isEmpty = value === undefined || value === null || value === "";
+          const fieldErrors = {};
+          runFieldValidation.call(this, field, value, this.values, fieldErrors);
 
-          if (field.required && isEmpty) {
-            errors[field.id] =
-              field.requiredMessage || `${field.label || field.id} is required`;
-            return;
-          }
-
-          if (typeof field.validate === "function") {
-            const message = field.validate(value, this.values);
-            if (message) errors[field.id] = message;
+          if (Object.keys(fieldErrors).length > 0) {
+            Object.assign(errors, fieldErrors);
           }
         });
 
-        this.errors = errors;
+        this.errors = normalizeErrorState(errors);
         this.emit();
-        return Object.keys(errors).length === 0;
+        return Object.keys(this.errors).length === 0;
+      },
+      getFirstInvalidField: () => {
+        const schema = this.methods.getSchema?.() || [];
+        for (const field of schema) {
+          if (!field || !field.id) continue;
+          if (this.errors[field.id]) return field.id;
+        }
+        return null;
       },
       isValid: () => Object.keys(this.errors).length === 0,
+      isSubmitting: () => this.isSubmittingFlag,
+      setSubmitting: (value) => {
+        this.isSubmittingFlag = Boolean(value);
+        this.emit();
+      },
+      showNotification: (type, message, options = {}) => {
+        const entry = {
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          type,
+          message,
+          ...options,
+        };
+        this.notifications.queue = [...this.notifications.queue, entry];
+        this.emit();
+        return entry;
+      },
+      showSuccess: (message, options = {}) => this.methods.showNotification("success", message, options),
+      showError: (message, options = {}) => this.methods.showNotification("error", message, options),
+      showWarning: (message, options = {}) => this.methods.showNotification("warning", message, options),
+      showInfo: (message, options = {}) => this.methods.showNotification("info", message, options),
+      clearNotifications: () => {
+        this.notifications.queue = [];
+        this.emit();
+      },
+      handleFormSave: async (saveHandler, options = {}) => {
+        if (typeof saveHandler !== "function") {
+          throw new Error("[FormStore] handleFormSave requires a save callback function.");
+        }
+
+        const {
+          successMessage = "Saved successfully",
+          onSuccess,
+          onError,
+        } = options || {};
+
+        if (this.isSubmittingFlag) {
+          return {
+            success: false,
+            type: "submission",
+            errors: {},
+            message: "A save is already in progress.",
+          };
+        }
+
+        const validationPassed = this.methods.validate();
+        if (!validationPassed) {
+          const firstInvalidField = this.methods.getFirstInvalidField();
+          const firstError = firstInvalidField
+            ? this.errors[firstInvalidField]
+            : "Please fix the highlighted fields.";
+
+          if (firstInvalidField) {
+            this.methods.focusField(firstInvalidField);
+          }
+
+          this.methods.showError(firstError);
+          return {
+            success: false,
+            type: "validation",
+            errors: { ...this.errors },
+            message: firstError,
+          };
+        }
+
+        this.isSubmittingFlag = true;
+        this.emit();
+
+        try {
+          const payload = this.methods.getValues();
+          const response = await saveHandler(payload, this);
+
+          if (successMessage) {
+            this.methods.showSuccess(successMessage);
+          }
+
+          if (typeof onSuccess === "function") {
+            await onSuccess(response, this);
+          }
+
+          this.isSubmittingFlag = false;
+          this.emit();
+
+          return {
+            success: true,
+            type: "success",
+            data: response,
+            message: successMessage,
+          };
+        } catch (error) {
+          this.isSubmittingFlag = false;
+          this.emit();
+
+          const apiErrorMessage =
+            error?.message || "Something went wrong while saving.";
+
+          this.methods.showError(apiErrorMessage);
+
+          if (typeof onError === "function") {
+            await onError(error, this);
+          }
+
+          return {
+            success: false,
+            type: "api",
+            error,
+            message: apiErrorMessage,
+          };
+        }
+      },
       registerRef: (id, node) => {
         if (node) {
           this._private.refs[id] = node;
@@ -216,6 +375,14 @@ export class FormStore {
         const field = this.methods.getFieldConfig(id);
         if (field?.prevFocusField)
           this.methods.focusField(field.prevFocusField);
+      },
+      getFirstInvalidField: () => {
+        const schema = this.methods.getSchema?.() || [];
+        for (const field of schema) {
+          if (!field || !field.id) continue;
+          if (this.errors[field.id]) return field.id;
+        }
+        return null;
       },
       focusOnField: (id) => {
         this.methods.focusField(id);
@@ -245,6 +412,8 @@ export class FormStore {
       values: this.values,
       errors: this.errors,
       touched: this.touched,
+      isSubmitting: this.isSubmittingFlag,
+      notifications: this.notifications,
     };
   }
 

@@ -1,13 +1,9 @@
 import React from 'react'
+import { api, apiEndpoints } from "@/api/api";
+
 
 const useDepatmentConfig = () => {
     const DepartmentListingColDef = [
-        {
-            id: "departmentId",
-            field: "departmentId",
-            headerName: "Id",
-            width: 80,
-        },
         {
             id: "departmentName",
             field: "departmentName",
@@ -115,6 +111,9 @@ const useDepatmentConfig = () => {
             required: true,
             prevFocusField: "departmentcode",
             nextFocusField: "branch",
+            api: api + apiEndpoints.organization.company.CompanyHelp,
+            labelKey: "companyName",
+            valueKey: "_id",
             className: "col-span-3",
         },
         {

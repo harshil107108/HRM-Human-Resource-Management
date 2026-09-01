@@ -1,3 +1,4 @@
+import { api, apiEndpoints } from "@/api/api";
 
 const useBranchConfig = () => {
     const contactInfoSchema = [
@@ -77,6 +78,9 @@ const useBranchConfig = () => {
             required: true,
             prevFocusField: "branchname",
             nextFocusField: "branchtype",
+            api: api + apiEndpoints.organization.company.CompanyHelp,
+            labelKey: "companyName",
+            valueKey: "_id",
             className: "col-span-3",
         },
         {
@@ -87,6 +91,20 @@ const useBranchConfig = () => {
             prevFocusField: "parentcompany",
             nextFocusField: null,
             className: "col-span-3",
+            options: [
+                { label: "Head Office", value: "HEAD_OFFICE" },
+                { label: "Regional Office", value: "REGIONAL_OFFICE" },
+                { label: "Branch Office", value: "BRANCH_OFFICE" },
+                { label: "Corporate Office", value: "CORPORATE_OFFICE" },
+                { label: "Zonal Office", value: "ZONAL_OFFICE" },
+                { label: "Area Office", value: "AREA_OFFICE" },
+                { label: "Sales Office", value: "SALES_OFFICE" },
+                { label: "Service Office", value: "SERVICE_OFFICE" },
+                { label: "Warehouse", value: "WAREHOUSE" },
+                { label: "Factory / Plant", value: "FACTORY_PLANT" },
+                { label: "Regional Headquarters", value: "REGIONAL_HEADQUARTERS" },
+                { label: "Other", value: "OTHER" },
+            ],
         },
     ];
     const addressSchema = [
@@ -113,31 +131,34 @@ const useBranchConfig = () => {
             type: "selectWrapper",
             label: "Country",
             placeHolder: "Select Country",
-            options: [
-                { label: "United States", value: "US" },
-                { label: "India", value: "IN" },
-                { label: "United Kingdom", value: "UK" },
-                { label: "Canada", value: "CA" },
-            ],
+            api: api + apiEndpoints.master.country.CountryHelp,
+            labelKey: "countryName",
+            valueKey: "_id",
             required: true,
             prevFocusField: "addressLine2",
             nextFocusField: "state",
         },
         {
             id: "state",
-            type: "text",
+            type: "selectWrapper",
             label: "State / Province",
             placeHolder: "Enter state",
             required: true,
+            api: api + apiEndpoints.master.state.StateHelp,
+            labelKey: "stateName",
+            valueKey: "_id",
             prevFocusField: "country",
             nextFocusField: "city",
         },
         {
             id: "city",
-            type: "text",
+            type: "selectWrapper",
             label: "City",
             placeHolder: "City name",
             required: true,
+            api: api + apiEndpoints.master.city.CityHelp,
+            labelKey: "cityName",
+            valueKey: "_id",
             prevFocusField: "state",
             nextFocusField: "postalCode",
         },

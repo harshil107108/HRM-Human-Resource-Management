@@ -63,7 +63,7 @@ const useCompanyConfig = ({ handleDelete } = {}) => {
         { label: "Consulting", value: "CONSULTING" },
         { label: "Legal Services", value: "LEGAL_SERVICES" },
         { label: "Professional Services", value: "PROFESSIONAL_SERVICES" },
-        { label: "E-Commerce", value: "E_COMMERCE" },
+        { label: "E-Commerce", value: "E_COMMERCE" }, 
         { label: "Other", value: "OTHER" },
       ]
     },

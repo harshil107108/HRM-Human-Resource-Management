@@ -159,7 +159,6 @@ const useDepatmentConfig = () => {
             id: "reportingdepartment",
             type: "selectWrapper",
             label: "Reporting Department",
-            required: true,
             prevFocusField: "departmenthead",
             nextFocusField: "businessunit",
         },

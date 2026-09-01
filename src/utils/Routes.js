@@ -49,14 +49,7 @@ export const NAVIGATION_SCHEMA = [
         label: "Bank Master",
         path: "/master/bank",
       },
-      {
-        label: "Department Master",
-        path: "/master/departments",
-      },
-      {
-        label: "Designation Master",
-        path: "/master/designations",
-      },
+
 
     ],
   },

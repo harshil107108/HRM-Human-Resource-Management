@@ -64,6 +64,13 @@ const apiEndpoints = {
             BranchDeleteByID: "/organization/branch/deleteBranchById",
             BranchGetByID: "/organization/branch/getBranchById",
             BranchHelp: "/organization/branch/getBranchHelp",
+        },
+        department: {
+            DepartmentAddEdit: "/organization/department/addEditDepartment",
+            DepartmentGetData: "/organization/department/getDepartment",
+            DepartmentDeleteByID: "/organization/department/deleteDepartmentById",
+            DepartmentGetByID: "/organization/department/getDepartmentById",
+            DepartmentHelp: "/organization/department/getDepartmentHelp",
         }
     },
 

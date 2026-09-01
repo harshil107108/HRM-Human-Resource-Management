@@ -71,14 +71,7 @@ const router = createBrowserRouter([
         path: "master/bank",
         element: <BankMasterListing />,
       },
-      {
-        path: "master/departments",
-        element: <UnderConstruction moduleName="Department Master" />,
-      },
-      {
-        path: "master/designations",
-        element: <UnderConstruction moduleName="Designation Master" />,
-      },
+
       // ============================================
       // Organization
       // ============================================

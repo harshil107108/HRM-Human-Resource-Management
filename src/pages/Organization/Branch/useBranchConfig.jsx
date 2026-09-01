@@ -1,6 +1,6 @@
 import { api, apiEndpoints } from "@/api/api";
 
-const useBranchConfig = () => {
+const useBranchConfig = ({ handleDelete } = {}) => {
     const contactInfoSchema = [
         {
             id: "officialemail",
@@ -175,70 +175,40 @@ const useBranchConfig = () => {
 
     const branchListingColDef = [
         {
-            id: "branchid",
-            field: "branchid",
-            headerName: "Id",
-            width: 60,
-        },
-        {
             id: "branchname",
             field: "branchname",
             headerName: "Branch Name",
             width: 220,
         },
         {
-            id: "legalName",
-            field: "legalName",
-            headerName: "Legal Name",
-            width: 220,
+            id: "companyName",
+            field: "companyName",
+            headerName: "Parent Company Name",
+            width: 160,
         },
         {
             id: "companyCode",
             field: "companyCode",
-            headerName: "Company Code",
-            width: 120,
-        },
-        {
-            id: "businessEmail",
-            field: "businessEmail",
-            headerName: "Business Email",
-            width: 220,
-        },
-        {
-            id: "phone",
-            field: "phone",
-            headerName: "Phone",
+            headerName: "Parent Company Code",
             width: 160,
         },
         {
-            id: "establishDate",
-            field: "establishDate",
-            headerName: "Establish Date",
-            width: 140,
+            id: "officialemail",
+            field: "officialemail",
+            headerName: "Official Email",
+            width: 180,
         },
         {
-            id: "registrationNumber",
-            field: "registrationNumber",
-            headerName: "Registration Number",
-            width: 220,
+            id: "phonen0",
+            field: "phonen0",
+            headerName: "PhoneNo.",
+            width: 160,
         },
         {
-            id: "panNumber",
-            field: "panNumber",
-            headerName: "Pan Number",
-            width: 150,
-        },
-        {
-            id: "gstNumber",
-            field: "gstNumber",
-            headerName: "GST Number",
-            width: 190,
-        },
-        {
-            id: "companySize",
-            field: "companySize",
-            headerName: "Company Size",
-            width: 120,
+            id: "altphoneno",
+            field: "altphoneno",
+            headerName: "Alt PhoneNo.",
+            width: 160,
         },
         {
             id: "addressLine1",
@@ -253,20 +223,20 @@ const useBranchConfig = () => {
             width: 220,
         },
         {
-            id: "country",
-            field: "country",
+            id: "countryName",
+            field: "countryName",
             headerName: "Country",
             width: 120,
         },
         {
-            id: "state",
-            field: "state",
+            id: "stateName",
+            field: "stateName",
             headerName: "State",
             width: 120,
         },
         {
-            id: "city",
-            field: "city",
+            id: "cityName",
+            field: "cityName",
             headerName: "City",
             width: 120,
         },
@@ -275,7 +245,16 @@ const useBranchConfig = () => {
             field: "postalCode",
             headerName: "PostalCode",
             width: 120,
-        },
+        }, {
+            id: "action",
+            field: "action",
+            headerName: "Action",
+            width: 60,
+            type: "actions",
+            onClick: (data) => {
+                handleDelete(data._id);
+            }
+        }
     ]
 
     return {

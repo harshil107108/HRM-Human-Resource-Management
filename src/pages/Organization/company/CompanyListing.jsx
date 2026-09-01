@@ -102,7 +102,7 @@ const CompanyListing = () => {
         getCompanyListing();
     }, [])
 
-    useDocumentTitle("orvexa | Company")
+    useDocumentTitle("orvexa | Company") 
 
     return (
         <>

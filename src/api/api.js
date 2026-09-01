@@ -57,6 +57,13 @@ const apiEndpoints = {
             CompanyDeleteByID: "/organization/company/deleteCompanyById",
             CompanyGetByID: "/organization/company/getCompanyById",
             CompanyHelp: "/organization/company/getCompanyHelp",
+        },
+        branch: {
+            BranchAddEdit: "/organization/branch/addEditBranch",
+            BranchGetData: "/organization/branch/getBranch",
+            BranchDeleteByID: "/organization/branch/deleteBranchById",
+            BranchGetByID: "/organization/branch/getBranchById",
+            BranchHelp: "/organization/branch/getBranchHelp",
         }
     },
 

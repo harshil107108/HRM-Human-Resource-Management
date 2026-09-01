@@ -19,7 +19,7 @@ const Company = () => {
 
   const [companyImage, setCompanyImage] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
-  console.log(imagePreview)
+
   const initialValue = {
     companyName: '',
     legalName: '',
@@ -85,8 +85,6 @@ const Company = () => {
           title: "Company Added",
           text: "Company Added successfully.",
         });
-
-        getCompanyListing();
       }
     }
   };

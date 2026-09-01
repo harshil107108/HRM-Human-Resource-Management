@@ -370,6 +370,54 @@ export default function SelectWrapper({ field, form }) {
     ]
   );
 
+  const renderSingleOption = useCallback(
+    (optionProps) => {
+      const {
+        data,
+        innerRef,
+        innerProps,
+        isSelected,
+        isFocused,
+      } = optionProps;
+
+      const optionIndex = options.findIndex(
+        (item) =>
+          String(item.value) === String(data.value) &&
+          String(item.label) === String(data.label)
+      );
+
+      const zebraBackground =
+        optionIndex % 2 === 0
+          ? "#f8fafc"
+          : "#ffffff";
+
+      return (
+        <div
+          ref={innerRef}
+          {...innerProps}
+          className="cursor-pointer"
+          style={{
+            backgroundColor: isSelected
+              ? "#e0f2fe"
+              : isFocused
+                ? "#f1f5f9"
+                : zebraBackground,
+            padding: "6px 10px",
+            borderBottom: "1px solid #e5e7eb",
+            color: "#0f172a",
+            fontSize: 12,
+            fontWeight: isSelected ? 600 : 500,
+            lineHeight: 1.4,
+            transition: "background-color 0.12s ease",
+          }}
+        >
+          {data.label}
+        </div>
+      );
+    },
+    [options]
+  );
+
   // ============================================================
   // CUSTOM MENU
   // ============================================================
@@ -515,7 +563,9 @@ export default function SelectWrapper({ field, form }) {
               Option: renderOption,
               MenuList: renderMenuList,
             }
-            : undefined
+            : {
+              Option: renderSingleOption,
+            }
         }
         styles={customStyles(
           displayError
@@ -621,7 +671,7 @@ const customStyles = (error) => ({
   menu: (base) => ({
     ...base,
     marginTop: 6,
-    borderRadius: 10,
+    borderRadius: 8,
     overflow: "hidden",
     boxShadow:
       "0 16px 32px -8px rgba(15, 23, 42, 0.16), 0 4px 8px -2px rgba(15, 23, 42, 0.06)",
@@ -632,7 +682,7 @@ const customStyles = (error) => ({
 
   menuList: (base) => ({
     ...base,
-    padding: 6,
+    padding: 0,
     maxHeight: 240,
     scrollbarWidth: "thin",
     scrollbarColor:
@@ -642,21 +692,22 @@ const customStyles = (error) => ({
 
   option: (base, state) => ({
     ...base,
-    padding: "10px 12px",
+    padding: "6px 10px",
     borderRadius: 0,
-    borderBottom: "1px solid #f1f5f9",
+    borderBottom: "1px solid #e5e7eb",
     marginBottom: 0,
     cursor: "pointer",
     backgroundColor:
       state.isSelected
         ? "#e0f2fe"
         : state.isFocused
-          ? "#f8fafc"
+          ? "#f1f5f9"
           : "#fff",
     color: "#0f172a",
-    fontSize: 13.5,
+    fontSize: 12,
     fontWeight: state.isSelected ? 600 : 500,
-    transition: "background-color .1s ease",
+    lineHeight: 1.4,
+    transition: "background-color .12s ease",
   }),
 
   noOptionsMessage: (base) => ({

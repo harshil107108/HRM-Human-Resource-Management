@@ -250,18 +250,7 @@ export default function EnterpriseDashboard() {
       <main className="flex-1 flex flex-col min-w-0">
         {/* Dashboard Content Container */}
         <div className="p-6 md:p-8 space-y-8 overflow-y-auto max-w-[1600px] mx-auto w-full">
-          {/* Welcome Banner */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-gray-950">
-                Good Morning, Harshil 👋
-              </h2>
-              <p className="text-sm text-gray-500 mt-1 font-medium">
-                Here is an overview of your organization's health today.
-              </p>
-            </div>
 
-          </div>
 
           {/* Stats Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -21,25 +21,39 @@ const StateMasterModal = ({ onModalClose, onSaved, open, extraParams }) => {
         });
     }, []);
 
+
     const handleSave = async () => {
-        const data = formmethod.methods.getValues();
+        const result = await formmethod.methods.handleFormSave(
+            async (data) => {
 
-        const payload = StateId
-            ? { ...data, _id: StateId }
-            : data;
+                const payload = StateId
+                    ? { ...data, _id: StateId }
+                    : data;
 
-        const res = await apiCall({
-            id: 'addEditCountry',
-            api: api + apiEndpoints.master.state.StateAddEdit,
-            payload,
-            showSuccessAlert: true
+                const res = await apiCall({
+                    id: 'addEditCountry',
+                    api: api + apiEndpoints.master.state.StateAddEdit,
+                    payload,
+                    showSuccessAlert: true
 
-        });
+                });
 
-        if (res.success) {
-            onModalClose();
-            await onSaved?.();
-        }
+                if (!res?.success) {
+                    throw new Error(res?.message || 'Failed to save City');
+                }
+
+                return res;
+            },
+            {
+                successMessage: 'City saved successfully',
+                onSuccess: async () => {
+                    onModalClose();
+                    await onSaved?.();
+                },
+            },
+        );
+
+        return result;
     };
 
     const getDataById = async () => {

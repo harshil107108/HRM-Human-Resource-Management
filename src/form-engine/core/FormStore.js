@@ -58,6 +58,23 @@ export class FormStore {
         }
       }
 
+      if (field.type === "phone") {
+        const digits = String(value ?? "").replace(/\D/g, "");
+        if (digits.length !== 10) {
+          errors[field.id] = field.phoneMessage || "Phone number must be 10 digits";
+          return;
+        }
+      }
+
+      if (field.type === "email") {
+        const emailValue = String(value ?? "").trim();
+        const gmailPattern = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+        if (!gmailPattern.test(emailValue)) {
+          errors[field.id] = field.emailMessage || "Email must be a valid @gmail.com address";
+          return;
+        }
+      }
+
       if (typeof field.validate === "function") {
         const customMessage = field.validate(value, allValues, this);
         if (customMessage) {
@@ -233,6 +250,31 @@ export class FormStore {
         this.errors = normalizeErrorState(errors);
         this.emit();
         return Object.keys(this.errors).length === 0;
+      },
+      validateField: (id) => {
+        const field = this.methods.getFieldConfig(id);
+        if (!field) {
+          return { isValid: true, error: undefined, fieldId: id };
+        }
+
+        const value = this.values[id];
+        const fieldErrors = {};
+        runFieldValidation.call(this, field, value, this.values, fieldErrors);
+
+        const error = fieldErrors[id];
+        if (error) {
+          this.errors = { ...this.errors, [id]: error };
+        } else {
+          const { [id]: _removed, ...rest } = this.errors;
+          this.errors = rest;
+        }
+
+        this.emit();
+        return {
+          isValid: !error,
+          error,
+          fieldId: id,
+        };
       },
       getFirstInvalidField: () => {
         const schema = this.methods.getSchema?.() || [];

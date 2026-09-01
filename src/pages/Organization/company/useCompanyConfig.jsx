@@ -63,7 +63,7 @@ const useCompanyConfig = ({ handleDelete } = {}) => {
         { label: "Consulting", value: "CONSULTING" },
         { label: "Legal Services", value: "LEGAL_SERVICES" },
         { label: "Professional Services", value: "PROFESSIONAL_SERVICES" },
-        { label: "E-Commerce", value: "E_COMMERCE" }, 
+        { label: "E-Commerce", value: "E_COMMERCE" },
         { label: "Other", value: "OTHER" },
       ]
     },
@@ -109,7 +109,7 @@ const useCompanyConfig = ({ handleDelete } = {}) => {
     },
     {
       id: "businessEmail",
-      type: "text",
+      type: "email",
       label: "Business Email",
       placeHolder: "admin@company.com",
       required: true,
@@ -119,7 +119,7 @@ const useCompanyConfig = ({ handleDelete } = {}) => {
     },
     {
       id: "phone",
-      type: "text",
+      type: "phone",
       label: "Phone Number",
       placeHolder: "+1 (555) 000-0000",
       required: true,

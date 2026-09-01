@@ -24,25 +24,37 @@ const CityMasterModal = ({ onModalClose, open, extraParams, onSaved }) => {
 
 
     const handleSave = async () => {
-        const data = formmethod.methods.getValues();
+        const result = await formmethod.methods.handleFormSave(
+            async (data) => {
 
-        const payload = cityId
-            ? { ...data, _id: cityId }
-            : data;
+                const payload = cityId
+                    ? { ...data, _id: cityId }
+                    : data;
 
-        const res = await apiCall({
-            id: 'addEditCountry',
-            api: api + apiEndpoints.master.city.CityAddEdit,
-            payload,
-            showSuccessAlert: true
-        });
+                const res = await apiCall({
+                    id: 'addEditCountry',
+                    api: api + apiEndpoints.master.city.CityAddEdit,
+                    payload,
+                    showSuccessAlert: true
+                });
 
-        if (res.success) {
-            onModalClose();
-            await onSaved?.();
-        }
+                if (!res?.success) {
+                    throw new Error(res?.message || 'Failed to save City');
+                }
+
+                return res;
+            },
+            {
+                successMessage: 'City saved successfully',
+                onSuccess: async () => {
+                    onModalClose();
+                    await onSaved?.();
+                },
+            },
+        );
+
+        return result;
     };
-
 
     const getDataById = async () => {
         const res = await apiCall({

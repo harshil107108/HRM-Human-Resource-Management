@@ -67,3 +67,45 @@ test('handleFormSave executes the save callback once after validation passes', a
     assert.equal(result.success, true);
     assert.equal(form.methods.isSubmitting(), false);
 });
+
+test('phone and email fields validate with 10-digit phone and gmail-only email rules', () => {
+    const form = formMethod.createForm({
+        schema: [
+            { id: 'contactPhone', type: 'phone', label: 'Phone', required: true },
+            { id: 'workEmail', type: 'email', label: 'Email', required: true },
+        ],
+        initialValue: {
+            contactPhone: '987654321',
+            workEmail: 'demo@gmail.com',
+        },
+    });
+
+    assert.equal(form.methods.validate(), false);
+    assert.equal(form.methods.getErrors().contactPhone, 'Phone number must be 10 digits');
+    assert.equal(form.methods.getErrors().workEmail, undefined);
+
+    form.methods.setValue('contactPhone', '9876543210');
+    form.methods.setValue('workEmail', 'test@gmail.com');
+
+    assert.equal(form.methods.validate(), true);
+    assert.equal(form.methods.getErrors().contactPhone, undefined);
+    assert.equal(form.methods.getErrors().workEmail, undefined);
+});
+
+test('invalid email and phone stop focus on enter and keep the error on the current field', () => {
+    const form = formMethod.createForm({
+        schema: [
+            { id: 'contactPhone', type: 'phone', label: 'Phone', required: true, nextFocusField: 'workEmail' },
+            { id: 'workEmail', type: 'email', label: 'Email', required: true },
+        ],
+        initialValue: { contactPhone: '123', workEmail: 'demo@yahoo.com' },
+    });
+
+    const phoneValidation = form.methods.validateField('contactPhone');
+    assert.equal(phoneValidation.isValid, false);
+    assert.equal(form.methods.getErrors().contactPhone, 'Phone number must be 10 digits');
+
+    const emailValidation = form.methods.validateField('workEmail');
+    assert.equal(emailValidation.isValid, false);
+    assert.equal(form.methods.getErrors().workEmail, 'Email must be a valid @gmail.com address');
+});

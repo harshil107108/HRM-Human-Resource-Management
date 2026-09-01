@@ -22,25 +22,37 @@ const BankMasterModal = ({ onModalClose, open, extraParams, onSaved }) => {
     }, []);
 
     const handleSave = async () => {
-        const data = formmethod.methods.getValues();
+        const result = await formmethod.methods.handleFormSave(
+            async (data) => {
 
-        const payload = bankId
-            ? { ...data, _id: bankId }
-            : data;
+                const payload = bankId
+                    ? { ...data, _id: bankId }
+                    : data;
 
-        const res = await apiCall({
-            id: 'addEditCountry',
-            api: api + apiEndpoints.master.bank.BankAddEdit,
-            payload,
-            showSuccessAlert: true
-        });
+                const res = await apiCall({
+                    id: 'addEditCountry',
+                    api: api + apiEndpoints.master.bank.BankAddEdit,
+                    payload,
+                    showSuccessAlert: true
+                });
 
-        if (res.success) {
-            onModalClose();
-            await onSaved?.();
-        }
+                if (!res?.success) {
+                    throw new Error(res?.message || 'Failed to save Bank');
+                }
+
+                return res;
+            },
+            {
+                successMessage: 'Bank saved successfully',
+                onSuccess: async () => {
+                    onModalClose();
+                    await onSaved?.();
+                },
+            },
+        );
+
+        return result;
     };
-
 
     const getDataById = async () => {
         const res = await apiCall({

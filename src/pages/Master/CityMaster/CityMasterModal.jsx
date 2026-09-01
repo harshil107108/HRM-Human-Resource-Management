@@ -22,7 +22,6 @@ const CityMasterModal = ({ onModalClose, open, extraParams, onSaved }) => {
         });
     }, []);
 
-    console.log(formmethod.methods);
 
     const handleSave = async () => {
         const data = formmethod.methods.getValues();

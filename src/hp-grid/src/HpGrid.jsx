@@ -199,6 +199,7 @@ function HpGrid(props) {
     colIndex: null,
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [columnResize, setColumnResize] = useState(null);
   // Per-column filters: { [field]: filterValue }. Only fields with a
   // non-empty value are considered "active" - see displayRows below.
   const [columnFilters, setColumnFiltersState] = useState({});
@@ -815,6 +816,53 @@ function HpGrid(props) {
     if (typeof onSearchChange === "function") onSearchChange(value);
   };
 
+  const updateColumnWidth = useCallback((colIndex, nextWidth) => {
+    setColDefState((prev) =>
+      prev.map((col, index) => {
+        if (index !== colIndex) return col;
+        const width = Math.max(80, Number.isFinite(nextWidth) ? nextWidth : 80);
+        return { ...col, width };
+      }),
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!columnResize) return undefined;
+
+    const handleMouseMove = (event) => {
+      const delta = event.clientX - columnResize.startX;
+      const nextWidth = Math.max(
+        80,
+        (columnResize.startWidth ?? 120) + delta,
+      );
+      updateColumnWidth(columnResize.colIndex, nextWidth);
+    };
+
+    const handleMouseUp = () => setColumnResize(null);
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [columnResize, updateColumnWidth]);
+
+  const handleColumnResizeStart = (event, colIndex) => {
+    if (event.button !== 0) return;
+    const target = event.currentTarget.parentElement;
+    const rect = target?.getBoundingClientRect();
+    const currentWidth = rect?.width ?? 120;
+
+    setColumnResize({
+      colIndex,
+      startX: event.clientX,
+      startWidth: currentWidth,
+    });
+    event.preventDefault();
+  };
+
   // Renders the actual control (text input / select / etc.) for one column's
   // filter cell, based on getColumnFilterType(col). Returns null for columns
   // that opted out (filterType === 'none'), so an empty placeholder cell is
@@ -953,13 +1001,22 @@ function HpGrid(props) {
                   />
                 </div>
               )}
-              {colDef.map((col) => (
+              {colDef.map((col, index) => (
                 <div
                   key={col.id || col.field}
                   className="hp-grid-header-cell"
                   style={getColumnStyle(col)}
                 >
-                  {col.headerName ?? col.field}
+                  <span className="hp-grid-header-label">
+                    {col.headerName ?? col.field}
+                  </span>
+                  <span
+                    className="hp-grid-column-resizer"
+                    onMouseDown={(event) => handleColumnResizeStart(event, index)}
+                    aria-label={`Resize ${col.headerName ?? col.field} column`}
+                    role="separator"
+                    tabIndex={-1}
+                  />
                 </div>
               ))}
             </div>

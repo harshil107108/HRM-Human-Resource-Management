@@ -191,6 +191,7 @@
 }
 
 .hp-grid-header-cell {
+  position: relative;
   padding: 0 12px;
   display: flex;
   align-items: center;
@@ -202,8 +203,44 @@
   text-overflow: ellipsis;
 }
 
+.hp-grid-header-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+}
+
 .hp-grid-header-cell:last-child {
   border-right: 1px solid var(--hpg-border);
+}
+
+.hp-grid-column-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+  z-index: 3;
+}
+
+.hp-grid-column-resizer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 50%;
+  transform: translateX(50%);
+  width: 2px;
+  height: 100%;
+  background: transparent;
+  transition: background-color 120ms ease;
+}
+
+.hp-grid-column-resizer:hover::before,
+.hp-grid-column-resizer:active::before {
+  background: var(--hpg-teal);
 }
 
 /* ---------------------------- column filter row ---------------------------- */

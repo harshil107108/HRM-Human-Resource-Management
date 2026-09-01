@@ -40,19 +40,41 @@ export function ensureRowIds(rows) {
   );
 }
 
+export function parseColumnWidth(value, fallback = 120) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === "auto") return fallback;
+
+    const pxMatch = trimmed.match(/^(-?\d+(?:\.\d+)?)px$/i);
+    if (pxMatch) return Number(pxMatch[1]);
+
+    const remMatch = trimmed.match(/^(-?\d+(?:\.\d+)?)rem$/i);
+    if (remMatch) return Number(remMatch[1]) * 16;
+
+    const emMatch = trimmed.match(/^(-?\d+(?:\.\d+)?)em$/i);
+    if (emMatch) return Number(emMatch[1]) * 16;
+
+    const numeric = Number(trimmed.replace(/[^\d.-]/g, ""));
+    if (Number.isFinite(numeric)) return numeric;
+  }
+
+  return fallback;
+}
+
 export function getColumnStyle(column) {
   if (column.width === undefined || column.width === null) {
     return { flex: "1 1 0", minWidth: 0 };
   }
 
-  const width =
-    typeof column.width === "number" ? `${column.width}px` : column.width;
+  const widthPx = `${parseColumnWidth(column.width, 120)}px`;
 
   return {
-    width,
-    minWidth: width,
-    maxWidth: width,
-    flex: `0 0 ${width}`,
+    width: widthPx,
+    minWidth: widthPx,
+    maxWidth: widthPx,
+    flex: `0 0 ${widthPx}`,
     boxSizing: "border-box",
   };
 }

@@ -72,6 +72,7 @@ const DesignationListing = () => {
         if (res?.success) {
             const data = res?.data?.data || [];
 
+
             const formattedData = data.map((item) => ({
                 ...item,
                 companyName: item.company?.companyName || "",

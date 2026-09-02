@@ -56,7 +56,7 @@ function getColumnFilterType(col) {
     case "checkbox":
       return "checkbox";
     case "status":
-      return "checkbox";
+      return "none";
     case "number":
       return "number";
     case "date":

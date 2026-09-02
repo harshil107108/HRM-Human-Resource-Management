@@ -7,7 +7,7 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             id: "designationname",
             field: "designationname",
             headerName: "Designation Name",
-            width: 220,
+            width: 160,
         },
         {
             id: "designationcode",
@@ -27,7 +27,7 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             id: "companyName",
             field: "companyName",
             headerName: "Company",
-            width: 220,
+            width: 180,
         },
 
         {
@@ -41,7 +41,7 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             id: "departmentname",
             field: "departmentname",
             headerName: "Department",
-            width: 180,
+            width: 160,
         },
 
         {
@@ -54,7 +54,7 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             id: "probationPeriod",
             field: "probationPeriod",
             headerName: "Probation Period",
-            width: 120,
+            width: 140,
         },
         {
             id: "noticePeriod",
@@ -66,13 +66,13 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             id: "departmentHeadId",
             field: "departmentHeadId",
             headerName: "department Head",
-            width: 120,
+            width: 140,
         },
         {
             id: "mentorId",
             field: "mentorId",
             headerName: "Mentor",
-            width: 120,
+            width: 140,
         },
         {
             id: "salaryGrade",
@@ -84,13 +84,13 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             id: "attendancePolicy",
             field: "attendancePolicy",
             headerName: "Attendance Policy",
-            width: 120,
+            width: 140,
         },
         {
             id: "officialEmail",
             field: "officialEmail",
             headerName: "Official Email",
-            width: 120,
+            width: 200,
         },
         {
             id: "officialPhone",
@@ -108,43 +108,48 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             id: "payrollGroup",
             field: "payrollGroup",
             headerName: "Payroll Group",
-            width: 120,
+            width: 100,
         },
         {
+            type: "status",
             id: "overtimeEligible",
             field: "overtimeEligible",
             headerName: "Overtime",
-            width: 120,
+            width: 100,
         },
         {
+            type: "status",
             id: "bonusEligible",
             field: "bonusEligible",
             headerName: "Bonus",
-            width: 120,
+            width: 80,
         },
         {
+            type: "status",
             id: "pfApplicable",
             field: "pfApplicable",
             headerName: "PF",
-            width: 120,
+            width: 80,
         },
         {
+            type: "status",
             id: "esiApplicable",
             field: "esiApplicable",
             headerName: "ESI",
-            width: 120,
+            width: 80,
         },
         {
+            type: "status",
             id: "professionalTaxApplicable",
             field: "professionalTaxApplicable",
             headerName: "Pro. Tax",
-            width: 120,
+            width: 80,
         },
         {
             id: "action",
             field: "action",
             headerName: "Action",
-            width: 60,
+            width: 80,
             type: "actions",
 
             onClick: (data) => {

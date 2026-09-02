@@ -70,6 +70,7 @@ const GridCell = React.forwardRef(function GridCell(props, ref) {
   const wrapperClassName = [
     "hp-grid-cell",
     editable ? "hp-grid-cell--editable" : "hp-grid-cell--readonly",
+    colDef.type === "status" ? "hp-grid-cell--status" : "",
     isFocused ? "hp-grid-cell--focused" : "",
     dynamicClassName,
   ]

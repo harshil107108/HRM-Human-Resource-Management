@@ -377,6 +377,12 @@
   cursor: default;
 }
 
+.hp-grid-cell--status {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .hp-grid-cell--editable {
   padding: 0 4px;
   cursor: text;
@@ -484,5 +490,5 @@
 }
 
 .hp-grid-status-dot--inactive {
-  background: #c9ced6;
+  background: #ef4444;
 }

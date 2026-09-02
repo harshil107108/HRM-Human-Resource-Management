@@ -87,7 +87,7 @@ const Company = () => {
         });
       }
     }
-  };
+  }; 
 
   const handleClear = () => {
     formmethod.methods.reset();

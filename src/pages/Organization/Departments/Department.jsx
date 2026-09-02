@@ -3,11 +3,21 @@ import useDepatmentConfig from "./useDepatmentConfig";
 import HpHeader from "@/hooks/HpHeader";
 import { FormRenderer } from "@/form-engine";
 import HpFooter from "@/hooks/HpFooter";
+import { useMemo, useState, useEffect } from "react";
+import useApiCall from "@/hooks/useApiCall";
+import { api, apiEndpoints } from "@/api/api";
+import { useLocation, useNavigate } from "react-router-dom";
+import useAlert from "@/hooks/useAlert";
 
 const Department = () => {
+  const locationData = useLocation();
+  const departmentId = locationData.state.departmentid;
+  const navigate = useNavigate();
+  const { apiCall } = useApiCall();
+  const { successAlert } = useAlert()
 
   const initialValue = {
-    companyName: '',
+    company: '',
     legalName: '',
     companyCode: '',
     businessEmail: '',
@@ -30,15 +40,75 @@ const Department = () => {
 
   const { basicInfoSchema, employeeSchema, managementSchema } = useDepatmentConfig();
 
-  const formmethod = formMethod.createForm({
-    schema: [
-      ...basicInfoSchema,
-      ...employeeSchema,
-      ...managementSchema,
-    ],
-    initialValue,
-  });
+  const formmethod = useMemo(() => {
+    return formMethod.createForm({
+      schema: [
+        ...basicInfoSchema,
+        ...employeeSchema,
+        ...managementSchema,
+      ],
+      initialValue,
+    });
+  }, []);
 
+  const handleSave = async (data) => {
+    const payload = formmethod.methods.getValues();
+
+    const res = await apiCall({
+      id: "companyAddEdit",
+      api: api + apiEndpoints.organization.department.DepartmentAddEdit,
+      payload: payload,
+    });
+
+    if (res?.success) {
+      successAlert({
+        title: "Department Added",
+        text: "Department added successfully.",
+      });
+
+      navigate(-1);
+    }
+  };
+
+  const handleClear = () => {
+    formmethod.methods.reset();
+  }
+
+  const handleBack = () => {
+    navigate(-1);
+  }
+
+  const getDataById = async () => {
+    if (!departmentId) return;
+
+    const res = await apiCall({
+      id: "getCompanyById",
+      api: api + apiEndpoints.organization.department.DepartmentGetByID,
+      payload: {
+        _id: departmentId,
+      },
+    });
+
+    if (res?.success) {
+      const data = res.data.data;
+
+      formmethod.methods.setValues({
+        ...data,
+        company: data?.company?._id || "",
+        branch: data?.branch?._id || "",
+        description: data?.description || "",
+        parentdepartment: data.parentdepartment?._id || "",
+        reportingdepartment: data.reportingdepartment?._id || "",
+      });
+
+    }
+  };
+
+  useEffect(() => {
+    if (departmentId) {
+      getDataById();
+    }
+  }, [departmentId]);
 
 
   return (
@@ -54,7 +124,6 @@ const Department = () => {
 
           <div className="mb-4 overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
 
-            {/* Card Header */}
             <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
               <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
               <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
@@ -62,7 +131,6 @@ const Department = () => {
               </h2>
             </div>
 
-            {/* Card Body */}
             <div className="p-4">
               <FormRenderer formMethod={formmethod} formSchema={basicInfoSchema} />
 
@@ -76,6 +144,10 @@ const Department = () => {
 
                 <textarea
                   id="branchDescription"
+                  onChange={(e) =>
+                    formmethod.methods.setValue("description", e.target.value)
+                  }
+                  value={formmethod.methods.watch('description')}
                   rows={3}
                   placeholder="Briefly describe the department's core function and objectives..."
                   className=" w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
@@ -85,15 +157,9 @@ const Department = () => {
             </div>
           </div>
 
-
-          {/* =========================
-            BOTTOM SECTION
-        ========================== */}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 
-            {/* =========================
-              ADDRESS
-          ========================== */}
+
             <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
 
               {/* Card Header */}
@@ -105,7 +171,6 @@ const Department = () => {
                 </h2>
               </div>
 
-              {/* Card Body */}
               <div className="p-4">
 
                 <FormRenderer formMethod={formmethod} formSchema={employeeSchema} />
@@ -117,7 +182,6 @@ const Department = () => {
 
               <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
 
-                {/* Card Header */}
                 <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
                   <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
 
@@ -126,18 +190,18 @@ const Department = () => {
                   </h2>
                 </div>
 
-                {/* Card Body */}
                 <div className="p-4">
                   <FormRenderer formMethod={formmethod} formSchema={managementSchema} />
                 </div>
-
               </div>
-
             </div>
-
           </div>
 
-          <HpFooter />
+          <HpFooter
+            onBack={handleBack}
+            onClear={handleClear}
+            onSave={handleSave}
+          />
 
         </div>
       </div>

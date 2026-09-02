@@ -1,73 +1,111 @@
 import { HpGrid } from "@/hp-grid/src";
 import useDepatmentConfig from "./useDepatmentConfig";
 import { useLocation, useNavigate } from "react-router-dom";
+import { api, apiEndpoints } from "@/api/api";
+import { useState, useEffect } from "react";
+import useApiCall from "@/hooks/useApiCall";
+import useAlert from "@/hooks/useAlert";
+import useDocumentTitle from "@/hooks/useDocumentTitle";
 
 
 const DepartmentListing = () => {
-    const { DepartmentListingColDef } = useDepatmentConfig();
-    const navigate = useNavigate();
-    const location = useLocation()
 
-    const handleAdd = () => {
-        navigate(`${location.pathname}/addedit`);
-    };
+    const { deleteAlert, successAlert } = useAlert()
+    const { apiCall } = useApiCall();
 
-    const handleSave = async (data) => {
-        formMethod.reset();
-    };
+    const handleDelete = async (id) => {
 
-    const handleClear = () => {
-        formMethod.reset();
-    };
+        deleteAlert({
+            title: "Delete Department?",
+            text: "Are you sure you want to delete this department? This action cannot be undone.",
+            confirmButtonText: "Delete",
+            cancelButtonText: "Cancel",
 
-    const handleDoubleClick = () => {
-        const { data } = params;
-        navigate(`${location.pathname}/addedit`, {
-            state: {
-                departmentid: data?.departmentid,
+            onClick: async () => {
+                const res = await apiCall({
+                    id: 'deleteListing',
+                    api: api + apiEndpoints.organization.department.DepartmentDeleteByID,
+                    payload: { _id: id }
+                });
+
+
+                if (res.success) {
+                    successAlert({
+                        title: "Department deleted",
+                        text: "Department has been deleted successfully.",
+                    });
+
+                    getCompanyListing();
+                }
             },
         });
     }
 
-    const departmentRowData = [
-        {
-            departmentId: 1,
-            departmentName: "Human Resources",
-            departmentCode: "HR001",
-            shortName: "HR",
-            companyName: "Orvexa Technologies",
-            branchName: "Ahmedabad Head Office",
-            parentDepartment: "-",
-            departmentHead: "Priya Patel",
-            reportingDepartment: "Corporate",
-            businessUnit: "Administration",
-            costCenterCode: "CC1001",
-            employeeCapacity: 50,
-            currentEmployeeCount: 32,
-            status: "Active",
-        },
-        {
-            departmentId: 2,
-            departmentName: "Software Development",
-            departmentCode: "DEV001",
-            shortName: "DEV",
-            companyName: "Orvexa Technologies",
-            branchName: "Ahmedabad Head Office",
-            parentDepartment: "Technology",
-            departmentHead: "Amit Shah",
-            reportingDepartment: "Technology",
-            businessUnit: "Engineering",
-            costCenterCode: "CC1002",
-            employeeCapacity: 120,
-            currentEmployeeCount: 98,
-            status: "Active",
-        },
-    ];
+    const { DepartmentListingColDef } = useDepatmentConfig({ handleDelete });
+    const [DepartmentListingData, setDepartmentListingData] = useState([])
+    const navigate = useNavigate();
+    const location = useLocation()
+
+    const handleAdd = () => {
+        navigate(`${location.pathname}/addedit`, {
+            state: {
+                departmentid: null,
+            },
+        });
+    };
+
+    const handleDoubleClick = (params) => {
+        const { data } = params;
+        navigate(`${location.pathname}/addedit`, {
+            state: {
+                departmentid: data?._id,
+            },
+        });
+    }
+
+    const getCompanyListing = async () => {
+        const res = await apiCall({
+            id: "getCompanyListing",
+            api: api + apiEndpoints.organization.department.DepartmentGetData,
+            payload: {}
+        });
+
+        if (res?.success) {
+            const data = res.data.data;
+
+            const formattedData = data.map((item) => {
+                const {
+                    company,
+                    branch,
+                    parentdepartment,
+                    reportingdepartment,
+                    ...departmentData
+                } = item;
+
+                return {
+                    ...departmentData,
+                    companyName: company?.companyName || "",
+                    branchname: branch?.branchname || "",
+                    parentdepartment: parentdepartment?.departmentname || "",
+                    reportingdepartment: reportingdepartment?.departmentname || "",
+                };
+            });
+
+            setDepartmentListingData(formattedData);
+        }
+    };
+
+
+    useEffect(() => {
+        getCompanyListing();
+    }, [])
+
+    useDocumentTitle("orvexa | Department")
 
     return (
         <HpGrid
             id="departmentListing"
-            rowData={departmentRowData}
+            rowData={DepartmentListingData}
             colDef={DepartmentListingColDef}
             style={{ height: "100%" }}
             onAddClick={handleAdd}

@@ -71,6 +71,13 @@ const apiEndpoints = {
             DepartmentDeleteByID: "/organization/department/deleteDepartmentById",
             DepartmentGetByID: "/organization/department/getDepartmentById",
             DepartmentHelp: "/organization/department/getDepartmentHelp",
+        },
+        designation: {
+            DesignationAddEdit: "/organization/designation/addEditDesignation",
+            DesignationGetData: "/organization/designation/getDesignation",
+            DesignationDeleteByID: "/organization/designation/deleteDesignationById",
+            DesignationGetByID: "/organization/designation/getDesignationById",
+            DesignationHelp: "/organization/designation/getDesignationHelp",
         }
     },
 

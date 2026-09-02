@@ -1,129 +1,110 @@
 import { HpGrid } from "@/hp-grid/src";
 import { useLocation, useNavigate } from "react-router-dom";
 import useDesignationConfig from "./useDesignationConfig";
+import { api, apiEndpoints } from "@/api/api";
+import { useState, useEffect } from "react";
+import useApiCall from "@/hooks/useApiCall";
+import useAlert from "@/hooks/useAlert";
+import useDocumentTitle from "@/hooks/useDocumentTitle";
 
 
 const DesignationListing = () => {
-    const { DesignationListingColDef } = useDesignationConfig();
+
+    const { deleteAlert, successAlert } = useAlert()
+    const { apiCall } = useApiCall();
+
+    const handleDelete = async (id) => {
+
+        deleteAlert({
+            title: "Delete Designation?",
+            text: "Are you sure you want to delete this designation? This action cannot be undone.",
+            confirmButtonText: "Delete",
+            cancelButtonText: "Cancel",
+
+            onClick: async () => {
+                const res = await apiCall({
+                    id: 'deleteListing',
+                    api: api + apiEndpoints.organization.designation.DesignationDeleteByID,
+                    payload: { _id: id }
+                });
+
+
+                if (res.success) {
+                    successAlert({
+                        title: "Designation deleted",
+                        text: "Designation has been deleted successfully.",
+                    });
+
+                    getDesignationListing();
+                }
+            },
+        });
+    }
+    const { DesignationListingColDef } = useDesignationConfig({ handleDelete });
+    const [DesignationListingData, setDesignationListingData] = useState([])
     const navigate = useNavigate();
     const location = useLocation()
 
     const handleAdd = () => {
-        navigate(`${location.pathname}/addedit`);
+        navigate(`${location.pathname}/addedit`, {
+            state: {
+                designationid: null,
+            },
+        });
     };
 
-    const handleSave = async (data) => {
-        formMethod.reset();
-    };
-
-    const handleClear = () => {
-        formMethod.reset();
-    };
-
-    const handleDoubleClick = () => {
+    const handleDoubleClick = (params) => {
         const { data } = params;
         navigate(`${location.pathname}/addedit`, {
             state: {
-                departmentid: data?.departmentid,
+                designationid: data?._id,
             },
         });
     }
 
-    const designationRowData = [
-        {
-            designationId: 1,
-            designationName: "React Developer",
-            designationCode: "DEV001",
-            shortName: "React Dev",
-            companyName: "Orvexa Technologies",
-            branchName: "Ahmedabad Head Office",
-            departmentName: "Development",
-            employeeCount: 8,
-            status: "Active",
-        },
-        {
-            designationId: 2,
-            designationName: "Senior React Developer",
-            designationCode: "DEV002",
-            shortName: "Sr. React",
-            companyName: "Orvexa Technologies",
-            branchName: "Ahmedabad Head Office",
-            departmentName: "Development",
-            employeeCount: 4,
-            status: "Active",
-        },
-        {
-            designationId: 3,
-            designationName: "HR Executive",
-            designationCode: "HR001",
-            shortName: "HR Exec",
-            companyName: "Orvexa Technologies",
-            branchName: "Ahmedabad Head Office",
-            departmentName: "Human Resource",
-            employeeCount: 5,
-            status: "Active",
-        },
-        {
-            designationId: 4,
-            designationName: "HR Manager",
-            designationCode: "HR002",
-            shortName: "HR Mgr",
-            companyName: "Orvexa Technologies",
-            branchName: "Ahmedabad Head Office",
-            departmentName: "Human Resource",
-            employeeCount: 1,
-            status: "Active",
-        },
-        {
-            designationId: 5,
-            designationName: "Accountant",
-            designationCode: "ACC001",
-            shortName: "Accounts",
-            companyName: "Orvexa Technologies",
-            branchName: "Surat Branch",
-            departmentName: "Finance",
-            employeeCount: 3,
-            status: "Active",
-        },
-        {
-            designationId: 6,
-            designationName: "Sales Executive",
-            designationCode: "SAL001",
-            shortName: "Sales",
-            companyName: "Orvexa Technologies",
-            branchName: "Vadodara Branch",
-            departmentName: "Sales",
-            employeeCount: 10,
-            status: "Active",
-        },
-        {
-            designationId: 7,
-            designationName: "QA Engineer",
-            designationCode: "QA001",
-            shortName: "QA",
-            companyName: "Orvexa Technologies",
-            branchName: "Ahmedabad Head Office",
-            departmentName: "Quality Assurance",
-            employeeCount: 6,
-            status: "Active",
-        },
-        {
-            designationId: 8,
-            designationName: "System Administrator",
-            designationCode: "IT001",
-            shortName: "Sys Admin",
-            companyName: "Orvexa Technologies",
-            branchName: "Rajkot Branch",
-            departmentName: "IT Support",
-            employeeCount: 2,
-            status: "Inactive",
-        },
-    ];
+    const getDesignationListing = async () => {
+        const res = await apiCall({
+            id: "getCompanyListing",
+            api: api + apiEndpoints.organization.designation.DesignationGetData,
+            payload: {}
+        });
+
+        if (res?.success) {
+            const data = res.data.data;
+
+            const formattedData = data.map((item) => {
+                const {
+                    company,
+                    branch,
+                    parentdepartment,
+                    reportingdepartment,
+                    ...departmentData
+                } = item;
+
+                return {
+                    ...departmentData,
+                    companyName: company?.companyName || "",
+                    branchname: branch?.branchname || "",
+                    parentdepartment: parentdepartment?.departmentname || "",
+                    reportingdepartment: reportingdepartment?.departmentname || "",
+                };
+            });
+
+            setDepartmentListingData(formattedData);
+        }
+    };
+
+
+    useEffect(() => {
+        getDesignationListing();
+    }, [])
+
+    useDocumentTitle("orvexa | Designation")
 
     return (
         <HpGrid
             id="designationListing"
-            rowData={designationRowData}
+            rowData={DesignationListingData}
             colDef={DesignationListingColDef}
             style={{ height: "100%" }}
             onAddClick={handleAdd}

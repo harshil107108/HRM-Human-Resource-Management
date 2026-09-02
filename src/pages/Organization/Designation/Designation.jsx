@@ -4,9 +4,13 @@ import HpHeader from "@/hooks/HpHeader";
 import { FormRenderer } from "@/form-engine";
 import HpFooter from "@/hooks/HpFooter";
 import Toggle from "@/hooks/Toogle";
+import { useEffect, useState } from "react";
+import { api, apiEndpoints } from "@/api/api";
+import useApiCall from "@/hooks/useApiCall";
 
 
 const Designation = () => {
+  const { apiCall } = useApiCall();
 
   const initialValue = {
     companyName: '',
@@ -30,14 +34,46 @@ const Designation = () => {
     postalCode: "",
   };
 
-  const { basicInfoSchema, jobAssignmentSchema, employmentSchema, reportingStructreSchema, workSchema, gradeSchema, payrollSchema, payrollToggleConfig } = useDesignationConfig();
+  const [EmployeeData, setEmployeeData] = useState();
+
+  const { basicInfoSchema, jobAssignmentSchema, employmentSchema, reportingStructreSchema, workSchema, gradeSchema, payrollSchema, payrollToggleConfig } = useDesignationConfig({ EmployeeData });
 
   const formmethod = formMethod.createForm({
     schema: [
       ...basicInfoSchema,
+      ...jobAssignmentSchema,
+      ...employmentSchema,
+      ...reportingStructreSchema,
+      ...workSchema,
+      ...gradeSchema,
+      ...payrollSchema,
     ],
     initialValue,
   });
+
+
+  const getEmployeeData = async () => {
+    const res = await apiCall({
+      id: "companyAddEdit",
+      api: api + apiEndpoints.employee.employee.EmployeeHelp,
+      payload: {},
+    });
+
+    if (res.success) {
+      const data = res.data.data;
+
+      const employeeOptions = data.map((employee) => ({
+        label: employee.employeeName,
+        value: employee._id,
+      }));
+
+      setEmployeeData(employeeOptions);
+    }
+  };
+
+  useEffect(() => {
+    getEmployeeData();
+  }, [])
 
   return (
     <>
@@ -234,7 +270,7 @@ const Designation = () => {
                   {payrollToggleConfig.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 transition-colors duration-150 hover:bg-slate-100/70"
+                      className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-5 py-4"
                     >
                       <div>
                         <h4 className="text-sm font-semibold text-slate-800">
@@ -250,6 +286,7 @@ const Designation = () => {
                         name={item.id}
                         formMethod={formmethod}
                         defaultValue={item.defaultValue}
+                        title={item.title}
                       />
                     </div>
                   ))}

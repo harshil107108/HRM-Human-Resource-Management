@@ -1,7 +1,6 @@
-import React from 'react'
+import { api, apiEndpoints } from "@/api/api";
 
-
-const useDesignationConfig = () => {
+const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
     const basicInfoSchema = [
         {
             id: "designationname",
@@ -33,44 +32,8 @@ const useDesignationConfig = () => {
             nextFocusField: "companyCode",
             className: "col-span-3",
         },
-        {
-            id: "company",
-            type: "selectWrapper",
-            label: "Company",
-            placeHolder: "e.g. Acme Corporation",
-            required: true,
-            nextFocusField: "legalName",
-            prevFocusField: 'companyName',
-            className: "col-span-3",
-        },
-        {
-            id: "branch",
-            type: "selectWrapper",
-            label: "Branch",
-            placeHolder: "e.g. Acme Corp LLC",
-            required: true,
-            prevFocusField: "companyName",
-            nextFocusField: "companyCode",
-            className: "col-span-3",
-        },
-        {
-            id: "department",
-            type: "selectWrapper",
-            label: "Department",
-            placeHolder: "e.g. Acme Corp LLC",
-            required: true,
-            prevFocusField: "companyName",
-            nextFocusField: "companyCode",
-            className: "col-span-3",
-        },
     ];
     const DesignationListingColDef = [
-        {
-            id: "designationId",
-            field: "designationId",
-            headerName: "Id",
-            width: 80,
-        },
         {
             id: "designationName",
             field: "designationName",
@@ -118,7 +81,16 @@ const useDesignationConfig = () => {
             field: "status",
             headerName: "Status",
             width: 120,
-        },
+        }, , {
+            id: "action",
+            field: "action",
+            headerName: "Action",
+            width: 60,
+            type: "actions",
+            onClick: (data) => {
+                handleDelete(data._id);
+            }
+        }
     ];
     const jobAssignmentSchema = [
         {
@@ -127,6 +99,9 @@ const useDesignationConfig = () => {
             label: "Company",
             placeHolder: "Select Company",
             required: true,
+            api: api + apiEndpoints.organization.company.CompanyHelp,
+            labelKey: "companyName",
+            valueKey: "_id",
             className: "col-span-4",
         },
         {
@@ -135,12 +110,18 @@ const useDesignationConfig = () => {
             label: "Branch",
             placeHolder: "Select Branch",
             required: true,
+            api: api + apiEndpoints.organization.branch.BranchHelp,
+            labelKey: "branchname",
+            valueKey: "_id",
             className: "col-span-4",
         },
         {
             id: "departmentId",
             type: "selectWrapper",
             label: "Department",
+            api: api + apiEndpoints.organization.department.DepartmentHelp,
+            labelKey: "departmentname",
+            valueKey: "_id",
             placeHolder: "Select Department",
             required: true,
             className: "col-span-4",
@@ -151,6 +132,9 @@ const useDesignationConfig = () => {
             label: "Designation",
             placeHolder: "Select Designation",
             required: true,
+            api: api + apiEndpoints.organization.designation.DesignationHelp,
+            labelKey: "desigantioname",
+            valueKey: "_id",
             className: "col-span-4",
         },
         {
@@ -159,14 +143,18 @@ const useDesignationConfig = () => {
             label: "Business Unit",
             placeHolder: "Select Business Unit",
             className: "col-span-4",
+            options: [
+                { label: "Information Technology", value: "IT" },
+                { label: "Human Resources", value: "HR" },
+                { label: "Finance & Accounting", value: "FINANCE" },
+                { label: "Sales & Marketing", value: "SALES_MARKETING" },
+                { label: "Operations", value: "OPERATIONS" },
+                { label: "Research & Development", value: "R_AND_D" },
+                { label: "Customer Support", value: "CUSTOMER_SUPPORT" },
+                { label: "Administration", value: "ADMIN" },
+            ],
         },
-        {
-            id: "locationId",
-            type: "selectWrapper",
-            label: "Location",
-            placeHolder: "Select Location",
-            className: "col-span-4",
-        },
+
     ];
     const employmentSchema = [
         {
@@ -176,6 +164,15 @@ const useDesignationConfig = () => {
             placeHolder: "Select Employment Type",
             required: true,
             className: "col-span-4",
+            options: [
+                { label: "Full Time", value: "FULL_TIME" },
+                { label: "Part Time", value: "PART_TIME" },
+                { label: "Contract", value: "CONTRACT" },
+                { label: "Temporary", value: "TEMPORARY" },
+                { label: "Intern", value: "INTERN" },
+                { label: "Trainee", value: "TRAINEE" },
+                { label: "Freelancer", value: "FREELANCER" },
+            ],
         },
         {
             id: "employmentStatus",
@@ -184,6 +181,16 @@ const useDesignationConfig = () => {
             placeHolder: "Select Status",
             required: true,
             className: "col-span-4",
+            options: [
+                { label: "Active", value: "ACTIVE" },
+                { label: "Probation", value: "PROBATION" },
+                { label: "On Leave", value: "ON_LEAVE" },
+                { label: "Suspended", value: "SUSPENDED" },
+                { label: "Resigned", value: "RESIGNED" },
+                { label: "Terminated", value: "TERMINATED" },
+                { label: "Retired", value: "RETIRED" },
+                { label: "Inactive", value: "INACTIVE" },
+            ],
         },
         {
             id: "joiningDate",
@@ -203,12 +210,30 @@ const useDesignationConfig = () => {
             type: "selectWrapper",
             label: "Probation Period",
             className: "col-span-4",
+            options: [
+                { label: "No Probation", value: "0" },
+                { label: "1 Month", value: "1_MONTH" },
+                { label: "2 Months", value: "2_MONTHS" },
+                { label: "3 Months", value: "3_MONTHS" },
+                { label: "4 Months", value: "4_MONTHS" },
+                { label: "6 Months", value: "6_MONTHS" },
+                { label: "12 Months", value: "12_MONTHS" },
+            ],
         },
         {
             id: "noticePeriod",
             type: "selectWrapper",
             label: "Notice Period",
             className: "col-span-4",
+            options: [
+                { label: "No Notice Period", value: "0" },
+                { label: "7 Days", value: "7_DAYS" },
+                { label: "15 Days", value: "15_DAYS" },
+                { label: "30 Days", value: "30_DAYS" },
+                { label: "45 Days", value: "45_DAYS" },
+                { label: "60 Days", value: "60_DAYS" },
+                { label: "90 Days", value: "90_DAYS" },
+            ],
         },
     ];
     const reportingStructreSchema = [
@@ -216,26 +241,30 @@ const useDesignationConfig = () => {
             id: "reportingManagerId",
             type: "selectWrapper",
             label: "Reporting Manager",
-            required: true,
+            // required: true,
             className: "col-span-6",
+            options: EmployeeData,
         },
         {
             id: "skipLevelManagerId",
             type: "selectWrapper",
             label: "Skip Level Manager",
             className: "col-span-6",
+            options: EmployeeData,
         },
         {
             id: "departmentHeadId",
             type: "selectWrapper",
             label: "Department Head",
             className: "col-span-6",
+            options: EmployeeData,
         },
         {
             id: "mentorId",
             type: "selectWrapper",
             label: "Mentor",
             className: "col-span-6",
+            options: EmployeeData,
         },
     ];
     const gradeSchema = [
@@ -244,24 +273,73 @@ const useDesignationConfig = () => {
             type: "selectWrapper",
             label: "Job Grade",
             className: "col-span-6",
+            options: [
+                { label: "Entry Level", value: "ENTRY" },
+                { label: "Junior", value: "JUNIOR" },
+                { label: "Intermediate", value: "INTERMEDIATE" },
+                { label: "Senior", value: "SENIOR" },
+                { label: "Lead", value: "LEAD" },
+                { label: "Assistant Manager", value: "ASSISTANT_MANAGER" },
+                { label: "Manager", value: "MANAGER" },
+                { label: "Senior Manager", value: "SENIOR_MANAGER" },
+                { label: "Head", value: "HEAD" },
+                { label: "Director", value: "DIRECTOR" },
+                { label: "Vice President", value: "VP" },
+                { label: "C-Level", value: "C_LEVEL" },
+            ]
         },
         {
             id: "jobLevel",
             type: "selectWrapper",
             label: "Job Level",
             className: "col-span-6",
+            options: [
+                { label: "Entry Level", value: "ENTRY" },
+                { label: "Junior", value: "JUNIOR" },
+                { label: "Intermediate", value: "INTERMEDIATE" },
+                { label: "Senior", value: "SENIOR" },
+                { label: "Lead", value: "LEAD" },
+                { label: "Assistant Manager", value: "ASSISTANT_MANAGER" },
+                { label: "Manager", value: "MANAGER" },
+                { label: "Senior Manager", value: "SENIOR_MANAGER" },
+                { label: "Head", value: "HEAD" },
+                { label: "Director", value: "DIRECTOR" },
+                { label: "Vice President", value: "VP" },
+                { label: "C-Level", value: "C_LEVEL" },
+            ],
         },
         {
             id: "band",
             type: "selectWrapper",
             label: "Band",
             className: "col-span-6",
+            options: [
+                { label: "Band A", value: "A" },
+                { label: "Band B", value: "B" },
+                { label: "Band C", value: "C" },
+                { label: "Band D", value: "D" },
+                { label: "Band E", value: "E" },
+                { label: "Band F", value: "F" },
+                { label: "Band G", value: "G" },
+            ],
         },
         {
             id: "salaryGrade",
             type: "selectWrapper",
             label: "Salary Grade",
             className: "col-span-6",
+            options: [
+                { label: "SG-01", value: "SG01" },
+                { label: "SG-02", value: "SG02" },
+                { label: "SG-03", value: "SG03" },
+                { label: "SG-04", value: "SG04" },
+                { label: "SG-05", value: "SG05" },
+                { label: "SG-06", value: "SG06" },
+                { label: "SG-07", value: "SG07" },
+                { label: "SG-08", value: "SG08" },
+                { label: "SG-09", value: "SG09" },
+                { label: "SG-10", value: "SG10" },
+            ],
         },
     ];
     const workSchema = [
@@ -270,35 +348,68 @@ const useDesignationConfig = () => {
             type: "selectWrapper",
             label: "Working Shift",
             className: "col-span-4",
+            options: [
+                { label: "General Shift", value: "GENERAL" },
+                { label: "Morning Shift", value: "MORNING" },
+                { label: "Afternoon Shift", value: "AFTERNOON" },
+                { label: "Evening Shift", value: "EVENING" },
+                { label: "Night Shift", value: "NIGHT" },
+                { label: "Rotational Shift", value: "ROTATIONAL" },
+                { label: "Flexible Shift", value: "FLEXIBLE" },
+            ]
         },
         {
             id: "holidayCalendar",
             type: "selectWrapper",
             label: "Holiday Calendar",
             className: "col-span-4",
+            isMultiSelect: true,
+            api: api + apiEndpoints.master.holiday.HolidayHelp,
+            labelKey: "holidayName",
+            valueKey: "_id",
+
         },
         {
             id: "weeklyOff",
             type: "selectWrapper",
             label: "Weekly Off",
+            isMultiSelect: true,
             className: "col-span-4",
+            options: [
+                { label: "Sunday", value: "SUNDAY" },
+                { label: "Monday", value: "MONDAY" },
+                { label: "Tuesday", value: "TUESDAY" },
+                { label: "Wednesday", value: "WEDNESDAY" },
+                { label: "Thursday", value: "THURSDAY" },
+                { label: "Friday", value: "FRIDAY" },
+                { label: "Saturday", value: "SATURDAY" },
+            ]
         },
         {
             id: "attendancePolicy",
             type: "selectWrapper",
             label: "Attendance Policy",
             className: "col-span-4",
+            options: [
+                { label: "Standard Attendance Policy", value: "STANDARD" },
+                { label: "Flexible Attendance Policy", value: "FLEXIBLE" },
+                { label: "Shift Based Attendance Policy", value: "SHIFT_BASED" },
+                { label: "Biometric Attendance Policy", value: "BIOMETRIC" },
+                { label: "Remote / Work From Home Policy", value: "REMOTE" },
+                { label: "Contract Employee Policy", value: "CONTRACT" },
+            ]
         },
         {
             id: "officialEmail",
-            type: "text",
+            type: "email",
             label: "Official Email",
             placeHolder: "Enter Official Email",
             className: "col-span-4",
+            nextFocusField: "officialPhone"
         },
         {
             id: "officialPhone",
-            type: "number",
+            type: "phone",
             label: "Official Phone",
             className: "col-span-4",
         },
@@ -313,6 +424,13 @@ const useDesignationConfig = () => {
             type: "selectWrapper",
             label: "Work Mode",
             className: "col-span-4",
+            options: [
+                { label: "On-Site", value: "ON_SITE" },
+                { label: "Work From Home", value: "WORK_FROM_HOME" },
+                { label: "Hybrid", value: "HYBRID" },
+                { label: "Remote", value: "REMOTE" },
+                { label: "Field Work", value: "FIELD_WORK" },
+            ]
         },
     ];
     const payrollSchema = [
@@ -321,24 +439,51 @@ const useDesignationConfig = () => {
             type: "selectWrapper",
             label: "Payroll Group",
             className: "col-span-6",
+            options: [
+                { label: "Monthly Payroll", value: "MONTHLY" },
+                { label: "Weekly Payroll", value: "WEEKLY" },
+                { label: "Bi-Weekly Payroll", value: "BI_WEEKLY" },
+                { label: "Contract Payroll", value: "CONTRACT" },
+            ],
         },
         {
             id: "defaultRole",
             type: "selectWrapper",
             label: "Default Role",
             className: "col-span-6",
+            options: [
+                { label: "Employee", value: "EMPLOYEE" },
+                { label: "Manager", value: "MANAGER" },
+                { label: "HR Manager", value: "HR_MANAGER" },
+                { label: "HR Executive", value: "HR_EXECUTIVE" },
+                { label: "Payroll Administrator", value: "PAYROLL_ADMIN" },
+                { label: "System Administrator", value: "SYSTEM_ADMIN" },
+            ],
         },
         {
             id: "accessLevel",
             type: "selectWrapper",
             label: "Access Level",
             className: "col-span-6",
+            options: [
+                { label: "Basic", value: "BASIC" },
+                { label: "Standard", value: "STANDARD" },
+                { label: "Manager", value: "MANAGER" },
+                { label: "HR", value: "HR" },
+                { label: "Administrator", value: "ADMIN" },
+                { label: "Super Administrator", value: "SUPER_ADMIN" },
+            ],
         },
         {
             id: "userAccount",
             type: "selectWrapper",
             label: "User Account",
             className: "col-span-6",
+            options: [
+                { label: "Create New Account", value: "CREATE" },
+                { label: "Link Existing Account", value: "LINK_EXISTING" },
+                { label: "No User Account", value: "NONE" },
+            ],
         },
     ];
     const payrollToggleConfig = [

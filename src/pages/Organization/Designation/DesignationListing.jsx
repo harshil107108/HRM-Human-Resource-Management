@@ -64,33 +64,23 @@ const DesignationListing = () => {
 
     const getDesignationListing = async () => {
         const res = await apiCall({
-            id: "getCompanyListing",
+            id: "getDesignationListing",
             api: api + apiEndpoints.organization.designation.DesignationGetData,
-            payload: {}
+            payload: {},
         });
 
         if (res?.success) {
-            const data = res.data.data;
+            const data = res?.data?.data || [];
 
-            const formattedData = data.map((item) => {
-                const {
-                    company,
-                    branch,
-                    parentdepartment,
-                    reportingdepartment,
-                    ...departmentData
-                } = item;
+            const formattedData = data.map((item) => ({
+                ...item,
+                companyName: item.company?.companyName || "",
+                branchname: item.branch?.branchname || "",
+                departmentname: item.department?.departmentname || "",
+                employeeCount: item.employeeCount || 0,
+            }));
 
-                return {
-                    ...departmentData,
-                    companyName: company?.companyName || "",
-                    branchname: branch?.branchname || "",
-                    parentdepartment: parentdepartment?.departmentname || "",
-                    reportingdepartment: reportingdepartment?.departmentname || "",
-                };
-            });
-
-            setDepartmentListingData(formattedData);
+            setDesignationListingData(formattedData);
         }
     };
 

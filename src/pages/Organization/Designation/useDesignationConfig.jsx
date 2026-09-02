@@ -1,6 +1,158 @@
 import { api, apiEndpoints } from "@/api/api";
 
 const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
+
+    const DesignationListingColDef = [
+        {
+            id: "designationname",
+            field: "designationname",
+            headerName: "Designation Name",
+            width: 220,
+        },
+        {
+            id: "designationcode",
+            field: "designationcode",
+            headerName: "Designation Code",
+            width: 150,
+        },
+
+        {
+            id: "shortname",
+            field: "shortname",
+            headerName: "Short Name",
+            width: 120,
+        },
+
+        {
+            id: "companyName",
+            field: "companyName",
+            headerName: "Company",
+            width: 220,
+        },
+
+        {
+            id: "branchname",
+            field: "branchname",
+            headerName: "Branch",
+            width: 180,
+        },
+
+        {
+            id: "departmentname",
+            field: "departmentname",
+            headerName: "Department",
+            width: 180,
+        },
+
+        {
+            id: "employeeCount",
+            field: "employeeCount",
+            headerName: "Employees",
+            width: 120,
+        },
+        {
+            id: "probationPeriod",
+            field: "probationPeriod",
+            headerName: "Probation Period",
+            width: 120,
+        },
+        {
+            id: "noticePeriod",
+            field: "noticePeriod",
+            headerName: "Notice Period",
+            width: 120,
+        },
+        {
+            id: "departmentHeadId",
+            field: "departmentHeadId",
+            headerName: "department Head",
+            width: 120,
+        },
+        {
+            id: "mentorId",
+            field: "mentorId",
+            headerName: "Mentor",
+            width: 120,
+        },
+        {
+            id: "salaryGrade",
+            field: "salaryGrade",
+            headerName: "salary Grade",
+            width: 120,
+        },
+        {
+            id: "attendancePolicy",
+            field: "attendancePolicy",
+            headerName: "Attendance Policy",
+            width: 120,
+        },
+        {
+            id: "officialEmail",
+            field: "officialEmail",
+            headerName: "Official Email",
+            width: 120,
+        },
+        {
+            id: "officialPhone",
+            field: "officialPhone",
+            headerName: "Official Phone",
+            width: 120,
+        },
+        {
+            id: "workMode",
+            field: "workMode",
+            headerName: "Work Mode",
+            width: 120,
+        },
+        {
+            id: "payrollGroup",
+            field: "payrollGroup",
+            headerName: "Payroll Group",
+            width: 120,
+        },
+        {
+            id: "overtimeEligible",
+            field: "overtimeEligible",
+            headerName: "Overtime",
+            width: 120,
+        },
+        {
+            id: "bonusEligible",
+            field: "bonusEligible",
+            headerName: "Bonus",
+            width: 120,
+        },
+        {
+            id: "pfApplicable",
+            field: "pfApplicable",
+            headerName: "PF",
+            width: 120,
+        },
+        {
+            id: "esiApplicable",
+            field: "esiApplicable",
+            headerName: "ESI",
+            width: 120,
+        },
+        {
+            id: "professionalTaxApplicable",
+            field: "professionalTaxApplicable",
+            headerName: "Pro. Tax",
+            width: 120,
+        },
+        {
+            id: "action",
+            field: "action",
+            headerName: "Action",
+            width: 60,
+            type: "actions",
+
+            onClick: (data) => {
+                handleDelete(data._id);
+            },
+        },
+    ];
+
     const basicInfoSchema = [
         {
             id: "designationname",
@@ -33,68 +185,10 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             className: "col-span-3",
         },
     ];
-    const DesignationListingColDef = [
-        {
-            id: "designationName",
-            field: "designationName",
-            headerName: "Designation Name",
-            width: 220,
-        },
-        {
-            id: "designationCode",
-            field: "designationCode",
-            headerName: "Designation Code",
-            width: 150,
-        },
-        {
-            id: "shortName",
-            field: "shortName",
-            headerName: "Short Name",
-            width: 120,
-        },
-        {
-            id: "companyName",
-            field: "companyName",
-            headerName: "Company",
-            width: 220,
-        },
-        {
-            id: "branchName",
-            field: "branchName",
-            headerName: "Branch",
-            width: 180,
-        },
-        {
-            id: "departmentName",
-            field: "departmentName",
-            headerName: "Department",
-            width: 180,
-        },
-        {
-            id: "employeeCount",
-            field: "employeeCount",
-            headerName: "Employees",
-            width: 120,
-        },
-        {
-            id: "status",
-            field: "status",
-            headerName: "Status",
-            width: 120,
-        }, , {
-            id: "action",
-            field: "action",
-            headerName: "Action",
-            width: 60,
-            type: "actions",
-            onClick: (data) => {
-                handleDelete(data._id);
-            }
-        }
-    ];
+
     const jobAssignmentSchema = [
         {
-            id: "companyId",
+            id: "company",
             type: "selectWrapper",
             label: "Company",
             placeHolder: "Select Company",
@@ -105,7 +199,7 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             className: "col-span-4",
         },
         {
-            id: "branchId",
+            id: "branch",
             type: "selectWrapper",
             label: "Branch",
             placeHolder: "Select Branch",
@@ -116,7 +210,7 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             className: "col-span-4",
         },
         {
-            id: "departmentId",
+            id: "department",
             type: "selectWrapper",
             label: "Department",
             api: api + apiEndpoints.organization.department.DepartmentHelp,
@@ -131,7 +225,7 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             type: "selectWrapper",
             label: "Designation",
             placeHolder: "Select Designation",
-            required: true,
+            // required: true,
             api: api + apiEndpoints.organization.designation.DesignationHelp,
             labelKey: "desigantioname",
             valueKey: "_id",
@@ -490,17 +584,17 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
         {
             id: "overtimeEligible",
             title: "Overtime Eligible",
-            defaultValue: true,
+            defaultValue: false,
         },
         {
             id: "bonusEligible",
             title: "Bonus Eligible",
-            defaultValue: true,
+            defaultValue: false,
         },
         {
             id: "pfApplicable",
             title: "PF Applicable",
-            defaultValue: true,
+            defaultValue: false,
         },
         {
             id: "esiApplicable",
@@ -510,7 +604,7 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
         {
             id: "professionalTaxApplicable",
             title: "Professional Tax",
-            defaultValue: true,
+            defaultValue: false,
         },
     ];
 

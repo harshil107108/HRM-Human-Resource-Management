@@ -4,12 +4,29 @@ import HpHeader from "@/hooks/HpHeader";
 import { FormRenderer } from "@/form-engine";
 import HpFooter from "@/hooks/HpFooter";
 import Toggle from "@/hooks/Toogle";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { api, apiEndpoints } from "@/api/api";
 import useApiCall from "@/hooks/useApiCall";
+import useAlert from "@/hooks/useAlert";
+import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { formatDateForInput } from "@/utils/dateUtils";
 
 
 const Designation = () => {
+  const locationData = useLocation();
+  const DesignationId = locationData.state.designationid;
+  const navigate = useNavigate();
+  const { successAlert } = useAlert()
+
+  const [toggleData, setToggleData] = useState({
+    professionalTaxApplicable: false,
+    esiApplicable: false,
+    pfApplicable: false,
+    bonusEligible: false,
+    overtimeEligible: false,
+  })
+
   const { apiCall } = useApiCall();
 
   const initialValue = {
@@ -32,24 +49,142 @@ const Designation = () => {
     state: '',
     city: '',
     postalCode: "",
+    description: ''
   };
 
   const [EmployeeData, setEmployeeData] = useState();
 
   const { basicInfoSchema, jobAssignmentSchema, employmentSchema, reportingStructreSchema, workSchema, gradeSchema, payrollSchema, payrollToggleConfig } = useDesignationConfig({ EmployeeData });
 
-  const formmethod = formMethod.createForm({
-    schema: [
-      ...basicInfoSchema,
-      ...jobAssignmentSchema,
-      ...employmentSchema,
-      ...reportingStructreSchema,
-      ...workSchema,
-      ...gradeSchema,
-      ...payrollSchema,
-    ],
-    initialValue,
-  });
+
+  const formmethod = useMemo(() => {
+    return formMethod.createForm({
+      schema: [
+        ...basicInfoSchema,
+        ...jobAssignmentSchema,
+        ...employmentSchema,
+        ...reportingStructreSchema,
+        ...workSchema,
+        ...gradeSchema,
+        ...payrollSchema,
+      ],
+      initialValue,
+    });
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      const formData = formmethod.methods.getValues();
+
+      const data = {
+        ...formData,
+        ...toggleData,
+      };
+
+
+      const res = await apiCall({
+        id: "designationAddEdit",
+        api: api + apiEndpoints.organization.designation.DesignationAddEdit,
+        payload: data,
+      });
+
+      if (res?.success) {
+        successAlert({
+          title: DesignationId
+            ? "Designation Updated"
+            : "Designation Added",
+          text: DesignationId
+            ? "Designation updated successfully."
+            : "Designation added successfully.",
+        });
+
+        navigate(-1);
+      }
+    } catch (error) {
+      console.error("Designation Save Error:", error);
+    }
+  };
+  const handleClear = () => {
+    formmethod.methods.reset();
+  }
+
+  const handleBack = () => {
+    navigate(-1);
+  }
+
+  const getDataById = async () => {
+    if (!DesignationId) return;
+
+    const res = await apiCall({
+      id: "getDesignationById",
+      api: api + apiEndpoints.organization.designation.DesignationGetByID,
+      payload: {
+        _id: DesignationId,
+      },
+    });
+
+    if (res?.success) {
+      const data = res?.data?.data;
+
+      if (!data) return;
+
+      const finalData = {
+        ...data,
+
+        // Convert populated references to IDs
+        company: data.company?._id || "",
+        branch: data.branch?._id || "",
+        department: data.department?._id || "",
+
+        reportingManagerId: data.reportingManagerId?._id || "",
+        skipLevelManagerId: data.skipLevelManagerId?._id || "",
+        departmentHeadId: data.departmentHeadId?._id || "",
+        mentorId: data.mentorId?._id || "",
+
+        // Date fields
+        joiningDate: formatDateForInput(data.joiningDate),
+        confirmationDate: formatDateForInput(data.confirmationDate),
+
+        // Holiday calendar is an array of IDs
+        holidayCalendar: Array.isArray(data.holidayCalendar)
+          ? data.holidayCalendar.map((item) =>
+            typeof item === "object" ? item._id : item
+          )
+          : [],
+
+        // Weekly off is already an array
+        weeklyOff: Array.isArray(data.weeklyOff)
+          ? data.weeklyOff
+          : [],
+      };
+
+      formmethod.methods.setValues(finalData);
+
+      setToggleData({
+        professionalTaxApplicable:
+          data.professionalTaxApplicable ?? false,
+
+        esiApplicable:
+          data.esiApplicable ?? false,
+
+        pfApplicable:
+          data.pfApplicable ?? false,
+
+        bonusEligible:
+          data.bonusEligible ?? false,
+
+        overtimeEligible:
+          data.overtimeEligible ?? false,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (DesignationId) {
+      getDataById();
+    }
+  }, [DesignationId]);
+
 
 
   const getEmployeeData = async () => {
@@ -109,10 +244,15 @@ const Designation = () => {
                 </label>
 
                 <textarea
-                  id="branchDescription"
+                  id="description"
+                  name="description"
                   rows={3}
-                  placeholder="Briefly describe the department's core function and objectives..."
-                  className=" w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                  value={formmethod.methods.watch("description") || ""}
+                  onChange={(e) =>
+                    formmethod.methods.setValue("description", e.target.value)
+                  }
+                  placeholder="Briefly describe the employee's role, responsibilities, and objectives..."
+                  className="w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
                 />
               </div>
 
@@ -255,7 +395,6 @@ const Designation = () => {
           <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="lg:col-span-2 overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
 
-              {/* Card Header */}
               <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
                 <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
 
@@ -264,7 +403,6 @@ const Designation = () => {
                 </h2>
               </div>
 
-              {/* Card Body */}
               <div className="p-4">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {payrollToggleConfig.map((item) => (
@@ -284,9 +422,10 @@ const Designation = () => {
 
                       <Toggle
                         name={item.id}
-                        formMethod={formmethod}
                         defaultValue={item.defaultValue}
                         title={item.title}
+                        toggleData={toggleData}
+                        setToggleData={setToggleData}
                       />
                     </div>
                   ))}
@@ -296,9 +435,11 @@ const Designation = () => {
             </div>
           </div>
 
-
-
-          <HpFooter />
+          <HpFooter
+            onBack={handleBack}
+            onClear={handleClear}
+            onSave={handleSave}
+          />
 
         </div>
       </div>

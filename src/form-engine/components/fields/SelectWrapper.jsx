@@ -498,7 +498,7 @@ export default function SelectWrapper({ field, form }) {
       )}
 
       {label && (
-        <label className={labelClass}>
+        <label className={`${labelClass} min-h-5`}>
           {label}
 
           {required && (
@@ -613,6 +613,7 @@ const customStyles = (error) => ({
 
     outline: "none",
     display: "flex",
+    flexWrap: "nowrap",
     alignItems: "center",
     fontSize: 11,
     backgroundColor: "#f8fafc",
@@ -626,6 +627,10 @@ const customStyles = (error) => ({
     alignItems: "center",
     padding: "0 5px",
     height: "100%",
+    minWidth: 0,
+    width: 0,
+    flex: "1 1 auto",
+    flexWrap: "nowrap",
     overflow: "hidden",
   }),
 
@@ -642,6 +647,13 @@ const customStyles = (error) => ({
     ...base,
     color: "#0f172a",
     margin: 0,
+    right: 12,
+    maxWidth: "calc(100% - 28px)",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    paddingRight: 8,
+    boxSizing: "border-box",
     fontSize: 11,
     fontWeight: 600,
     lineHeight: 1.2,
@@ -649,6 +661,7 @@ const customStyles = (error) => ({
 
   indicatorSeparator: (base) => ({
     ...base,
+    flexShrink: 0,
     backgroundColor: "#cbd5e1",
     width: 1,
     margin: "3px 0",
@@ -657,12 +670,22 @@ const customStyles = (error) => ({
 
   dropdownIndicator: (base, state) => ({
     ...base,
+    flexShrink: 0,
     color: "#64748b",
     padding: "0 5px 0 7px",
     transform: state.selectProps.menuIsOpen
       ? "rotate(180deg)"
       : "rotate(0deg)",
     transition: "all .2s",
+  }),
+
+  indicatorsContainer: (base) => ({
+    ...base,
+    flexShrink: 0,
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    backgroundColor: "#f8fafc",
   }),
 
   clearIndicator: (base) => ({

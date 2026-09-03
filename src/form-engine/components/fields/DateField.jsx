@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useFormStore } from "../../hooks/useFormStore";
 import {
   inputClass,
@@ -194,6 +195,7 @@ export default function DateField({ field, form, ...standaloneProps }) {
   const monthRef = useRef(null);
   const yearRef = useRef(null);
   const wrapperRef = useRef(null);
+  const calendarRef = useRef(null);
   const lastEmitted = useRef(undefined);
   const initialized = useRef(false);
 
@@ -229,7 +231,11 @@ export default function DateField({ field, form, ...standaloneProps }) {
   useEffect(() => {
     if (!calendarOpen) return;
     const handler = (e) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(e.target) &&
+        !calendarRef.current?.contains(e.target)
+      ) {
         setCalendarOpen(false);
       }
     };
@@ -306,6 +312,11 @@ export default function DateField({ field, form, ...standaloneProps }) {
     if (e.key === "Enter") {
       e.preventDefault();
       validateAndCommit(day, month, year, { fillDefaults: true });
+      const validationError = getDateValidationError(day, month, year, { min, max });
+      const isCompleteDate = day.length === 2 && month.length === 2 && year.length === 4;
+      if (!validationError && isCompleteDate) {
+        form?.methods.focusNext(id);
+      }
       return;
     }
     if (e.key === "ArrowDown") {
@@ -415,6 +426,34 @@ export default function DateField({ field, form, ...standaloneProps }) {
 
   const cells = useMemo(() => buildCalendarGrid(viewDate.year, viewDate.month), [viewDate]);
 
+  const [calendarPosition, setCalendarPosition] = useState(null);
+
+  useEffect(() => {
+    if (!calendarOpen) {
+      setCalendarPosition(null);
+      return undefined;
+    }
+
+    const updateCalendarPosition = () => {
+      const fieldBounds = wrapperRef.current?.getBoundingClientRect();
+      if (!fieldBounds) return;
+
+      setCalendarPosition({
+        top: fieldBounds.bottom + 4,
+        left: fieldBounds.left,
+      });
+    };
+
+    updateCalendarPosition();
+    window.addEventListener("resize", updateCalendarPosition);
+    window.addEventListener("scroll", updateCalendarPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updateCalendarPosition);
+      window.removeEventListener("scroll", updateCalendarPosition, true);
+    };
+  }, [calendarOpen]);
+
   const displayError = error || formError;
   const segmentBase =
     "h-7 bg-transparent text-center text-xs font-semibold text-slate-800 outline-none tabular-nums placeholder:text-slate-400 disabled:cursor-not-allowed disabled:text-slate-500";
@@ -509,10 +548,12 @@ export default function DateField({ field, form, ...standaloneProps }) {
           </div>
         </div>
 
-        {calendarOpen && (
+        {calendarOpen && calendarPosition && createPortal(
           <div
+            ref={calendarRef}
             role="dialog" aria-label="Choose date" onKeyDown={handleCalendarKeyDown}
-            className="absolute z-20 mt-1 w-64 rounded-md border border-gray-200 bg-white p-2 shadow-lg"
+            className="fixed z-[9999] w-64 rounded-md border border-gray-200 bg-white p-2 shadow-lg"
+            style={calendarPosition}
           >
             <div className="mb-1 flex items-center justify-between px-1">
               <button type="button" onClick={() => goMonth(-1)} aria-label="Previous month"
@@ -575,7 +616,8 @@ export default function DateField({ field, form, ...standaloneProps }) {
                 Close
               </button>
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
       </div>
 

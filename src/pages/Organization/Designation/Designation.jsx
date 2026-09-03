@@ -128,9 +128,11 @@ const Designation = () => {
 
       if (!data) return;
 
+      console.log(data.firstName)
+
       const finalData = {
         ...data,
-
+        firstName: data.firstName || "",
         // Convert populated references to IDs
         company: data.company?._id || "",
         branch: data.branch?._id || "",

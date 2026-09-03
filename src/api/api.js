@@ -81,6 +81,10 @@ const apiEndpoints = {
         }
     },
 
+    common: {
+        imageUpload: "/api/imageupload"
+    },
+
     user: {
         get: "/user/getUsers",
         add: "/user/addUser",

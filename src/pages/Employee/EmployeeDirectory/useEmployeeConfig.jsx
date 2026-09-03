@@ -1,34 +1,34 @@
-import React from "react";
+import { api, apiEndpoints } from "@/api/api";
 
 const useEmployeeConfig = ({ handleDelete } = {}) => {
     const employeeListingColDef = [
         {
-            id: "employeeName",
-            field: "employeeName",
-            headerName: "Employee",
-            width: 220,
+            id: "firstName",
+            field: "firstName",
+            headerName: "Employee Name",
+            width: 180,
         },
         {
-            id: "employeeCode",
-            field: "employeeCode",
-            headerName: "Employee ID",
-            width: 120,
+            id: "lastName",
+            field: "lastName",
+            headerName: "Surname ",
+            width: 140,
         },
         {
             id: "companyName",
             field: "companyName",
             headerName: "Company",
-            width: 180,
+            width: 120,
         },
         {
             id: "branchName",
             field: "branchName",
             headerName: "Branch",
-            width: 160,
+            width: 120,
         },
         {
-            id: "departmentName",
-            field: "departmentName",
+            id: "departmentname",
+            field: "departmentname",
             headerName: "Department",
             width: 180,
         },
@@ -57,9 +57,15 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             width: 140,
         },
         {
-            id: "workEmail",
-            field: "workEmail",
-            headerName: "Work Email",
+            id: "officialEmail",
+            field: "officialEmail",
+            headerName: "Official Email",
+            width: 240,
+        },
+        {
+            id: "personalEmail",
+            field: "personalEmail",
+            headerName: "Personal Email Email",
             width: 240,
         },
         {
@@ -69,11 +75,54 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             width: 150,
         },
         {
-            id: "status",
-            field: "status",
-            headerName: "Status",
+            id: "alternateMobile",
+            field: "alternateMobile",
+            headerName: "Alternate Mobile",
+            width: 150,
+        },
+        {
+            id: "emergencyContactNumber",
+            field: "emergencyContactNumber",
+            headerName: "emergency Contact",
+            width: 150,
+        },
+        {
+            id: "joiningDate",
+            field: "joiningDate",
+            headerName: "Joining Date",
+            width: 150,
+        },
+        {
+            id: "confirmationDate",
+            field: "confirmationDate",
+            headerName: "Confirmation Date",
+            width: 150,
+        },
+        {
+            id: "countryName",
+            field: "countryName",
+            headerName: "Country",
             width: 120,
         },
+        {
+            id: "stateName",
+            field: "stateName",
+            headerName: "State",
+            width: 120,
+        },
+        {
+            id: "cityName",
+            field: "cityName",
+            headerName: "City",
+            width: 120,
+        },
+        {
+            id: "currentAddress",
+            field: "currentAddress",
+            headerName: "Address",
+            width: 120,
+        },
+
         {
             id: "action",
             field: "action",
@@ -220,10 +269,9 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             required: true,
             nextFocusField: "branchId",
             className: "col-span-4",
-            options: [
-                { label: "Elite Enterprises Inc.", value: 1 },
-                { label: "Orvexa Technologies", value: 2 },
-            ],
+            api: api + apiEndpoints.organization.company.CompanyHelp,
+            labelKey: "companyName",
+            valueKey: "_id",
         },
         {
             id: "branchId",
@@ -234,10 +282,9 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             prevFocusField: "companyId",
             nextFocusField: "departmentId",
             className: "col-span-4",
-            options: [
-                { label: "Main Headquarters", value: 1 },
-                { label: "Ahmedabad Branch", value: 2 },
-            ],
+            api: api + apiEndpoints.organization.branch.BranchHelp,
+            labelKey: "branchname",
+            valueKey: "_id",
         },
         {
             id: "departmentId",
@@ -248,11 +295,9 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             prevFocusField: "branchId",
             nextFocusField: "designationId",
             className: "col-span-4",
-            options: [
-                { label: "Engineering", value: 1 },
-                { label: "HR", value: 2 },
-                { label: "Accounts", value: 3 },
-            ],
+            api: api + apiEndpoints.organization.department.DepartmentHelp,
+            labelKey: "departmentname",
+            valueKey: "_id",
         },
         {
             id: "designationId",
@@ -263,11 +308,9 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             prevFocusField: "departmentId",
             nextFocusField: "reportingManager",
             className: "col-span-4",
-            options: [
-                { label: "Software Engineer", value: 1 },
-                { label: "Senior Developer", value: 2 },
-                { label: "Team Lead", value: 3 },
-            ],
+            api: api + apiEndpoints.organization.designation.DesignationHelp,
+            labelKey: "designationname",
+            valueKey: "_id",
         },
         {
             id: "reportingManager",
@@ -278,10 +321,9 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             prevFocusField: "designationId",
             nextFocusField: "employmentType",
             className: "col-span-4",
-            options: [
-                { label: "John Smith", value: 1 },
-                { label: "David Wilson", value: 2 },
-            ],
+            api: api + apiEndpoints.employee.employee.EmployeeHelp,
+            labelKey: "employeeName",
+            valueKey: "_id",
         },
         {
             id: "employmentType",
@@ -334,20 +376,29 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
         },
         {
             id: "probationPeriod",
-            type: "number",
+            type: "selectWrapper",
             label: "Probation Period",
-            placeHolder: "6",
+            placeHolder: "Select probationPeriod ",
             required: false,
             suffix: "Months",
             prevFocusField: "confirmationDate",
             className: "col-span-4",
+            options: [
+                { label: "No Probation", value: 0 },
+                { label: "1 Month", value: 1 },
+                { label: "2 Months", value: 2 },
+                { label: "3 Months", value: 3 },
+                { label: "4 Months", value: 4 },
+                { label: "6 Months", value: 5 },
+                { label: "12 Months", value: 6 },
+            ],
         },
     ];
 
     const contactInformationSchema = [
         {
             id: "officialEmail",
-            type: "text",
+            type: "email",
             label: "Official Email",
             placeHolder: "e.g. john.doe@company.com",
             required: true,
@@ -356,7 +407,7 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
         },
         {
             id: "personalEmail",
-            type: "number",
+            type: "email",
             label: "Personal Email",
             placeHolder: "e.g. john@gmail.com",
             required: true,
@@ -366,7 +417,7 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
         },
         {
             id: "mobileNumber",
-            type: "number",
+            type: "phone",
             label: "Mobile Number",
             placeHolder: "Enter Mobile Number",
             required: true,
@@ -376,7 +427,7 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
         },
         {
             id: "alternateMobile",
-            type: "number",
+            type: "phone",
             label: "Alternate Mobile",
             placeHolder: "Enter Alternate Mobile",
             required: false,
@@ -396,7 +447,7 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
         },
         {
             id: "emergencyContactNumber",
-            type: "number",
+            type: "phone",
             label: "Emergency Contact Number",
             placeHolder: "Enter Contact Number",
             required: true,
@@ -413,10 +464,9 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             prevFocusField: "emergencyContactNumber",
             nextFocusField: "stateId",
             className: "col-span-4",
-            options: [
-                { label: "India", value: 1 },
-                { label: "United States", value: 2 },
-            ],
+            api: api + apiEndpoints.master.country.CountryHelp,
+            labelKey: "countryName",
+            valueKey: "_id",
         },
         {
             id: "stateId",
@@ -427,10 +477,9 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             prevFocusField: "countryId",
             nextFocusField: "cityId",
             className: "col-span-4",
-            options: [
-                { label: "Gujarat", value: 1 },
-                { label: "Maharashtra", value: 2 },
-            ],
+            api: api + apiEndpoints.master.state.StateHelp,
+            labelKey: "stateName",
+            valueKey: "_id",
         },
         {
             id: "cityId",
@@ -441,10 +490,9 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             prevFocusField: "stateId",
             nextFocusField: "postalCode",
             className: "col-span-4",
-            options: [
-                { label: "Ahmedabad", value: 1 },
-                { label: "Surat", value: 2 },
-            ],
+            api: api + apiEndpoints.master.city.CityHelp,
+            labelKey: "cityName",
+            valueKey: "_id",
         },
         {
             id: "postalCode",
@@ -520,6 +568,9 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             placeHolder: "Select Bank",
             required: true,
             className: "col-span-4",
+            api: api + apiEndpoints.master.bank.BankHelp,
+            labelKey: "bankName",
+            valueKey: "_id",
         },
         {
             id: "accountNumber",
@@ -568,6 +619,13 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             placeHolder: "Select Structure",
             required: true,
             className: "col-span-4",
+            options: [
+                { label: "Monthly Fixed Salary", value: "monthly_fixed" },
+                { label: "Monthly + Performance Incentive", value: "monthly_incentive" },
+                { label: "Hourly Salary", value: "hourly" },
+                { label: "Daily Wage", value: "daily_wage" },
+                { label: "Annual CTC", value: "annual_ctc" },
+            ],
         },
         {
             id: "ctc",

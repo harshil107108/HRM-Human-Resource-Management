@@ -14,7 +14,7 @@
     "axios": "^1.20.0",
     "dotenv": "^17.4.2",
     "framer-motion": "^12.42.2",
-    "lucide-react": "^1.27.0",
+    "lucide-react": "^1.39.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.81.0",

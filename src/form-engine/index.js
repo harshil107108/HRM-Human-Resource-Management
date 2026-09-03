@@ -14,18 +14,62 @@ import DateField from "./components/fields/DateField";
 import CheckboxField from "./components/fields/CheckboxField";
 import PhoneField from "./components/fields/PhoneField";
 import EmailField from "./components/fields/EmailField";
+import { memo } from "react";
+
+const areFieldValuesEqual = (previousValue, nextValue) => {
+  if (Object.is(previousValue, nextValue)) return true;
+
+  if (Array.isArray(previousValue) && Array.isArray(nextValue)) {
+    return (
+      previousValue.length === nextValue.length &&
+      previousValue.every((value, index) =>
+        areFieldValuesEqual(value, nextValue[index]),
+      )
+    );
+  }
+
+  if (
+    previousValue &&
+    nextValue &&
+    typeof previousValue === "object" &&
+    typeof nextValue === "object"
+  ) {
+    const previousKeys = Object.keys(previousValue);
+    const nextKeys = Object.keys(nextValue);
+
+    return (
+      previousKeys.length === nextKeys.length &&
+      previousKeys.every((key) =>
+        areFieldValuesEqual(previousValue[key], nextValue[key]),
+      )
+    );
+  }
+
+  return false;
+};
+
+const areFieldConfigsEqual = (previousField, nextField) =>
+  areFieldValuesEqual(previousField, nextField);
+
+const memoizeField = (FieldComponent) =>
+  memo(
+    FieldComponent,
+    (previousProps, nextProps) =>
+      previousProps.form === nextProps.form &&
+      areFieldConfigsEqual(previousProps.field, nextProps.field),
+  );
 
 // ---- register built-in field types -----------------------------------
 // Add new types anywhere in your app with the exported `registerFieldType`
 // without ever touching this file, e.g.:
 //   registerFieldType('date', DateField);
-registerFieldType("number", NumberField);
-registerFieldType("selectWrapper", SelectWrapper);
-registerFieldType("text", TextField);
-registerFieldType("date", DateField);
-registerFieldType("checkbox", CheckboxField);
-registerFieldType("phone", PhoneField);
-registerFieldType("email", EmailField);
+registerFieldType("number", memoizeField(NumberField));
+registerFieldType("selectWrapper", memoizeField(SelectWrapper));
+registerFieldType("text", memoizeField(TextField));
+registerFieldType("date", memoizeField(DateField));
+registerFieldType("checkbox", memoizeField(CheckboxField));
+registerFieldType("phone", memoizeField(PhoneField));
+registerFieldType("email", memoizeField(EmailField));
 
 // ---- public exports -----------------------------------------------------
 export { default as formMethod, extendFormMethod } from "./core/formMethod";

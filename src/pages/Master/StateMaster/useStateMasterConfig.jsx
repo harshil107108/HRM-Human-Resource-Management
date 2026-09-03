@@ -53,6 +53,7 @@ const useStateMasterConfig = ({ handleDelete } = {}) => {
             label: "Country",
             placeHolder: "Select Country",
             required: true,
+            prevFocusField: "countryId",
             nextFocusField: "stateCode",
             className: "col-span-6",
             api: api + apiEndpoints.master.country.CountryHelp,
@@ -101,7 +102,7 @@ const useStateMasterConfig = ({ handleDelete } = {}) => {
             placeHolder: "Enter Capital",
             required: false,
             prevFocusField: "gstStateCode",
-            nextFocusField: "isActive",
+            nextFocusField: "capital",
             className: "col-span-6",
         },
     ];

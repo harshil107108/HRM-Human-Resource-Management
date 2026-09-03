@@ -52,6 +52,7 @@ const useCountyMasterConfig = ({ handleDelete } = {}) => {
             label: "Country Name",
             placeHolder: "Enter country name",
             required: true,
+            prevFocusField: "countryName",
             nextFocusField: "countryCode",
             className: "col-span-6",
         },
@@ -98,7 +99,7 @@ const useCountyMasterConfig = ({ handleDelete } = {}) => {
             placeHolder: "Indian",
             required: false,
             prevFocusField: "phoneCode",
-            nextFocusField: "isActive",
+            nextFocusField: "nationality",
             className: "col-span-6",
         },
     ];

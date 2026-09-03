@@ -64,6 +64,7 @@ const useCityMasterConfig = ({ handleDelete } = {}) => {
             label: "Country",
             placeHolder: "Select Country",
             required: true,
+            prevFocusField: "countryId",
             nextFocusField: "stateId",
             className: "col-span-6",
             api: api + apiEndpoints.master.country.CountryHelp,
@@ -135,7 +136,7 @@ const useCityMasterConfig = ({ handleDelete } = {}) => {
             placeHolder: "72.5714",
             required: false,
             prevFocusField: "latitude",
-            nextFocusField: "isActive",
+            nextFocusField: "longitude",
             className: "col-span-6",
         },
     ];

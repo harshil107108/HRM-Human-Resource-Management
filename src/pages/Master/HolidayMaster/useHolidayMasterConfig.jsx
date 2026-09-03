@@ -27,6 +27,27 @@ const useHolidayMasterConfig = ({ handleDelete } = {}) => {
             width: 120,
         },
         {
+            type: "status",
+            id: "recurringEveryYear",
+            field: "recurringEveryYear",
+            headerName: "Recurring EveryYear",
+            width: 150,
+        },
+        {
+            type: "status",
+            id: "optionalHoliday",
+            field: "optionalHoliday",
+            headerName: "Optional Holiday",
+            width: 140,
+        },
+        {
+            type: "status",
+            id: "paidHoliday",
+            field: "paidHoliday",
+            headerName: "Paid Holiday",
+            width: 120,
+        },
+        {
             id: "action",
             field: "action",
             headerName: "Action",
@@ -45,6 +66,7 @@ const useHolidayMasterConfig = ({ handleDelete } = {}) => {
             label: "Holiday Name",
             placeHolder: "Enter Holiday Name",
             required: true,
+            prevFocusField: "holidayName",
             nextFocusField: "holidayCode",
             className: "col-span-6",
         },
@@ -77,7 +99,7 @@ const useHolidayMasterConfig = ({ handleDelete } = {}) => {
             placeHolder: "Select Holiday Type",
             required: true,
             prevFocusField: "holidayDate",
-            nextFocusField: "holidayCalendar",
+            nextFocusField: "holidayType",
             className: "col-span-6",
             options: [
                 {

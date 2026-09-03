@@ -4,15 +4,22 @@ import { Building2 } from "lucide-react";
 const Toggle = ({
     name,
     defaultValue = false,
+    value,
+    onChange,
     title = "Head Office",
     description = "Mark this option as enabled.",
     disabled = false,
     toggleData,
     setToggleData,
 }) => {
-    const value = toggleData?.[name] ?? defaultValue;
+    const checkedValue = value ?? toggleData?.[name] ?? defaultValue;
 
     const handleChange = (checked) => {
+        if (onChange) {
+            onChange(checked);
+            return;
+        }
+
         setToggleData((prev) => ({
             ...prev,
             [name]: checked,
@@ -48,7 +55,7 @@ const Toggle = ({
                     <input
                         type="checkbox"
                         name={name}
-                        checked={Boolean(value)}
+                        checked={Boolean(checkedValue)}
                         disabled={disabled}
                         onChange={(e) => handleChange(e.target.checked)}
                         className="peer sr-only"

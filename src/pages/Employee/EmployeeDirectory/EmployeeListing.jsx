@@ -32,7 +32,7 @@ const EmployeeListing = () => {
                         title: "Employee deleted",
                         text: "Employee has been deleted successfully.",
                     });
-                    getCityListing();
+                    getEmployeeListing();
                 }
             },
         });

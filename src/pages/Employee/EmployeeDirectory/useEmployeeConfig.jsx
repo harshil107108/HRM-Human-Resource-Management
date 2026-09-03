@@ -87,12 +87,6 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             width: 150,
         },
         {
-            id: "joiningDate",
-            field: "joiningDate",
-            headerName: "Joining Date",
-            width: 150,
-        },
-        {
             id: "confirmationDate",
             field: "confirmationDate",
             headerName: "Confirmation Date",

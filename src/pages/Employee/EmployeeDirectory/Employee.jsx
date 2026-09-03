@@ -10,12 +10,32 @@ import { useLocation, useNavigate } from "react-router-dom";
 import useApiCall from "@/hooks/useApiCall";
 import { api, apiEndpoints } from "@/api/api";
 import { formatDateForInput } from "@/utils/dateUtils";
+import useAlert from "@/hooks/useAlert";
+
+const getUploadUrl = (filePath) => {
+    if (!filePath) return null;
+
+    const normalizedPath = filePath.replace(/\\/g, "/");
+    const uploadsIndex = normalizedPath.indexOf("/uploads/");
+
+    return uploadsIndex >= 0
+        ? `${api}${normalizedPath.slice(uploadsIndex)}`
+        : filePath.startsWith("http")
+            ? filePath
+            : `${api}/${normalizedPath.replace(/^\/+/, "")}`;
+};
+
+const getUploadName = (filePath) => {
+    if (!filePath) return null;
+    return filePath.replace(/\\/g, "/").split("/").pop();
+};
 
 
 const Employee = () => {
 
     const locationData = useLocation();
     const EmployeeId = locationData.state.employeeid;
+    const { successAlert } = useAlert();
 
     const [permissions, setPermissions] = useState({
         financialView: false,
@@ -23,7 +43,6 @@ const Employee = () => {
         orgChartAdmin: false,
         directoryAccess: true,
     });
-
 
     const navigate = useNavigate();
     const { apiCall } = useApiCall();
@@ -64,12 +83,12 @@ const Employee = () => {
 
     const handleDocumentChange = (name, file) => {
         if (!file) return;
-
         const allowedTypes = [
             "application/pdf",
             "application/msword",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         ];
+
 
         if (!allowedTypes.includes(file.type)) {
             alert("Only PDF, DOC and DOCX files are allowed.");
@@ -77,11 +96,11 @@ const Employee = () => {
         }
 
         const maxSize = 5 * 1024 * 1024;
-
         if (file.size > maxSize) {
             alert("File size must be less than 5 MB.");
             return;
         }
+
 
         setDocuments((prev) => ({
             ...prev,
@@ -97,24 +116,28 @@ const Employee = () => {
     const handleDocumentRemove = (name) => {
         setDocuments((prev) => ({
             ...prev,
-            [name]: null,
+            [name]: {
+                file: null,
+                url: null,
+                name: null,
+            },
         }));
     };
 
     const handleImageChange = (e) => {
         const file = e.target.files?.[0];
-
         if (!file) return;
 
         const allowedTypes = [
             "image/jpeg",
+            "image/jpg",
             "image/png",
-            "image/gif",
             "image/webp",
         ];
 
+
         if (!allowedTypes.includes(file.type)) {
-            alert("Please upload a JPG, PNG, GIF or WEBP image.");
+            alert("Please upload a JPG, JPEG, PNG or WEBP image.");
             e.target.value = "";
             return;
         }
@@ -127,23 +150,19 @@ const Employee = () => {
             return;
         }
 
+        if (preview) { URL.revokeObjectURL(preview); }
         setProfilePhoto(file);
 
         const previewUrl = URL.createObjectURL(file);
         setPreview(previewUrl);
-
-        formmethod.methods.setValue("profilePhoto", file);
+        formmethod.methods.setValue("profileImage", file);
     };
 
     const handleRemove = () => {
-        if (preview) {
-            URL.revokeObjectURL(preview);
-        }
-
+        if (preview) { URL.revokeObjectURL(preview); }
         setPreview(null);
         setProfilePhoto(null);
-
-        formmethod.methods.setValue("profilePhoto", null);
+        formmethod.methods.setValue("profileImage", null);
     };
 
     const {
@@ -223,54 +242,72 @@ const Employee = () => {
     const handleSave = async () => {
         try {
             const values = formmethod.methods.getValues();
-
             const formData = new FormData();
-
             Object.entries(values).forEach(([key, value]) => {
+                if (
+                    key === "profilePhoto" ||
+                    key === "profileImage" ||
+                    key === "resume" ||
+                    key === "offerLetter" ||
+                    key === "appointmentLetter" ||
+                    key === "otherDocuments"
+                ) {
+                    return;
+                }
+
                 if (
                     value !== undefined &&
                     value !== null &&
                     value !== ""
                 ) {
-                    // Don't append File here if we handle it separately
-                    if (key !== "profilePhoto") {
-                        formData.append(key, value);
+                    if (
+                        typeof value === "object" &&
+                        !(value instanceof File)
+                    ) {
+                        return;
                     }
+
+                    formData.append(key, value);
                 }
             });
 
-            // Profile image
-            if (profilePhoto) {
-                formData.append("profilePhoto", profilePhoto);
+            if (profilePhoto instanceof File) {
+
+                formData.append(
+                    "profileImage",
+                    profilePhoto
+                );
             }
 
-            // Employee documents
-            if (documents.resume) {
-                formData.append("resume", documents.resume);
+            if (documents.resume?.file instanceof File) {
+
+                formData.append(
+                    "resume",
+                    documents.resume.file
+                );
             }
 
-            if (documents.offerLetter) {
-                formData.append("offerLetter", documents.offerLetter);
+            if (documents.offerLetter?.file instanceof File) {
+
+                formData.append(
+                    "offerLetter",
+                    documents.offerLetter.file
+                );
             }
 
-            if (documents.appointmentLetter) {
-                formData.append("appointmentLetter", documents.appointmentLetter);
+            if (documents.appointmentLetter?.file instanceof File) {
+
+                formData.append(
+                    "appointmentLetter",
+                    documents.appointmentLetter.file
+                );
             }
 
-            if (documents.otherDocuments) {
-                formData.append("otherDocuments", documents.otherDocuments);
+            if (documents.otherDocuments?.file instanceof File) {
+                formData.append("otherDocuments", documents.otherDocuments.file);
             }
 
-            // Profile image
-            if (profilePhoto) {
-                formData.append("profilePhoto", profilePhoto);
-            }
-
-            // Permissions
-            formData.append(
-                "permissions",
-                JSON.stringify(permissions)
-            );
+            formData.append("permissions", JSON.stringify(permissions));
 
             const res = await apiCall({
                 id: "employeeAddEdit",
@@ -279,10 +316,28 @@ const Employee = () => {
             });
 
             if (res?.success) {
-                console.log("Employee saved successfully");
+                successAlert({
+                    title: EmployeeId
+                        ? "Employee Updated"
+                        : "Employee Added",
+                    text: EmployeeId
+                        ? "Employee updated successfully."
+                        : "Employee added successfully.",
+                });
+                navigate(-1);
+            } else {
+                console.error(
+                    "Employee save failed:",
+                    res
+                );
             }
+
         } catch (error) {
-            console.error("Employee save error:", error);
+
+            console.error(
+                "Employee save error:",
+                error
+            );
         }
     };
 
@@ -292,14 +347,12 @@ const Employee = () => {
         const res = await apiCall({
             id: "getEmployeeById",
             api: api + apiEndpoints.employee.employee.EmployeeGetByID,
-            payload: {
-                _id: EmployeeId,
-            },
+            payload: { _id: EmployeeId, },
         });
+
 
         if (res?.success) {
             const data = res?.data?.data;
-            console.log(data)
 
             if (!data) return;
 
@@ -318,17 +371,9 @@ const Employee = () => {
 
                 bankName: data.bankName?._id || "",
 
-                // =========================
-                // DATE FIELDS
-                // =========================
-
                 dateOfBirth: formatDateForInput(data.dateOfBirth),
                 joiningDate: formatDateForInput(data.joiningDate),
                 confirmationDate: formatDateForInput(data.confirmationDate),
-
-                // =========================
-                // SAFE DEFAULTS
-                // =========================
 
                 employeeId: data.employeeId || "",
                 profileImage: data.profileImage || "",
@@ -385,8 +430,33 @@ const Employee = () => {
                 isActive: data.isActive ?? true,
             };
 
-            setPermissions(data.permissions)
+            const profileImageUrl = getUploadUrl(data.profileImage);
 
+            setPreview(profileImageUrl);
+            setDocuments({
+                resume: {
+                    file: null,
+                    url: getUploadUrl(data.resume),
+                    name: getUploadName(data.resume),
+                },
+                offerLetter: {
+                    file: null,
+                    url: getUploadUrl(data.offerLetter),
+                    name: getUploadName(data.offerLetter),
+                },
+                appointmentLetter: {
+                    file: null,
+                    url: getUploadUrl(data.appointmentLetter),
+                    name: getUploadName(data.appointmentLetter),
+                },
+                otherDocuments: {
+                    file: null,
+                    url: getUploadUrl(data.otherDocuments),
+                    name: getUploadName(data.otherDocuments),
+                },
+            });
+
+            setPermissions(data.permissions)
             formmethod.methods.setValues(finalData);
         }
     };
@@ -495,24 +565,15 @@ const Employee = () => {
                                         >
                                             Remove
                                         </button>
-
                                     </div>
-
                                 </div>
-
                             </div>
-
-
                             <FormRenderer formMethod={formmethod} formSchema={personalInformationSchema} />
-
                         </div>
                     </div>
 
 
-
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-
-
                         <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
 
                             {/* Card Header */}
@@ -544,18 +605,14 @@ const Employee = () => {
                                     </h2>
                                 </div>
 
-                                {/* Card Body */}
                                 <div className="p-4">
                                     <FormRenderer
                                         formMethod={formmethod}
                                         formSchema={contactInformationSchema}
                                     />
                                 </div>
-
                             </div>
-
                         </div>
-
                     </div>
 
                     <div className="mt-4 mb-4 overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
@@ -574,9 +631,6 @@ const Employee = () => {
                             <FormRenderer formMethod={formmethod} formSchema={documentInformationSchema} />
 
                             <div className="my-8 border-t border-slate-100" />
-
-                            {/* Upload Section */}
-
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
                                 <UploadCard
@@ -626,19 +680,14 @@ const Employee = () => {
                                         handleDocumentRemove("otherDocuments")
                                     }
                                 />
-
                             </div>
-
                         </div>
                     </div>
 
 
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-
-
                         <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
 
-                            {/* Card Header */}
                             <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
                                 <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
 
@@ -647,7 +696,6 @@ const Employee = () => {
                                 </h2>
                             </div>
 
-                            {/* Card Body */}
                             <div className="p-4">
                                 <FormRenderer formMethod={formmethod} formSchema={payrollInformationSchema} />
                             </div>
@@ -658,7 +706,6 @@ const Employee = () => {
 
                             <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
 
-                                {/* Card Header */}
                                 <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
                                     <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
 
@@ -667,23 +714,17 @@ const Employee = () => {
                                     </h2>
                                 </div>
 
-                                {/* Card Body */}
                                 <div className="p-4">
                                     <FormRenderer
                                         formMethod={formmethod}
                                         formSchema={accessInformationSchema}
                                     />
                                 </div>
-
                             </div>
-
                         </div>
-
                     </div>
 
                     <div className="mt-4 mb-4 overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
-
-                        {/* Card Header */}
                         <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
                             <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
                             <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
@@ -692,9 +733,7 @@ const Employee = () => {
                         </div>
 
                         <div className="p-6 shadow-sm">
-
                             <div className="grid grid-cols-4 gap-4">
-
                                 <PermissionCard
                                     title="Financial View"
                                     description="Access payroll and salary information."
@@ -736,8 +775,6 @@ const Employee = () => {
                         </div>
                     </div>
 
-
-
                     <HpFooter
                         onBack={handleBack}
                         onClear={handleClear}
@@ -752,7 +789,6 @@ const Employee = () => {
                     className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-6"
                     onClick={() => setShowImageModal(false)}
                 >
-                    {/* Close Button */}
                     <button
                         type="button"
                         onClick={() => setShowImageModal(false)}
@@ -761,7 +797,7 @@ const Employee = () => {
                         <X className="h-6 w-6" />
                     </button>
 
-                    {/* Large Round Image */}
+
                     <div
                         className="flex h-[min(70vw,500px)] w-[min(70vw,500px)] items-center justify-center overflow-hidden rounded-full border-4 border-white bg-slate-100 shadow-2xl"
                         onClick={(e) => e.stopPropagation()}

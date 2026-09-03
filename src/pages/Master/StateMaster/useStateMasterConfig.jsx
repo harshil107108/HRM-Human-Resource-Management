@@ -13,7 +13,7 @@ const useStateMasterConfig = ({ handleDelete } = {}) => {
             id: "stateCode",
             field: "stateCode",
             headerName: "State Code",
-            width: 90,
+            width: 100,
         },
 
         {
@@ -25,8 +25,8 @@ const useStateMasterConfig = ({ handleDelete } = {}) => {
         {
             id: "gstStateCode",
             field: "gstStateCode",
-            headerName: "GST State Code",
-            width: 150,
+            headerName: "GST StateCode",
+            width: 120,
         },
         {
             id: "capital",
@@ -38,7 +38,7 @@ const useStateMasterConfig = ({ handleDelete } = {}) => {
             id: "action",
             field: "action",
             headerName: "Action",
-            width: 60,
+            width: 80,
             type: "actions",
             onClick: (data) => {
                 handleDelete(data._id);
@@ -91,6 +91,8 @@ const useStateMasterConfig = ({ handleDelete } = {}) => {
             prevFocusField: "stateName",
             nextFocusField: "capital",
             className: "col-span-6",
+            minLength: 2,
+            maxLength: 2,
         },
         {
             id: "capital",

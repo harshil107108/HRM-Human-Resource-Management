@@ -31,8 +31,8 @@ const useCityMasterConfig = ({ handleDelete } = {}) => {
         {
             id: "postalPrefix",
             field: "postalPrefix",
-            headerName: "Postal Prefix",
-            width: 100,
+            headerName: "Postal Code",
+            width: 120,
         },
         {
             id: "latitude",
@@ -49,7 +49,7 @@ const useCityMasterConfig = ({ handleDelete } = {}) => {
             id: "action",
             field: "action",
             headerName: "Action",
-            width: 60,
+            width: 80,
             type: "actions",
             onClick: (data) => {
                 handleDelete(data._id);
@@ -110,8 +110,8 @@ const useCityMasterConfig = ({ handleDelete } = {}) => {
         {
             id: "postalPrefix",
             type: "text",
-            label: "Postal Prefix",
-            placeHolder: "380",
+            label: "Postal Code",
+            placeHolder: "383235",
             required: false,
             prevFocusField: "cityName",
             nextFocusField: "latitude",

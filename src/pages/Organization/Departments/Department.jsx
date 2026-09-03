@@ -51,23 +51,34 @@ const Department = () => {
     });
   }, []);
 
-  const handleSave = async (data) => {
-    const payload = formmethod.methods.getValues();
+  const handleSave = async () => {
+    const result = await formmethod.methods.handleFormSave(
+      async (data) => {
+        const res = await apiCall({
+          id: "departmentAddEdit",
+          api: api + apiEndpoints.organization.department.DepartmentAddEdit,
+          payload: data,
+        });
 
-    const res = await apiCall({
-      id: "companyAddEdit",
-      api: api + apiEndpoints.organization.department.DepartmentAddEdit,
-      payload: payload,
-    });
+        if (!res?.success) {
+          throw new Error(res?.message || "Failed to save Department");
+        }
 
-    if (res?.success) {
-      successAlert({
-        title: "Department Added",
-        text: "Department added successfully.",
-      });
+        return res;
+      },
+      {
+        onSuccess: async () => {
+          successAlert({
+            title: "Department Added",
+            text: "Department added successfully.",
+          });
 
-      navigate(-1);
-    }
+          navigate(-1);
+        },
+      }
+    );
+
+    return result;
   };
 
   const handleClear = () => {

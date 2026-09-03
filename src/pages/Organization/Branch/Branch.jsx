@@ -51,45 +51,54 @@ const Branch = () => {
   const formmethod = useMemo(() => {
     return formMethod.createForm({
       schema: [
-        ...contactInfoSchema,
         ...basicInfoSchema,
         ...addressSchema,
+        ...contactInfoSchema,
       ],
       initialValue,
     });
   }, []);
 
   const handleSave = async () => {
-    const data = formmethod.methods.getValues();
+    const result = await formmethod.methods.handleFormSave(
+      async (data) => {
+        const formData = new FormData();
 
-    const formData = new FormData();
-
-    Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        formData.append(key, value);
-      }
-    });
-
-    if (branchImage) {
-      formData.append("branchImage", branchImage);
-    }
-
-    const res = await apiCall({
-      id: "companyAddEdit",
-      api: api + apiEndpoints.organization.branch.BranchAddEdit,
-      payload: formData,
-    });
-
-    if (res?.success) {
-      navigate(-1);
-      if (res.success) {
-        successAlert({
-          title: "Branch Added",
-          text: "Branch Added successfully.",
+        Object.entries(data).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            formData.append(key, value);
+          }
         });
 
+        if (branchImage) {
+          formData.append("branchImage", branchImage);
+        }
+
+        const res = await apiCall({
+          id: "branchAddEdit",
+          api: api + apiEndpoints.organization.branch.BranchAddEdit,
+          payload: formData,
+        });
+
+        if (!res?.success) {
+          throw new Error(res?.message || "Failed to save Branch");
+        }
+
+        return res;
+      },
+      {
+        onSuccess: async () => {
+          successAlert({
+            title: "Branch Added",
+            text: "Branch Added successfully.",
+          });
+
+          navigate(-1);
+        },
       }
-    }
+    );
+
+    return result;
   };
 
   const handleClear = () => {

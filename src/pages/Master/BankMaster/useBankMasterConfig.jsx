@@ -18,7 +18,7 @@ const useCityMasterConfig = ({ handleDelete } = {}) => {
             id: "action",
             field: "action",
             headerName: "Action",
-            width: 60,
+            width: 80,
             type: "actions",
             onClick: (data) => {
                 handleDelete(data._id);

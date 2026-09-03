@@ -9,6 +9,8 @@ const useCompanyConfig = ({ handleDelete } = {}) => {
       label: "GST Number",
       placeHolder: "22AAAAA0000A1Z5",
       required: true,
+      textTransform: 'uppercase',
+      maxLength: 15,
       nextFocusField: "panNumber",
       prevFocusField: "gstNumber",
     },
@@ -20,6 +22,8 @@ const useCompanyConfig = ({ handleDelete } = {}) => {
       required: true,
       prevFocusField: "gstNumber",
       nextFocusField: "registrationNumber",
+      textTransform: 'uppercase',
+      maxLength: 10,
     },
     {
       id: "registrationNumber",

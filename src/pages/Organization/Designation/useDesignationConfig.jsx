@@ -1,7 +1,6 @@
 import { api, apiEndpoints } from "@/api/api";
 
 const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
-
     const DesignationListingColDef = [
         {
             id: "designationname",
@@ -165,8 +164,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             label: "Designation Name",
             placeHolder: "e.g. Acme Corporation",
             required: true,
-            nextFocusField: "legalName",
-            prevFocusField: 'companyName',
+            nextFocusField: "designationcode",
+            prevFocusField: 'designationname',
             className: "col-span-3",
         },
         {
@@ -176,7 +175,7 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             placeHolder: "e.g. Acme Corp LLC",
             required: true,
             prevFocusField: "companyName",
-            nextFocusField: "companyCode",
+            nextFocusField: "shortname",
             className: "col-span-3",
         },
         {
@@ -185,8 +184,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             label: "Short Name",
             placeHolder: "e.g. Acme Corp LLC",
             required: true,
-            prevFocusField: "companyName",
-            nextFocusField: "companyCode",
+            prevFocusField: "designationcode",
+            nextFocusField: "company",
             className: "col-span-3",
         },
     ];
@@ -202,6 +201,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             labelKey: "companyName",
             valueKey: "_id",
             className: "col-span-4",
+            prevFocusField: "shortname",
+            nextFocusField: "branch",
         },
         {
             id: "branch",
@@ -213,6 +214,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             labelKey: "branchname",
             valueKey: "_id",
             className: "col-span-4",
+            prevFocusField: "company",
+            nextFocusField: "department",
         },
         {
             id: "department",
@@ -224,6 +227,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             placeHolder: "Select Department",
             required: true,
             className: "col-span-4",
+            prevFocusField: "branch",
+            nextFocusField: "designationId",
         },
         {
             id: "designationId",
@@ -235,6 +240,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             labelKey: "desigantioname",
             valueKey: "_id",
             className: "col-span-4",
+            prevFocusField: "department",
+            nextFocusField: "businessUnitId",
         },
         {
             id: "businessUnitId",
@@ -242,6 +249,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             label: "Business Unit",
             placeHolder: "Select Business Unit",
             className: "col-span-4",
+            prevFocusField: "designationId",
+            nextFocusField: "employmentType",
             options: [
                 { label: "Information Technology", value: "IT" },
                 { label: "Human Resources", value: "HR" },
@@ -263,6 +272,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             placeHolder: "Select Employment Type",
             required: true,
             className: "col-span-4",
+            prevFocusField: "businessUnitId",
+            nextFocusField: "employmentStatus",
             options: [
                 { label: "Full Time", value: "FULL_TIME" },
                 { label: "Part Time", value: "PART_TIME" },
@@ -280,6 +291,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             placeHolder: "Select Status",
             required: true,
             className: "col-span-4",
+            prevFocusField: "employmentType",
+            nextFocusField: "joiningDate",
             options: [
                 { label: "Active", value: "ACTIVE" },
                 { label: "Probation", value: "PROBATION" },
@@ -297,18 +310,24 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             label: "Date of Joining",
             required: true,
             className: "col-span-4",
+            prevFocusField: "employmentStatus",
+            nextFocusField: "confirmationDate",
         },
         {
             id: "confirmationDate",
             type: "date",
             label: "Confirmation Date",
             className: "col-span-4",
+            prevFocusField: "joiningDate",
+            nextFocusField: "probationPeriod",
         },
         {
             id: "probationPeriod",
             type: "selectWrapper",
             label: "Probation Period",
             className: "col-span-4",
+            prevFocusField: "confirmationDate",
+            nextFocusField: "noticePeriod",
             options: [
                 { label: "No Probation", value: "0" },
                 { label: "1 Month", value: "1_MONTH" },
@@ -324,6 +343,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             type: "selectWrapper",
             label: "Notice Period",
             className: "col-span-4",
+            prevFocusField: "probationPeriod",
+            nextFocusField: "workingShifts",
             options: [
                 { label: "No Notice Period", value: "0" },
                 { label: "7 Days", value: "7_DAYS" },
@@ -335,6 +356,113 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             ],
         },
     ];
+    const workSchema = [
+        {
+            id: "workingShift",
+            type: "selectWrapper",
+            label: "Working Shift",
+            className: "col-span-4",
+            prevFocusField: "noticePeriod",
+            nextFocusField: "holidayCalendar",
+            options: [
+                { label: "General Shift", value: "GENERAL" },
+                { label: "Morning Shift", value: "MORNING" },
+                { label: "Afternoon Shift", value: "AFTERNOON" },
+                { label: "Evening Shift", value: "EVENING" },
+                { label: "Night Shift", value: "NIGHT" },
+                { label: "Rotational Shift", value: "ROTATIONAL" },
+                { label: "Flexible Shift", value: "FLEXIBLE" },
+            ]
+        },
+        {
+            id: "holidayCalendar",
+            type: "selectWrapper",
+            label: "Holiday Calendar",
+            className: "col-span-4",
+            isMultiSelect: true,
+            api: api + apiEndpoints.master.holiday.HolidayHelp,
+            labelKey: "holidayName",
+            valueKey: "_id",
+            prevFocusField: "workingShift",
+            nextFocusField: "weeklyOff",
+
+        },
+        {
+            id: "weeklyOff",
+            type: "selectWrapper",
+            label: "Weekly Off",
+            isMultiSelect: true,
+            className: "col-span-4",
+            prevFocusField: "holidayCalendar",
+            nextFocusField: "attendancePolicy",
+            options: [
+                { label: "Sunday", value: "SUNDAY" },
+                { label: "Monday", value: "MONDAY" },
+                { label: "Tuesday", value: "TUESDAY" },
+                { label: "Wednesday", value: "WEDNESDAY" },
+                { label: "Thursday", value: "THURSDAY" },
+                { label: "Friday", value: "FRIDAY" },
+                { label: "Saturday", value: "SATURDAY" },
+            ]
+        },
+        {
+            id: "attendancePolicy",
+            type: "selectWrapper",
+            label: "Attendance Policy",
+            className: "col-span-4",
+            prevFocusField: "weeklyOff",
+            nextFocusField: "officialEmail",
+            options: [
+                { label: "Standard Attendance Policy", value: "STANDARD" },
+                { label: "Flexible Attendance Policy", value: "FLEXIBLE" },
+                { label: "Shift Based Attendance Policy", value: "SHIFT_BASED" },
+                { label: "Biometric Attendance Policy", value: "BIOMETRIC" },
+                { label: "Remote / Work From Home Policy", value: "REMOTE" },
+                { label: "Contract Employee Policy", value: "CONTRACT" },
+            ]
+        },
+        {
+            id: "officialEmail",
+            type: "email",
+            label: "Official Email",
+            placeHolder: "Enter Official Email",
+            className: "col-span-4",
+            nextFocusField: "officialPhone",
+            prevFocusField: "attendancePolicy",
+            nextFocusField: "officialPhone",
+        },
+        {
+            id: "officialPhone",
+            type: "phone",
+            label: "Official Phone",
+            className: "col-span-4",
+            prevFocusField: "officialEmail",
+            nextFocusField: "extensionNumber",
+        },
+        {
+            id: "extensionNumber",
+            type: "number",
+            label: "Extension Number",
+            className: "col-span-4",
+            prevFocusField: "officialPhone",
+            nextFocusField: "workMode",
+        },
+        {
+            id: "workMode",
+            type: "selectWrapper",
+            label: "Work Mode",
+            className: "col-span-4",
+            prevFocusField: "extensionNumber",
+            nextFocusField: "reportingManagerId",
+            options: [
+                { label: "On-Site", value: "ON_SITE" },
+                { label: "Work From Home", value: "WORK_FROM_HOME" },
+                { label: "Hybrid", value: "HYBRID" },
+                { label: "Remote", value: "REMOTE" },
+                { label: "Field Work", value: "FIELD_WORK" },
+            ]
+        },
+    ];
     const reportingStructreSchema = [
         {
             id: "reportingManagerId",
@@ -343,6 +471,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             // required: true,
             className: "col-span-6",
             options: EmployeeData,
+            prevFocusField: "workMode",
+            nextFocusField: "skipLevelManagerId",
         },
         {
             id: "skipLevelManagerId",
@@ -350,6 +480,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             label: "Skip Level Manager",
             className: "col-span-6",
             options: EmployeeData,
+            prevFocusField: "reportingManagerId",
+            nextFocusField: "departmentHeadId",
         },
         {
             id: "departmentHeadId",
@@ -357,6 +489,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             label: "Department Head",
             className: "col-span-6",
             options: EmployeeData,
+            prevFocusField: "skipLevelManagerId",
+            nextFocusField: "mentorId",
         },
         {
             id: "mentorId",
@@ -364,6 +498,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             label: "Mentor",
             className: "col-span-6",
             options: EmployeeData,
+            prevFocusField: "departmentHeadId",
+            nextFocusField: "jobGrade",
         },
     ];
     const gradeSchema = [
@@ -372,6 +508,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             type: "selectWrapper",
             label: "Job Grade",
             className: "col-span-6",
+            prevFocusField: "mentorId",
+            nextFocusField: "jobLevel",
             options: [
                 { label: "Entry Level", value: "ENTRY" },
                 { label: "Junior", value: "JUNIOR" },
@@ -392,6 +530,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             type: "selectWrapper",
             label: "Job Level",
             className: "col-span-6",
+            prevFocusField: "jobGrade",
+            nextFocusField: "band",
             options: [
                 { label: "Entry Level", value: "ENTRY" },
                 { label: "Junior", value: "JUNIOR" },
@@ -412,6 +552,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             type: "selectWrapper",
             label: "Band",
             className: "col-span-6",
+            prevFocusField: "jobLevel",
+            nextFocusField: "salaryGrade",
             options: [
                 { label: "Band A", value: "A" },
                 { label: "Band B", value: "B" },
@@ -427,6 +569,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             type: "selectWrapper",
             label: "Salary Grade",
             className: "col-span-6",
+            prevFocusField: "band",
+            nextFocusField: "payrollGroup",
             options: [
                 { label: "SG-01", value: "SG01" },
                 { label: "SG-02", value: "SG02" },
@@ -441,103 +585,15 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             ],
         },
     ];
-    const workSchema = [
-        {
-            id: "workingShift",
-            type: "selectWrapper",
-            label: "Working Shift",
-            className: "col-span-4",
-            options: [
-                { label: "General Shift", value: "GENERAL" },
-                { label: "Morning Shift", value: "MORNING" },
-                { label: "Afternoon Shift", value: "AFTERNOON" },
-                { label: "Evening Shift", value: "EVENING" },
-                { label: "Night Shift", value: "NIGHT" },
-                { label: "Rotational Shift", value: "ROTATIONAL" },
-                { label: "Flexible Shift", value: "FLEXIBLE" },
-            ]
-        },
-        {
-            id: "holidayCalendar",
-            type: "selectWrapper",
-            label: "Holiday Calendar",
-            className: "col-span-4",
-            isMultiSelect: true,
-            api: api + apiEndpoints.master.holiday.HolidayHelp,
-            labelKey: "holidayName",
-            valueKey: "_id",
 
-        },
-        {
-            id: "weeklyOff",
-            type: "selectWrapper",
-            label: "Weekly Off",
-            isMultiSelect: true,
-            className: "col-span-4",
-            options: [
-                { label: "Sunday", value: "SUNDAY" },
-                { label: "Monday", value: "MONDAY" },
-                { label: "Tuesday", value: "TUESDAY" },
-                { label: "Wednesday", value: "WEDNESDAY" },
-                { label: "Thursday", value: "THURSDAY" },
-                { label: "Friday", value: "FRIDAY" },
-                { label: "Saturday", value: "SATURDAY" },
-            ]
-        },
-        {
-            id: "attendancePolicy",
-            type: "selectWrapper",
-            label: "Attendance Policy",
-            className: "col-span-4",
-            options: [
-                { label: "Standard Attendance Policy", value: "STANDARD" },
-                { label: "Flexible Attendance Policy", value: "FLEXIBLE" },
-                { label: "Shift Based Attendance Policy", value: "SHIFT_BASED" },
-                { label: "Biometric Attendance Policy", value: "BIOMETRIC" },
-                { label: "Remote / Work From Home Policy", value: "REMOTE" },
-                { label: "Contract Employee Policy", value: "CONTRACT" },
-            ]
-        },
-        {
-            id: "officialEmail",
-            type: "email",
-            label: "Official Email",
-            placeHolder: "Enter Official Email",
-            className: "col-span-4",
-            nextFocusField: "officialPhone"
-        },
-        {
-            id: "officialPhone",
-            type: "phone",
-            label: "Official Phone",
-            className: "col-span-4",
-        },
-        {
-            id: "extensionNumber",
-            type: "text",
-            label: "Extension Number",
-            className: "col-span-4",
-        },
-        {
-            id: "workMode",
-            type: "selectWrapper",
-            label: "Work Mode",
-            className: "col-span-4",
-            options: [
-                { label: "On-Site", value: "ON_SITE" },
-                { label: "Work From Home", value: "WORK_FROM_HOME" },
-                { label: "Hybrid", value: "HYBRID" },
-                { label: "Remote", value: "REMOTE" },
-                { label: "Field Work", value: "FIELD_WORK" },
-            ]
-        },
-    ];
     const payrollSchema = [
         {
             id: "payrollGroup",
             type: "selectWrapper",
             label: "Payroll Group",
             className: "col-span-6",
+            prevFocusField: "salaryGrade",
+            nextFocusField: "defaultRole",
             options: [
                 { label: "Monthly Payroll", value: "MONTHLY" },
                 { label: "Weekly Payroll", value: "WEEKLY" },
@@ -550,6 +606,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             type: "selectWrapper",
             label: "Default Role",
             className: "col-span-6",
+            prevFocusField: "payrollGroup",
+            nextFocusField: "accessLevel",
             options: [
                 { label: "Employee", value: "EMPLOYEE" },
                 { label: "Manager", value: "MANAGER" },
@@ -564,6 +622,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             type: "selectWrapper",
             label: "Access Level",
             className: "col-span-6",
+            prevFocusField: "defaultRole",
+            nextFocusField: "userAccount",
             options: [
                 { label: "Basic", value: "BASIC" },
                 { label: "Standard", value: "STANDARD" },
@@ -578,6 +638,8 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
             type: "selectWrapper",
             label: "User Account",
             className: "col-span-6",
+            prevFocusField: "accessLevel",
+            nextFocusField: "userAccount",
             options: [
                 { label: "Create New Account", value: "CREATE" },
                 { label: "Link Existing Account", value: "LINK_EXISTING" },

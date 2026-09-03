@@ -75,6 +75,27 @@ export class FormStore {
         }
       }
 
+      if (field.type === "number" && !isEmptyValue(value, field)) {
+        const numericValue = Number(value);
+        const digitLength = String(value).replace(/[-+.]/g, "").length;
+        if (field.minLength !== undefined && digitLength < Number(field.minLength)) {
+          errors[field.id] = field.minLengthMessage || `${field.label || field.id} must be ${field.minLength} digits`;
+          return;
+        }
+        if (field.maxLength !== undefined && digitLength > Number(field.maxLength)) {
+          errors[field.id] = field.maxLengthMessage || `${field.label || field.id} must be ${field.maxLength} digits`;
+          return;
+        }
+        if (field.min !== undefined && numericValue < Number(field.min)) {
+          errors[field.id] = field.minMessage || `${field.label || field.id} must be at least ${field.min}`;
+          return;
+        }
+        if (field.max !== undefined && numericValue > Number(field.max)) {
+          errors[field.id] = field.maxMessage || `${field.label || field.id} must be at most ${field.max}`;
+          return;
+        }
+      }
+
       if (typeof field.validate === "function") {
         const customMessage = field.validate(value, allValues, this);
         if (customMessage) {

@@ -243,6 +243,7 @@ const Employee = () => {
         try {
             const values = formmethod.methods.getValues();
             const formData = new FormData();
+            console.log(formData)
             Object.entries(values).forEach(([key, value]) => {
                 if (
                     key === "profilePhoto" ||
@@ -308,6 +309,7 @@ const Employee = () => {
             }
 
             formData.append("permissions", JSON.stringify(permissions));
+
 
             const res = await apiCall({
                 id: "employeeAddEdit",

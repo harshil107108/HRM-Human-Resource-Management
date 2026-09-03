@@ -63,8 +63,8 @@ const Designation = () => {
         ...basicInfoSchema,
         ...jobAssignmentSchema,
         ...employmentSchema,
-        ...reportingStructreSchema,
         ...workSchema,
+        ...reportingStructreSchema,
         ...gradeSchema,
         ...payrollSchema,
       ],
@@ -73,37 +73,44 @@ const Designation = () => {
   }, []);
 
   const handleSave = async () => {
-    try {
-      const formData = formmethod.methods.getValues();
+    const result = await formmethod.methods.handleFormSave(
+      async (data) => {
+        const payload = {
+          ...data,
+          ...toggleData,
+        };
 
-      const data = {
-        ...formData,
-        ...toggleData,
-      };
-
-
-      const res = await apiCall({
-        id: "designationAddEdit",
-        api: api + apiEndpoints.organization.designation.DesignationAddEdit,
-        payload: data,
-      });
-
-      if (res?.success) {
-        successAlert({
-          title: DesignationId
-            ? "Designation Updated"
-            : "Designation Added",
-          text: DesignationId
-            ? "Designation updated successfully."
-            : "Designation added successfully.",
+        const res = await apiCall({
+          id: "designationAddEdit",
+          api: api + apiEndpoints.organization.designation.DesignationAddEdit,
+          payload,
         });
 
-        navigate(-1);
+        if (!res?.success) {
+          throw new Error(res?.message || "Failed to save Designation");
+        }
+
+        return res;
+      },
+      {
+        onSuccess: async () => {
+          successAlert({
+            title: DesignationId
+              ? "Designation Updated"
+              : "Designation Added",
+            text: DesignationId
+              ? "Designation updated successfully."
+              : "Designation added successfully.",
+          });
+
+          navigate(-1);
+        },
       }
-    } catch (error) {
-      console.error("Designation Save Error:", error);
-    }
+    );
+
+    return result;
   };
+
   const handleClear = () => {
     formmethod.methods.reset();
   }

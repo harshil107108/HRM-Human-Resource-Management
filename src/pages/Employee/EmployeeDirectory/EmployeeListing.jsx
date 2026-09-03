@@ -68,7 +68,6 @@ const EmployeeListing = () => {
 
         if (res?.success) {
             const data = res?.data?.data || [];
-
             const formattedData = data.map((item) => ({
                 ...item,
 
@@ -85,9 +84,9 @@ const EmployeeListing = () => {
                 branchName: item.branchId?.branchname || "",
                 departmentname: item.departmentId?.departmentname || "",
                 designationName: item.designationId?.designationname || "",
-                countryName: item.countryId.countryName || "",
-                stateName: item.stateId.stateName || "",
-                cityName: item.cityId.cityName || "",
+                countryName: item?.countryId?.countryName || "",
+                stateName: item?.stateId?.stateName || "",
+                cityName: item?.cityId?.cityName || "",
                 reportingManagerName:
                     item.reportingManager?.name || "",
 

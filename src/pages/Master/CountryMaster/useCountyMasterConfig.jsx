@@ -6,7 +6,7 @@ const useCountyMasterConfig = ({ handleDelete } = {}) => {
             id: "countryName",
             field: "countryName",
             headerName: "Country Name",
-            width: 220,
+            width: 180,
         },
         {
             id: "countryCode",
@@ -30,14 +30,14 @@ const useCountyMasterConfig = ({ handleDelete } = {}) => {
             id: "nationality",
             field: "nationality",
             headerName: "Nationality",
-            width: 180,
+            width: 160,
         },
 
         {
             id: "action",
             field: "action",
             headerName: "Action",
-            width: 60,
+            width: 80,
             type: "actions",
             onClick: (data) => {
                 handleDelete(data._id);
@@ -81,12 +81,13 @@ const useCountyMasterConfig = ({ handleDelete } = {}) => {
         },
         {
             id: "phoneCode",
-            type: "text",
+            type: "number",
             label: "Phone Code",
             placeHolder: "+91",
             required: false,
             prevFocusField: "isoCode",
             nextFocusField: "nationality",
+            minLength: 2,
             maxLength: 2,
             className: "col-span-6",
         },

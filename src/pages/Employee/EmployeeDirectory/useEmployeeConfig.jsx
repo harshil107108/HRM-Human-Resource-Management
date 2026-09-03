@@ -239,7 +239,7 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             placeHolder: "Select Blood Group",
             required: false,
             prevFocusField: "maritalStatus",
-            nextFocusField: "",
+            nextFocusField: "companyId",
             className: "col-span-2",
             options: [
                 { label: "A+", value: "A+" },
@@ -261,6 +261,7 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             label: "Company",
             placeHolder: "Select Company",
             required: true,
+            prevFocusField: 'bloodGroup',
             nextFocusField: "branchId",
             className: "col-span-4",
             api: api + apiEndpoints.organization.company.CompanyHelp,
@@ -376,6 +377,7 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             required: false,
             suffix: "Months",
             prevFocusField: "confirmationDate",
+            nextFocusField: 'officialEmail',
             className: "col-span-4",
             options: [
                 { label: "No Probation", value: 0 },
@@ -396,6 +398,7 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             label: "Official Email",
             placeHolder: "e.g. john.doe@company.com",
             required: true,
+            prevFocusField: 'probationPeriod',
             nextFocusField: "personalEmail",
             className: "col-span-4",
         },
@@ -506,6 +509,7 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             placeHolder: "Enter Full Address",
             required: true,
             prevFocusField: "postalCode",
+            nextFocusField: "aadhaarNumber",
             className: "col-span-8",
             rows: 3,
         },
@@ -520,6 +524,7 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             required: true,
             className: "col-span-3",
             maxLength: 12,
+            prevFocusField: "currentAddress",
             nextFocusField: "panNumber",
         },
         {
@@ -550,6 +555,7 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             placeHolder: "Enter DL Number",
             className: "col-span-3",
             prevFocusField: "passportNumber",
+            nextFocusField: "bankName",
         },
     ];
 
@@ -565,6 +571,8 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             api: api + apiEndpoints.master.bank.BankHelp,
             labelKey: "bankName",
             valueKey: "_id",
+            prevFocusField: "drivingLicenseNumber",
+            nextFocusField: "accountNumber",
         },
         {
             id: "accountNumber",
@@ -573,6 +581,8 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             placeHolder: "Enter Account Number",
             required: true,
             className: "col-span-4",
+            prevFocusField: "bankName",
+            nextFocusField: "ifscCode",
         },
         {
             id: "ifscCode",
@@ -582,6 +592,8 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             required: true,
             className: "col-span-4",
             textTransform: "uppercase",
+            prevFocusField: "accountNumber",
+            nextFocusField: "uanNumber",
         },
         {
             id: "uanNumber",
@@ -589,6 +601,8 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             label: "UAN Number (PF)",
             placeHolder: "Enter UAN",
             className: "col-span-4",
+            prevFocusField: "ifscCode",
+            nextFocusField: "pfNumber",
         },
         {
             id: "pfNumber",
@@ -596,6 +610,8 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             label: "PF Number",
             placeHolder: "Enter PF Number",
             className: "col-span-4",
+            prevFocusField: "uanNumber",
+            nextFocusField: "esiNumber",
         },
         {
             id: "esiNumber",
@@ -603,6 +619,8 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             label: "ESI Number",
             placeHolder: "Enter ESI Number",
             className: "col-span-4",
+            prevFocusField: "pfNumber",
+            nextFocusField: "salaryStructure",
         },
 
         // Compensation
@@ -613,6 +631,8 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             placeHolder: "Select Structure",
             required: true,
             className: "col-span-4",
+            prevFocusField: "esiNumber",
+            nextFocusField: "ctc",
             options: [
                 { label: "Monthly Fixed Salary", value: "monthly_fixed" },
                 { label: "Monthly + Performance Incentive", value: "monthly_incentive" },
@@ -628,6 +648,8 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             placeHolder: "0",
             required: true,
             className: "col-span-4",
+            prevFocusField: "salaryStructure",
+            nextFocusField: "basicSalary",
         },
         {
             id: "basicSalary",
@@ -636,6 +658,8 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             placeHolder: "0",
             required: true,
             className: "col-span-4",
+            prevFocusField: "ctc",
+            nextFocusField: "username",
         },
     ];
 
@@ -649,10 +673,13 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             required: true,
             className: "col-span-4",
             nextFocusField: "password",
+            prevFocusField: "basicSalary",
+
         },
         {
             id: "password",
-            type: "number",
+            type: "text",
+            inputType: "password",
             label: "Password",
             placeHolder: "Generate Password",
             required: true,
@@ -670,6 +697,8 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             placeHolder: "Select Role",
             required: true,
             className: "col-span-4",
+            prevFocusField: "password",
+            nextFocusField: "userGroup",
             options: [
                 {
                     label: "Standard Employee",
@@ -696,6 +725,8 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             placeHolder: "Select Group",
             required: true,
             className: "col-span-4",
+            prevFocusField: "primaryRole",
+            nextFocusField: "userGroup",
             options: [
                 {
                     label: "Product Development",

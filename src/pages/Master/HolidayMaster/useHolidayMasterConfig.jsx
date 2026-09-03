@@ -12,7 +12,7 @@ const useHolidayMasterConfig = ({ handleDelete } = {}) => {
             id: "holidayCode",
             field: "holidayCode",
             headerName: "Holiday Code",
-            width: 100,
+            width: 120,
         },
         {
             id: "holidayDate",
@@ -30,7 +30,7 @@ const useHolidayMasterConfig = ({ handleDelete } = {}) => {
             id: "action",
             field: "action",
             headerName: "Action",
-            width: 60,
+            width: 80,
             type: "actions",
             onClick: (data) => {
                 handleDelete(data._id);

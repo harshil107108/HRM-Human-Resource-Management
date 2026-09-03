@@ -8,6 +8,7 @@ import { api, apiEndpoints } from "@/api/api";
 import { useLocation, useNavigate } from "react-router-dom";
 import { formatDateForInput } from "@/utils/dateUtils";
 import useAlert from "@/hooks/useAlert";
+import useDocumentTitle from "@/hooks/useDocumentTitle";
 
 
 const Company = () => {
@@ -48,46 +49,59 @@ const Company = () => {
   const formmethod = useMemo(() => {
     return formMethod.createForm({
       schema: [
-        ...businessInfoSchema1,
-        ...AdditionalBusinessInformation,
         ...basicInfoSchema,
         ...addressSchema,
+        ...businessInfoSchema1,
+        ...AdditionalBusinessInformation,
       ],
       initialValue,
     });
   }, []);
 
   const handleSave = async () => {
-    const data = formmethod.methods.getValues();
+    const result = await formmethod.methods.handleFormSave(
+      async (data) => {
+        const formData = new FormData();
 
-    const formData = new FormData();
-
-    Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        formData.append(key, value);
-      }
-    });
-
-    if (companyImage) {
-      formData.append("companyImage", companyImage);
-    }
-
-    const res = await apiCall({
-      id: "companyAddEdit",
-      api: api + apiEndpoints.organization.company.CompanyAddEdit,
-      payload: formData,
-    });
-
-    if (res?.success) {
-      navigate(-1);
-      if (res.success) {
-        successAlert({
-          title: "Company Added",
-          text: "Company Added successfully.",
+        Object.entries(data).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            formData.append(key, value);
+          }
         });
+
+        if (companyImage) {
+          formData.append("companyImage", companyImage);
+        }
+
+        const res = await apiCall({
+          id: "companyAddEdit",
+          api: api + apiEndpoints.organization.company.CompanyAddEdit,
+          payload: formData,
+        });
+
+        if (!res?.success) {
+          throw new Error(res?.message || "Failed to save Company");
+        }
+
+        return res;
+      },
+      {
+        successMessage: null,
+
+        onSuccess: async () => {
+          successAlert({
+            title: companyId ? "Company Updated" : "Company Added",
+            text: companyId
+              ? "Company updated successfully"
+              : "Company added successfully",
+          });
+          navigate(-1);
+        },
       }
-    }
-  }; 
+    );
+
+    return result;
+  };
 
   const handleClear = () => {
     formmethod.methods.reset();
@@ -146,6 +160,7 @@ const Company = () => {
   }, [companyId]);
 
 
+  useDocumentTitle("orvexa | Company")
 
   return (
     <>

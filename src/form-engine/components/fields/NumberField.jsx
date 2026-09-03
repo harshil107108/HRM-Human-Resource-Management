@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { useFormStore } from "../../hooks/useFormStore";
 import {
   inputClass,
@@ -7,7 +7,17 @@ import {
 } from "../../styles/formtheme";
 
 export default function NumberField({ field, form }) {
-  const { id, label, placeHolder, precision, min, max, disabled } = field;
+  const {
+    id,
+    label,
+    placeHolder,
+    precision,
+    min,
+    max,
+    minLength,
+    maxLength,
+    disabled,
+  } = field;
   const value = useFormStore(form, (snapshot) => snapshot.values[id]);
   const error = useFormStore(form, (snapshot) => snapshot.errors[id]);
   const [isFocused, setIsFocused] = useState(false);
@@ -24,9 +34,12 @@ export default function NumberField({ field, form }) {
       const numericValue = Number(raw);
       if (Number.isNaN(numericValue)) return;
 
+      const digitLength = raw.replace(/[-+.]/g, "").length;
+      if (maxLength !== undefined && digitLength > Number(maxLength)) return;
+
       form.methods.setValue(id, numericValue);
     },
-    [form, id],
+    [form, id, maxLength],
   );
 
   const handleBlur = useCallback(() => {
@@ -87,6 +100,8 @@ export default function NumberField({ field, form }) {
         placeholder={placeHolder}
         min={min}
         max={max}
+        minLength={minLength}
+        maxLength={maxLength}
         disabled={disabled}
         onChange={handleChange}
         onBlur={(event) => {

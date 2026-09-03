@@ -4,7 +4,7 @@ const useBranchConfig = ({ handleDelete } = {}) => {
     const contactInfoSchema = [
         {
             id: "officialemail",
-            type: "text",
+            type: "email",
             label: "Official Email",
             placeHolder: "branch@company.com",
             required: true,
@@ -13,7 +13,7 @@ const useBranchConfig = ({ handleDelete } = {}) => {
         },
         {
             id: "phonen0",
-            type: "text",
+            type: "phone",
             label: "Phone Number",
             placeHolder: "+91 9876543210",
             required: true,
@@ -22,7 +22,7 @@ const useBranchConfig = ({ handleDelete } = {}) => {
         },
         {
             id: "altphoneno",
-            type: "text",
+            type: "phone",
             label: "Alternate Phone",
             placeHolder: "+91 9876543211",
             required: false,
@@ -40,7 +40,7 @@ const useBranchConfig = ({ handleDelete } = {}) => {
         },
         {
             id: "supportemail",
-            type: "text",
+            type: "email",
             label: "Support Email",
             placeHolder: "support@company.com",
             required: false,
@@ -89,7 +89,7 @@ const useBranchConfig = ({ handleDelete } = {}) => {
             label: "Branch Type",
             required: true,
             prevFocusField: "parentcompany",
-            nextFocusField: null,
+            nextFocusField: 'addressLine1',
             className: "col-span-3",
             options: [
                 { label: "Head Office", value: "HEAD_OFFICE" },
@@ -178,19 +178,19 @@ const useBranchConfig = ({ handleDelete } = {}) => {
             id: "branchname",
             field: "branchname",
             headerName: "Branch Name",
-            width: 220,
+            width: 180,
         },
         {
             id: "companyName",
             field: "companyName",
             headerName: "Parent Company Name",
-            width: 160,
+            width: 180,
         },
         {
             id: "companyCode",
             field: "companyCode",
             headerName: "Parent Company Code",
-            width: 160,
+            width: 180,
         },
         {
             id: "officialemail",
@@ -249,7 +249,7 @@ const useBranchConfig = ({ handleDelete } = {}) => {
             id: "action",
             field: "action",
             headerName: "Action",
-            width: 60,
+            width: 80,
             type: "actions",
             onClick: (data) => {
                 handleDelete(data._id);

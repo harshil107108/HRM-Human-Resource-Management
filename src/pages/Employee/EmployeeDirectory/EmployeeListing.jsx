@@ -87,19 +87,18 @@ const EmployeeListing = () => {
                 countryName: item?.countryId?.countryName || "",
                 stateName: item?.stateId?.stateName || "",
                 cityName: item?.cityId?.cityName || "",
-                reportingManagerName:
-                    item.reportingManager?.name || "",
+                reportingManagerName: item?.reportingManager?.firstName || "",
 
-                employmentType: item.employmentType || "",
-                employeeStatus: item.employeeStatus || "",
+                employmentType: item?.employmentType || "",
+                employeeStatus: item?.employeeStatus || "",
 
-                joiningDate: formatDateForInput(item.joiningDate) || "",
-                confirmationDate: formatDateForInput(item.confirmationDate) || "",
+                joiningDate: formatDateForInput(item?.joiningDate) || "",
+                confirmationDate: formatDateForInput(item?.confirmationDate) || "",
 
-                officialEmail: item.officialEmail || "",
-                mobileNumber: item.mobileNumber || "",
+                officialEmail: item?.officialEmail || "",
+                mobileNumber: item?.mobileNumber || "",
 
-                profileImage: item.profileImage || "",
+                profileImage: item?.profileImage || "",
             }));
 
             setEmployeeListingData(formattedData);

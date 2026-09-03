@@ -39,8 +39,8 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
             width: 180,
         },
         {
-            id: "reportingManager",
-            field: "reportingManager",
+            id: "reportingManagerName",
+            field: "reportingManagerName",
             headerName: "Manager",
             width: 180,
         },

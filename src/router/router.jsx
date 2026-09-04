@@ -1,4 +1,3 @@
-import React from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import MainLayout from "../components/layout/MainLayout";
@@ -293,23 +292,6 @@ const router = createBrowserRouter([
       {
         path: "performance/feedback",
         element: <UnderConstruction moduleName="Feedback" />,
-      },
-
-      // ============================================
-      // Learning
-      // ============================================
-
-      {
-        path: "learning/courses",
-        element: <UnderConstruction moduleName="Courses" />,
-      },
-      {
-        path: "learning/training",
-        element: <UnderConstruction moduleName="Training Programs" />,
-      },
-      {
-        path: "learning/certificates",
-        element: <UnderConstruction moduleName="Certificates" />,
       },
 
       // ============================================

@@ -256,28 +256,6 @@ export const NAVIGATION_SCHEMA = [
     ],
   },
 
-  // =========================
-  // Learning
-  // =========================
-  {
-    label: "Learning",
-    icon: GraduationCap,
-    path: "/learning",
-    children: [
-      {
-        label: "Courses",
-        path: "/learning/courses",
-      },
-      {
-        label: "Training",
-        path: "/learning/training",
-      },
-      {
-        label: "Certificates",
-        path: "/learning/certificates",
-      },
-    ],
-  },
 
   // =========================
   // Reports

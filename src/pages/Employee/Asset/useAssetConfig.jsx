@@ -1,0 +1,430 @@
+// import { api, apiEndpoints } from "@/api/api";
+
+const useAssetConfig = () => {
+  const assetListingColDef = [
+    {
+      id: "assetName",
+      field: "assetName",
+      headerName: "Asset",
+      width: 200,
+    },
+    {
+      id: "assetCode",
+      field: "assetCode",
+      headerName: "Asset ID",
+      width: 130,
+    },
+    {
+      id: "categoryName",
+      field: "categoryName",
+      headerName: "Category",
+      width: 150,
+    },
+    {
+      id: "assetTag",
+      field: "assetTag",
+      headerName: "Asset Tag",
+      width: 150,
+    },
+    {
+      id: "serialNumber",
+      field: "serialNumber",
+      headerName: "Serial Number",
+      width: 170,
+    },
+    {
+      id: "brand",
+      field: "brand",
+      headerName: "Brand",
+      width: 130,
+    },
+    {
+      id: "model",
+      field: "model",
+      headerName: "Model",
+      width: 160,
+    },
+    {
+      id: "employeeName",
+      field: "employeeName",
+      headerName: "Assigned To",
+      width: 180,
+    },
+    {
+      id: "companyName",
+      field: "companyName",
+      headerName: "Company",
+      width: 160,
+    },
+    {
+      id: "branchName",
+      field: "branchName",
+      headerName: "Branch",
+      width: 150,
+    },
+    {
+      id: "purchaseDate",
+      field: "purchaseDate",
+      headerName: "Purchase Date",
+      width: 140,
+    },
+    {
+      id: "warrantyEndDate",
+      field: "warrantyEndDate",
+      headerName: "Warranty",
+      width: 140,
+    },
+    {
+      id: "assetStatus",
+      field: "assetStatus",
+      headerName: "Status",
+      width: 130,
+    },
+    {
+      id: "action",
+      field: "action",
+      headerName: "Action",
+      width: 70,
+      type: "actions",
+      // onClick: (data) => {
+      //     handleDelete?.(data._id);
+      // },
+    },
+  ];
+
+  const basicInformationSchema = [
+    {
+      id: "assetName",
+      type: "text",
+      label: "Asset Name",
+      placeHolder: "Enter Asset Name",
+      required: true,
+      nextFocusField: "assetCode",
+      className: "col-span-3",
+    },
+    {
+      id: "assetCode",
+      type: "text",
+      label: "Asset Code",
+      placeHolder: "Auto Generated",
+      required: true,
+      disabled: true,
+      nextFocusField: "assetCategoryId",
+      prevFocusField: "assetName",
+      className: "col-span-3",
+    },
+    {
+      id: "assetCategoryId",
+      type: "selectWrapper",
+      label: "Asset Category",
+      placeHolder: "Select Category",
+      required: true,
+      nextFocusField: "assetTag",
+      prevFocusField: "assetCode",
+      className: "col-span-3",
+      // api: api + apiEndpoints.asset.assetCategory.AssetCategoryHelp,
+      // labelKey: "categoryName",
+      // valueKey: "_id",
+    },
+    {
+      id: "assetTag",
+      type: "text",
+      label: "Asset Tag",
+      placeHolder: "Enter Asset Tag",
+      required: true,
+      nextFocusField: "brand",
+      prevFocusField: "assetCategoryId",
+      className: "col-span-3",
+    },
+  ];
+
+  const assetDetailsSchema = [
+    {
+      id: "brand",
+      type: "text",
+      label: "Brand",
+      placeHolder: "Enter Brand",
+      required: false,
+      nextFocusField: "model",
+      prevFocusField: "assetTag",
+      className: "col-span-4",
+    },
+    {
+      id: "model",
+      type: "text",
+      label: "Model",
+      placeHolder: "Enter Model",
+      required: false,
+      nextFocusField: "serialNumber",
+      prevFocusField: "brand",
+      className: "col-span-4",
+    },
+    {
+      id: "serialNumber",
+      type: "text",
+      label: "Serial Number",
+      placeHolder: "Enter Serial Number",
+      required: false,
+      nextFocusField: "condition",
+      prevFocusField: "model",
+      className: "col-span-4",
+    },
+    {
+      id: "condition",
+      type: "selectWrapper",
+      label: "Condition",
+      placeHolder: "Select Condition",
+      required: true,
+      nextFocusField: "purchaseDate",
+      prevFocusField: "serialNumber",
+      className: "col-span-4",
+      options: [
+        {
+          label: "New",
+          value: "NEW",
+        },
+        {
+          label: "Excellent",
+          value: "EXCELLENT",
+        },
+        {
+          label: "Good",
+          value: "GOOD",
+        },
+        {
+          label: "Fair",
+          value: "FAIR",
+        },
+        {
+          label: "Damaged",
+          value: "DAMAGED",
+        },
+      ],
+    },
+  ];
+
+  const purchaseInformationSchema = [
+    {
+      id: "purchaseDate",
+      type: "date",
+      label: "Purchase Date",
+      placeHolder: "Select Purchase Date",
+      required: false,
+      nextFocusField: "purchaseCost",
+      prevFocusField: "condition",
+      className: "col-span-4",
+    },
+    {
+      id: "purchaseCost",
+      type: "number",
+      label: "Purchase Cost",
+      placeHolder: "0.00",
+      required: false,
+      prefix: "₹",
+      nextFocusField: "vendor",
+      prevFocusField: "purchaseDate",
+      className: "col-span-4",
+    },
+    {
+      id: "vendor",
+      type: "text",
+      label: "Vendor",
+      placeHolder: "Enter Vendor",
+      required: false,
+      nextFocusField: "invoiceNumber",
+      prevFocusField: "purchaseCost",
+      className: "col-span-4",
+    },
+    {
+      id: "invoiceNumber",
+      type: "text",
+      label: "Invoice Number",
+      placeHolder: "Enter Invoice Number",
+      required: false,
+      nextFocusField: "warrantyStartDate",
+      prevFocusField: "vendor",
+      className: "col-span-4",
+    },
+    {
+      id: "warrantyStartDate",
+      type: "date",
+      label: "Warranty Start Date",
+      placeHolder: "Select Start Date",
+      required: false,
+      nextFocusField: "warrantyEndDate",
+      prevFocusField: "invoiceNumber",
+      className: "col-span-4",
+    },
+    {
+      id: "warrantyEndDate",
+      type: "date",
+      label: "Warranty End Date",
+      placeHolder: "Select End Date",
+      required: false,
+      nextFocusField: "companyId",
+      prevFocusField: "warrantyStartDate",
+      className: "col-span-4",
+    },
+  ];
+
+  const organizationInformationSchema = [
+    {
+      id: "companyId",
+      type: "selectWrapper",
+      label: "Company",
+      placeHolder: "Select Company",
+      required: true,
+      nextFocusField: "branchId",
+      className: "col-span-4",
+      // api: api + apiEndpoints.organization.company.CompanyHelp,
+      // labelKey: "companyName",
+      // valueKey: "_id",
+    },
+    {
+      id: "branchId",
+      type: "selectWrapper",
+      label: "Branch",
+      placeHolder: "Select Branch",
+      required: false,
+      prevFocusField: "companyId",
+      nextFocusField: "locationId",
+      className: "col-span-4",
+      // api: api + apiEndpoints.organization.branch.BranchHelp,
+      // labelKey: "branchname",
+      // valueKey: "_id",
+    },
+    {
+      id: "locationId",
+      type: "selectWrapper",
+      label: "Location",
+      placeHolder: "Select Location",
+      required: false,
+      prevFocusField: "branchId",
+      nextFocusField: "assetStatus",
+      className: "col-span-4",
+      // api: api + apiEndpoints.master.location.LocationHelp,
+      // labelKey: "locationName",
+      // valueKey: "_id",
+    },
+  ];
+
+  const assetStatusSchema = [
+    {
+      id: "assetStatus",
+      type: "selectWrapper",
+      label: "Asset Status",
+      placeHolder: "Select Status",
+      required: true,
+      prevFocusField: "locationId",
+      nextFocusField: "currentOwner",
+      className: "col-span-6",
+      options: [
+        {
+          label: "Available",
+          value: "AVAILABLE",
+        },
+        {
+          label: "Assigned",
+          value: "ASSIGNED",
+        },
+        {
+          label: "Under Repair",
+          value: "UNDER_REPAIR",
+        },
+        {
+          label: "Lost",
+          value: "LOST",
+        },
+        {
+          label: "Disposed",
+          value: "DISPOSED",
+        },
+      ],
+    },
+    {
+      id: "currentOwner",
+      type: "text",
+      label: "Current Owner",
+      placeHolder: "Not Assigned",
+      disabled: true,
+      required: false,
+      prevFocusField: "assetStatus",
+      className: "col-span-6",
+    },
+  ];
+
+  const assignmentInformationSchema = [
+    {
+      id: "assignedEmployeeId",
+      type: "selectWrapper",
+      label: "Assign to Employee",
+      placeHolder: "Select Employee",
+      required: false,
+      nextFocusField: "assignedDate",
+      className: "col-span-4",
+      // api: api + apiEndpoints.employee.employee.EmployeeHelp,
+      // labelKey: "employeeName",
+      // valueKey: "_id",
+    },
+    {
+      id: "assignedDate",
+      type: "date",
+      label: "Assigned Date",
+      placeHolder: "Select Assigned Date",
+      required: false,
+      prevFocusField: "assignedEmployeeId",
+      nextFocusField: "expectedReturnDate",
+      className: "col-span-4",
+    },
+    {
+      id: "expectedReturnDate",
+      type: "date",
+      label: "Expected Return Date",
+      placeHolder: "Select Return Date",
+      required: false,
+      prevFocusField: "assignedDate",
+      nextFocusField: "notes",
+      className: "col-span-4",
+    },
+  ];
+
+  const documentInformationSchema = [
+    {
+      id: "purchaseInvoice",
+      type: "file",
+      label: "Purchase Invoice",
+      placeHolder: "Upload Purchase Invoice",
+      required: false,
+      className: "col-span-4",
+    },
+    {
+      id: "warrantyDocument",
+      type: "file",
+      label: "Warranty Document",
+      placeHolder: "Upload Warranty Document",
+      required: false,
+      className: "col-span-4",
+    },
+    {
+      id: "otherDocument",
+      type: "file",
+      label: "Other Document",
+      placeHolder: "Upload Document",
+      required: false,
+      className: "col-span-4",
+    },
+  ];
+
+  return {
+    assetListingColDef,
+    basicInformationSchema,
+    assetDetailsSchema,
+    purchaseInformationSchema,
+    organizationInformationSchema,
+    assetStatusSchema,
+    assignmentInformationSchema,
+    documentInformationSchema,
+  };
+};
+
+export default useAssetConfig;

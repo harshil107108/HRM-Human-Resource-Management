@@ -22,6 +22,8 @@ import HolidayMasterListing from "@/pages/Master/HolidayMaster/HolidayMasterList
 import EmployeeListing from "@/pages/Employee/EmployeeDirectory/EmployeeListing";
 import Employee from "@/pages/Employee/EmployeeDirectory/Employee";
 import BankMasterListing from "@/pages/Master/BankMaster/BankMasterListing";
+import AssetListing from "@/pages/Employee/Asset/AssetListing";
+import Asset from "@/pages/Employee/Asset/Asset";
 
 const router = createBrowserRouter([
   {
@@ -156,7 +158,16 @@ const router = createBrowserRouter([
       },
       {
         path: "employees/assets",
-        element: <UnderConstruction moduleName="Employee Assets" />,
+        children: [
+          {
+            index: true,
+            element: <AssetListing />,
+          },
+          {
+            path: "addedit",
+            element: <Asset />,
+          },
+        ],
       },
       {
         path: "employees/exit",
@@ -377,7 +388,6 @@ const router = createBrowserRouter([
       },
     ],
   },
-
 
   {
     path: "*",

@@ -1,6 +1,5 @@
-import React from "react";
 import { Search, Bell, Mail, Globe, Menu, X, ArrowRight } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { NAVIGATION_SCHEMA } from "@utils/Routes.js";
 
@@ -31,13 +30,15 @@ export const Header = ({
     ).slice(0, 6);
   }, [searchQuery]);
 
-  useEffect(() => {
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
     setActiveSuggestionIndex(0);
-  }, [searchQuery]);
+  };
 
   const openSearchResult = (path) => {
     navigate(path);
     setSearchQuery("");
+    setActiveSuggestionIndex(0);
   };
 
   const handleSearchKeyDown = (event) => {
@@ -59,6 +60,7 @@ export const Header = ({
     } else if (event.key === "Escape") {
       event.preventDefault();
       setSearchQuery("");
+      setActiveSuggestionIndex(0);
     }
   };
 
@@ -82,7 +84,7 @@ export const Header = ({
             placeholder="Search dashboard..."
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             onKeyDown={handleSearchKeyDown}
             aria-label="Search navigation"
             aria-controls="header-search-suggestions"

@@ -264,7 +264,27 @@ const Asset = () => {
             </div>
 
             <div className="p-4">
-              <h1>ahi add karvanu che</h1>
+              <label
+                htmlFor="assetDescription"
+                className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+              >
+                Description
+              </label>
+
+              <textarea
+                id="assetDescription"
+                name="assetDescription"
+                rows={3}
+                //   value={formmethod.methods.watch("assetDescription") || ""}
+                //   onChange={(e) =>
+                //     formmethod.methods.setValue(
+                //       "assetDescription",
+                //       e.target.value,
+                //     )
+                //   }
+                placeholder="Briefly describe the asset..."
+                className=" w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+              />
             </div>
           </div>
         </div>

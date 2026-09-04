@@ -5,7 +5,6 @@ import {
   CalendarCheck2,
   CalendarDays,
   Database,
-  GraduationCap,
   LayoutDashboard,
   Settings,
   ShieldCheck,

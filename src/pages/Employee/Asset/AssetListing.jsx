@@ -127,58 +127,69 @@ const AssetListing = () => {
     return [
       {
         id: "totalAssets",
-        title: "TOTAL ASSETS",
+        title: "Total Assets",
         value: AssetListingData.length.toLocaleString(),
+        percentage: "↑ 12%",
+        description: "vs last month",
         icon: "▣",
-        description: "Total assets",
-        type: "total",
+        type: "blue",
       },
+
       {
         id: "available",
-        title: "AVAILABLE",
+        title: "Available",
         value: getStatusCount("Available").toLocaleString(),
+        percentage: "↑ 26%",
+        description: "vs last month",
         icon: "✓",
-        description: "Ready for deployment",
-        type: "available",
+        type: "green",
       },
+
       {
         id: "assigned",
-        title: "ASSIGNED",
+        title: "Assigned",
         value: getStatusCount("Assigned").toLocaleString(),
+        percentage: "↑ 63%",
+        description: "vs last month",
         icon: "♙",
-        description: "Currently assigned",
-        type: "assigned",
+        type: "purple",
       },
+
       {
         id: "underRepair",
-        title: "UNDER REPAIR",
+        title: "Under Repair",
         value: getStatusCount("Under Repair").toLocaleString(),
+        percentage: "↑ 8%",
+        description: "vs last month",
         icon: "🔧",
-        description: "Service tickets active",
-        type: "repair",
+        type: "orange",
       },
+
       {
         id: "lost",
-        title: "LOST",
+        title: "Lost",
         value: getStatusCount("Lost").toLocaleString(),
-        icon: "♧",
-        description: "Requires review",
-        type: "lost",
+        percentage: "↓ 11%",
+        description: "vs last month",
+        icon: "!",
+        type: "red",
       },
+
       {
         id: "disposed",
-        title: "DISPOSED",
+        title: "Disposed",
         value: getStatusCount("Disposed").toLocaleString(),
-        icon: "▣",
-        description: "Decommissioned",
-        type: "disposed",
+        percentage: "↑ 15%",
+        description: "vs last month",
+        icon: "✓",
+        type: "cyan",
       },
     ];
   }, [AssetListingData]);
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
-      <div className="grid grid-cols-6 gap-2.5 mt-3">
+      <div className="grid grid-cols-6 gap-2.5 mt-3 mr-2">
         {assetSummary.map((item) => (
           <AssetCard key={item.id} {...item} />
         ))}

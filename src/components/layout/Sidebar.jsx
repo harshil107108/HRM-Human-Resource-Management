@@ -1,14 +1,10 @@
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight
-} from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import companyLogo from "@assets/images/companyLogo.png";
 import Logo from "@assets/images/Logo.png";
-import { NAVIGATION_SCHEMA } from "@utils/Routes.js"
+import { NAVIGATION_SCHEMA } from "@utils/Routes.js";
 
 // ==========================================
 // SUB-COMPONENTS
@@ -28,17 +24,20 @@ const ParentMenuItem = ({
     <button
       onClick={onClick}
       title={isCollapsed ? label : undefined}
-      className={`group w-full flex items-center rounded-md text-[13px] transition-all duration-150 font-medium ${isCollapsed ? "justify-center p-2" : "gap-2.5 px-2.5 py-1.5"
-        } ${isActive && !hasChildren
+      className={`group w-full flex items-center rounded-md text-[13px] transition-all duration-150 font-medium ${
+        isCollapsed ? "justify-center p-2" : "gap-2.5 px-2.5 py-1.5"
+      } ${
+        isActive && !hasChildren
           ? "bg-blue-50 text-blue-700 font-semibold shadow-sm"
           : "text-slate-600 hover:bg-blue-50/70 hover:text-blue-700"
-        }`}
+      }`}
     >
       <Icon
-        className={`w-4 h-4 shrink-0 transition-colors ${isActive
-          ? "text-blue-600"
-          : "text-slate-400 group-hover:text-slate-600"
-          }`}
+        className={`w-4 h-4 shrink-0 transition-colors ${
+          isActive
+            ? "text-blue-600"
+            : "text-slate-400 group-hover:text-slate-600"
+        }`}
       />
 
       {!isCollapsed && (
@@ -47,8 +46,9 @@ const ParentMenuItem = ({
 
       {!isCollapsed && hasChildren && (
         <ChevronDown
-          className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${isExpanded ? "transform rotate-180" : ""
-            }`}
+          className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${
+            isExpanded ? "transform rotate-180" : ""
+          }`}
         />
       )}
     </button>
@@ -74,9 +74,10 @@ const NestedSubMenu = ({ children, isCollapsed }) => {
           <NavLink
             to={sub.path}
             className={({ isActive }) =>
-              `block px-3 py-1 text-[12px] font-medium rounded-md transition-all duration-150 ${isActive
-                ? "bg-blue-50 text-blue-700 font-semibold"
-                : "text-slate-500 hover:text-blue-700 hover:bg-blue-50/60"
+              `block px-3 py-1 text-[12px] font-medium rounded-md transition-all duration-150 ${
+                isActive
+                  ? "bg-blue-50 text-blue-700 font-semibold"
+                  : "text-slate-500 hover:text-blue-700 hover:bg-blue-50/60"
               }`
             }
           >
@@ -151,13 +152,18 @@ export const Sidebar = ({
       <aside
         className={`${isMobileOpen ? "flex" : "hidden"} lg:flex fixed lg:sticky top-0 left-0 h-screen bg-white border-r border-slate-200/80 flex-col pb-4 z-50 shrink-0 transition-all duration-300 ease-in-out`}
         style={{
-          width: isMobileOpen ? "16rem" : navigationCollapsed ? "3.5rem" : "14rem",
+          width: isMobileOpen
+            ? "16rem"
+            : navigationCollapsed
+              ? "3.5rem"
+              : "14rem",
         }}
       >
         {/* Brand Header */}
         <div
-          className={`h-14 px-4 flex items-center border-b border-slate-100/80 overflow-hidden ${navigationCollapsed ? "justify-center" : "justify-between"
-            }`}
+          className={`h-14 px-4 flex items-center border-b border-slate-100/80 overflow-hidden ${
+            navigationCollapsed ? "justify-center" : "justify-between"
+          }`}
         >
           <div className="flex items-center overflow-hidden">
             {navigationCollapsed ? (
@@ -179,7 +185,9 @@ export const Sidebar = ({
           <button
             onClick={handleSidebarToggle}
             className="absolute -right-2.75 top-3.5 flex h-6 w-6 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-600 shadow-sm transition-all duration-200 hover:border-blue-300 hover:bg-blue-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:ring-offset-1 z-50"
-            aria-label={isMobileOpen || !isCollapsed ? "Close sidebar" : "Expand sidebar"}
+            aria-label={
+              isMobileOpen || !isCollapsed ? "Close sidebar" : "Expand sidebar"
+            }
           >
             {navigationCollapsed ? (
               <ChevronRight className="w-4 h-4" />
@@ -198,8 +206,8 @@ export const Sidebar = ({
               const hasChildren = !!item.children;
               const isGroupActive = hasChildren
                 ? item.children.some((child) =>
-                  location.pathname.startsWith(child.path),
-                )
+                    location.pathname.startsWith(child.path),
+                  )
                 : location.pathname === item.path;
 
               const isGroupExpanded = !!expandedGroups[item.label];

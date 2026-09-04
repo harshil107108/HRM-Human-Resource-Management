@@ -1,105 +1,132 @@
-const AssetCard = ({ title, value, description, icon, type = "total" }) => {
+const AssetCard = ({
+  title,
+  value,
+  percentage,
+  description,
+  icon,
+  type = "blue",
+}) => {
   const styles = {
-    total: {
-      accent: "border-l-blue-500",
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-600",
+    blue: {
+      card: "border-blue-200 bg-blue-50",
+      icon: "bg-blue-100 text-blue-700",
+      percentage: "text-emerald-600",
     },
 
-    available: {
-      accent: "border-l-emerald-500",
-      iconBg: "bg-emerald-50",
-      iconColor: "text-emerald-600",
+    orange: {
+      card: "border-orange-200 bg-orange-50",
+      icon: "bg-orange-100 text-orange-700",
+      percentage: "text-red-600",
     },
 
-    assigned: {
-      accent: "border-l-violet-500",
-      iconBg: "bg-violet-50",
-      iconColor: "text-violet-600",
+    purple: {
+      card: "border-violet-200 bg-violet-50",
+      icon: "bg-violet-100 text-violet-700",
+      percentage: "text-emerald-600",
     },
 
-    repair: {
-      accent: "border-l-amber-500",
-      iconBg: "bg-amber-50",
-      iconColor: "text-amber-600",
+    green: {
+      card: "border-emerald-200 bg-emerald-50",
+      icon: "bg-emerald-100 text-emerald-700",
+      percentage: "text-emerald-600",
     },
 
-    lost: {
-      accent: "border-l-rose-500",
-      iconBg: "bg-rose-50",
-      iconColor: "text-rose-600",
+    red: {
+      card: "border-red-200 bg-red-50",
+      icon: "bg-red-100 text-red-700",
+      percentage: "text-red-600",
     },
 
-    disposed: {
-      accent: "border-l-slate-400",
-      iconBg: "bg-slate-100",
-      iconColor: "text-slate-500",
+    cyan: {
+      card: "border-sky-200 bg-sky-50",
+      icon: "bg-sky-100 text-sky-700",
+      percentage: "text-emerald-600",
     },
   };
 
-  const currentStyle = styles[type] || styles.total;
+  const currentStyle = styles[type] || styles.blue;
 
   return (
     <div
       className={`
-        flex
-        h-[68px]
-        min-w-0
-        items-center
-        gap-2.5
-        rounded-md
+        h-[82px]
+        w-full
+        rounded-[5px]
         border
-        border-slate-200
-        border-l-[3px]
-        bg-white
-        px-2.5
-        ${currentStyle.accent}
+        px-3
+        py-2.5
+        ${currentStyle.card}
       `}
     >
-      {/* Icon */}
-      <div
-        className={`
-          flex
-          h-8
-          w-8
-          shrink-0
-          items-center
-          justify-center
-          rounded-md
-          ${currentStyle.iconBg}
-          ${currentStyle.iconColor}
-        `}
-      >
-        <span className="text-sm leading-none">{icon}</span>
-      </div>
-
-      {/* Content */}
-      <div className="min-w-0 flex-1">
-        {/* Title */}
+      <div className="flex h-full items-start gap-2.5">
+        {/* Icon */}
         <div
-          className="
-            truncate
-            text-[9px]
-            font-semibold
-            uppercase
-            tracking-[0.6px]
-            text-slate-500
-          "
+          className={`
+            flex
+            h-9
+            w-9
+            shrink-0
+            items-center
+            justify-center
+            rounded-lg
+            ${currentStyle.icon}
+          `}
         >
-          {title}
+          <span className="text-[17px] font-bold leading-none">{icon}</span>
         </div>
 
-        {/* Value + Description */}
-        <div className="mt-0.5 flex items-baseline gap-2">
-          <span className="text-[18px] font-bold leading-5 text-slate-800">
-            {value}
-          </span>
+        {/* Content */}
+        <div className="min-w-0 flex-1">
+          {/* Title */}
+          <div
+            className="
+              truncate
+              text-[10px]
+              font-bold
+              leading-3
+              text-slate-600
+            "
+          >
+            {title}
+          </div>
 
-          {description && (
-            <span className="hidden truncate text-[9px] text-slate-400 xl:block">
+          {/* Value */}
+          <div
+            className="
+              mt-0.5
+              text-[22px]
+              font-extrabold
+              leading-[22px]
+              tracking-tight
+              text-slate-900
+            "
+          >
+            {value}
+          </div>
+
+          {/* Percentage */}
+          <div className="mt-1 flex items-center gap-1">
+            <span
+              className={`
+                text-[9px]
+                font-bold
+                ${currentStyle.percentage}
+              `}
+            >
+              {percentage}
+            </span>
+
+            <span
+              className="
+                truncate
+                text-[9px]
+                font-medium
+                text-slate-500
+              "
+            >
               {description}
             </span>
-          )}
+          </div>
         </div>
       </div>
     </div>

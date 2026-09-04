@@ -23,6 +23,8 @@ import Employee from "@/pages/Employee/EmployeeDirectory/Employee";
 import BankMasterListing from "@/pages/Master/BankMaster/BankMasterListing";
 import AssetListing from "@/pages/Employee/Asset/AssetListing";
 import Asset from "@/pages/Employee/Asset/Asset";
+import JobOpeningListing from "@/pages/Recruitment/Job Opening/JobOpeningListing";
+import JobOpening from "@/pages/Recruitment/Job Opening/JobOpening";
 
 const router = createBrowserRouter([
   {
@@ -254,7 +256,16 @@ const router = createBrowserRouter([
 
       {
         path: "recruitment/jobs",
-        element: <UnderConstruction moduleName="Job Openings" />,
+        children: [
+          {
+            index: true,
+            element: <JobOpeningListing />,
+          },
+          {
+            path: "addedit",
+            element: <JobOpening />,
+          },
+        ],
       },
       {
         path: "recruitment/candidates",

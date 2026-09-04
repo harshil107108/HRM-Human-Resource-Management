@@ -14,6 +14,7 @@ import DateField from "./components/fields/DateField";
 import CheckboxField from "./components/fields/CheckboxField";
 import PhoneField from "./components/fields/PhoneField";
 import EmailField from "./components/fields/EmailField";
+import TextareaField from "./components/fields/TextareaField";
 import { memo } from "react";
 
 const areFieldValuesEqual = (previousValue, nextValue) => {
@@ -70,6 +71,7 @@ registerFieldType("date", memoizeField(DateField));
 registerFieldType("checkbox", memoizeField(CheckboxField));
 registerFieldType("phone", memoizeField(PhoneField));
 registerFieldType("email", memoizeField(EmailField));
+registerFieldType("textarea", memoizeField(TextareaField));
 
 // ---- public exports -----------------------------------------------------
 export { default as formMethod, extendFormMethod } from "./core/formMethod";

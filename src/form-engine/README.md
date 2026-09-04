@@ -132,25 +132,28 @@ const form = formMethod.createForm({
 });
 
 const handleSave = async () => {
-  await form.methods.handleFormSave(async (data) => {
-    const response = await apiCall({
-      id: "addEditCountry",
-      api: api + apiEndpoints.master.country.CountryAddEdit,
-      payload: {
-        ...data,
-        _id: countryId,
-      },
-      showSuccessAlert: false,
-    });
+  await form.methods.handleFormSave(
+    async (data) => {
+      const response = await apiCall({
+        id: "addEditCountry",
+        api: api + apiEndpoints.master.country.CountryAddEdit,
+        payload: {
+          ...data,
+          _id: countryId,
+        },
+        showSuccessAlert: false,
+      });
 
-    if (!response.success) {
-      throw new Error(response.message || "Failed to save country");
-    }
+      if (!response.success) {
+        throw new Error(response.message || "Failed to save country");
+      }
 
-    return response;
-  }, {
-    successMessage: "Country saved successfully",
-  });
+      return response;
+    },
+    {
+      successMessage: "Country saved successfully",
+    },
+  );
 };
 ```
 
@@ -304,11 +307,11 @@ form.methods.reset(); // reset the whole form
 
 Three different tools for three different needs:
 
-| method | when to use it |
-| --- | --- |
-| `form.methods.getValue(id)` | one-off read - inside an event handler, `onChange`/`onBlur` callback, or `validate` function. Not reactive; doesn't cause re-renders. |
-| `form.methods.watch(id)` | **inside a component's render** - reactively returns the current value and re-renders that component whenever it changes. Same idea as react-hook-form's `watch`. Call `watch()` with no `id` to get the whole values object. |
-| `form.methods.onFieldChange(id, cb)` | imperative side effect from *outside* React's render cycle (e.g. logging, analytics, syncing to localStorage) - fires a callback, does not itself cause a re-render. |
+| method                               | when to use it                                                                                                                                                                                                                |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `form.methods.getValue(id)`          | one-off read - inside an event handler, `onChange`/`onBlur` callback, or `validate` function. Not reactive; doesn't cause re-renders.                                                                                         |
+| `form.methods.watch(id)`             | **inside a component's render** - reactively returns the current value and re-renders that component whenever it changes. Same idea as react-hook-form's `watch`. Call `watch()` with no `id` to get the whole values object. |
+| `form.methods.onFieldChange(id, cb)` | imperative side effect from _outside_ React's render cycle (e.g. logging, analytics, syncing to localStorage) - fires a callback, does not itself cause a re-render.                                                          |
 
 ```jsx
 function SalaryPreview({ form }) {
@@ -332,8 +335,6 @@ function SalaryPreview({ form }) {
   return <p>Monthly: {salary ? (salary / 12).toFixed(2) : "-"}</p>;
 }
 ```
-
-
 
 ### Errors & validation
 
@@ -385,19 +386,19 @@ form.methods.offFieldChange("age", callback); // or call unsubscribe()
 
 ## Extending with new field types
 
-`number`, `text`, `selectWrapper`, `date`, and `checkbox` all ship as
-built-in types already registered in `index.js`. To add one of your own:
+`number`, `text`, `selectWrapper`, `date`, `checkbox`, `phone`, `email`, and
+`textarea` all ship as built-in types already registered in `index.js`. To add
+one of your own:
 
 ```jsx
 import { registerFieldType } from "./form-engine";
-import TextareaField from "./TextareaField";
+import CustomField from "./CustomField";
 
-registerFieldType("textarea", TextareaField);
+registerFieldType("custom", CustomField);
 ```
 
-Then just use `type: "textarea"` in your schema. `styles/formtheme.js`
-already exports `textareaClass` and `radioClass` for wiring up those field
-types the same way the built-in ones do.
+Then use `type: "custom"` in your schema. `styles/formtheme.js` also exports
+`textareaClass` and `radioClass` for wiring up custom field types.
 
 ## Extending `formMethod` with new top-level methods
 

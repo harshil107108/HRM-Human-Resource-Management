@@ -339,9 +339,17 @@
 }
 
 .hp-grid-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 24px;
-  text-align: center;
-  color: #9aa1a9;
+}
+
+.hp-grid-empty img {
+  display: block;
+  max-width: min(500px, 80%);
+  width: 100%;
+  height: auto;
 }
 
 .hp-grid-cell-outer {

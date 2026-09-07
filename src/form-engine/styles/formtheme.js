@@ -75,27 +75,25 @@ disabled:cursor-not-allowed
 
 // Checkbox
 export const checkboxClass = `
-appearance-none
 relative
 inline-flex
-shrink-0
 items-center
 justify-center
-rounded-sm
-border
+shrink-0
+rounded-md
+border-2
 border-slate-300
 bg-white
 text-sky-600
-shadow-sm
+shadow-[0_1px_2px_rgba(15,23,42,0.08)]
 transition-all
-duration-200
-outline-none
-checked:bg-sky-500
-checked:border-sky-500
-checked:text-white
-focus:ring-2
-focus:ring-sky-100
-focus:ring-offset-0
+duration-150
+peer-checked:border-sky-600
+peer-checked:bg-sky-600
+peer-focus-visible:ring-4
+peer-focus-visible:ring-sky-100
+peer-disabled:bg-slate-100
+peer-disabled:border-slate-300
 `;
 
 // Radio

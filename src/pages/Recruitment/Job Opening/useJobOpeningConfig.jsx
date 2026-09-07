@@ -498,7 +498,7 @@ const useJobOpeningConfig = () => {
       id: "publishOnCareerPage",
       type: "checkbox",
       label: "Publish On Career Page",
-      className: "col-span-3",
+      className: "col-span-2",
       nextFocusField: "allowInternalApplications",
       prevFocusField: "closingDate",
     },

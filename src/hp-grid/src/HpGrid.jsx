@@ -11,6 +11,7 @@ import { registerGrid, unregisterGrid } from "./GridRegistry";
 import GridRow from "./GridRow";
 import { PlusIcon, SearchIcon } from "./icons";
 import { generateUUID, ensureRowIds, getColumnStyle } from "./utils";
+import noDataImage from "../../assets/images/Nodata.avif";
 import "./HpGrid.css";
 
 /**
@@ -831,10 +832,7 @@ function HpGrid(props) {
 
     const handleMouseMove = (event) => {
       const delta = event.clientX - columnResize.startX;
-      const nextWidth = Math.max(
-        80,
-        (columnResize.startWidth ?? 120) + delta,
-      );
+      const nextWidth = Math.max(80, (columnResize.startWidth ?? 120) + delta);
       updateColumnWidth(columnResize.colIndex, nextWidth);
     };
 
@@ -944,7 +942,9 @@ function HpGrid(props) {
   const showToolbar = Boolean(title || icon || searchable || onAddClick);
   const hasOnlyFixedColumns =
     colDef.length > 0 &&
-    colDef.every((column) => column.width !== undefined && column.width !== null);
+    colDef.every(
+      (column) => column.width !== undefined && column.width !== null,
+    );
 
   return (
     <div
@@ -988,16 +988,15 @@ function HpGrid(props) {
           <div
             className={`hp-grid-scroll-content ${hasOnlyFixedColumns ? "hp-grid-scroll-content--fixed-columns" : ""}`}
           >
-            <div
-              className="hp-grid-header"
-              style={{ height: headerHeight }}
-            >
+            <div className="hp-grid-header" style={{ height: headerHeight }}>
               {selectable && (
                 <div className="hp-grid-cell hp-grid-cell--select-col hp-grid-header-cell">
                   <input
                     type="checkbox"
                     checked={allSelected}
-                    onChange={() => (allSelected ? clearSelection() : selectAll())}
+                    onChange={() =>
+                      allSelected ? clearSelection() : selectAll()
+                    }
                   />
                 </div>
               )}
@@ -1012,7 +1011,9 @@ function HpGrid(props) {
                   </span>
                   <span
                     className="hp-grid-column-resizer"
-                    onMouseDown={(event) => handleColumnResizeStart(event, index)}
+                    onMouseDown={(event) =>
+                      handleColumnResizeStart(event, index)
+                    }
                     aria-label={`Resize ${col.headerName ?? col.field} column`}
                     role="separator"
                     tabIndex={-1}
@@ -1053,9 +1054,7 @@ function HpGrid(props) {
             <div className="hp-grid-body">
               {displayRows.length === 0 && (
                 <div className="hp-grid-empty">
-                  {searchTerm.trim() || activeColumnFilterFields.length > 0
-                    ? "No matching rows"
-                    : "No rows to display"}
+                  <img src={noDataImage} alt="No data" />
                 </div>
               )}
               {displayRows.map(({ row, rowIndex }) => (
@@ -1069,7 +1068,9 @@ function HpGrid(props) {
                   onToggleSelect={toggleRowSelection}
                   isRowFocused={focusedCell.rowIndex === rowIndex}
                   focusedColIndex={
-                    focusedCell.rowIndex === rowIndex ? focusedCell.colIndex : -1
+                    focusedCell.rowIndex === rowIndex
+                      ? focusedCell.colIndex
+                      : -1
                   }
                   registerCellRef={registerCellRef}
                   onCellCommit={handleCellCommit}

@@ -9,7 +9,7 @@ const useCompanyConfig = ({ handleDelete } = {}) => {
       label: "GST Number",
       placeHolder: "22AAAAA0000A1Z5",
       required: true,
-      textTransform: 'uppercase',
+      textTransform: "uppercase",
       maxLength: 15,
       nextFocusField: "panNumber",
       prevFocusField: "gstNumber",
@@ -22,7 +22,7 @@ const useCompanyConfig = ({ handleDelete } = {}) => {
       required: true,
       prevFocusField: "gstNumber",
       nextFocusField: "registrationNumber",
-      textTransform: 'uppercase',
+      textTransform: "uppercase",
       maxLength: 10,
     },
     {
@@ -33,7 +33,7 @@ const useCompanyConfig = ({ handleDelete } = {}) => {
       required: true,
       prevFocusField: "panNumber",
       nextFocusField: "industryname",
-    }
+    },
   ];
 
   const AdditionalBusinessInformation = [
@@ -57,7 +57,10 @@ const useCompanyConfig = ({ handleDelete } = {}) => {
         { label: "Wholesale & Distribution", value: "WHOLESALE_DISTRIBUTION" },
         { label: "Education", value: "EDUCATION" },
         { label: "Telecommunications", value: "TELECOMMUNICATIONS" },
-        { label: "Transportation & Logistics", value: "TRANSPORTATION_LOGISTICS" },
+        {
+          label: "Transportation & Logistics",
+          value: "TRANSPORTATION_LOGISTICS",
+        },
         { label: "Hospitality & Tourism", value: "HOSPITALITY_TOURISM" },
         { label: "Food & Beverage", value: "FOOD_BEVERAGE" },
         { label: "Automotive", value: "AUTOMOTIVE" },
@@ -69,7 +72,7 @@ const useCompanyConfig = ({ handleDelete } = {}) => {
         { label: "Professional Services", value: "PROFESSIONAL_SERVICES" },
         { label: "E-Commerce", value: "E_COMMERCE" },
         { label: "Other", value: "OTHER" },
-      ]
+      ],
     },
     {
       id: "establishDate",
@@ -88,7 +91,7 @@ const useCompanyConfig = ({ handleDelete } = {}) => {
       placeHolder: "e.g. Acme Corporation",
       required: true,
       nextFocusField: "legalName",
-      prevFocusField: 'companyName',
+      prevFocusField: "companyName",
       className: "col-span-3  ",
     },
     {
@@ -211,7 +214,6 @@ const useCompanyConfig = ({ handleDelete } = {}) => {
   ];
 
   const companyListingColDef = [
-
     {
       id: "companyName",
       field: "companyName",
@@ -301,24 +303,25 @@ const useCompanyConfig = ({ handleDelete } = {}) => {
       field: "postalCode",
       headerName: "PostalCode",
       width: 120,
-    }, {
+    },
+    {
       id: "action",
       field: "action",
       headerName: "Action",
-      width: 60,
+      width: 80,
       type: "actions",
       onClick: (data) => {
         handleDelete(data._id);
-      }
-    }
-  ]
+      },
+    },
+  ];
 
   return {
     businessInfoSchema1,
     AdditionalBusinessInformation,
     basicInfoSchema,
     addressSchema,
-    companyListingColDef
+    companyListingColDef,
   };
 };
 

@@ -1,26 +1,40 @@
-const useJobOpeningConfig = () => {
+import { api, apiEndpoints } from "@/api/api";
+
+const useJobOpeningConfig = ({ handleDelete } = {}) => {
   const jobOpeningListingColDef = [
-    {
-      id: "jobTitle",
-      field: "jobTitle",
-      headerName: "Job Opening",
-      width: 220,
-    },
     {
       id: "jobOpeningId",
       field: "jobOpeningId",
       headerName: "Job ID",
-      width: 140,
+      width: 80,
     },
     {
-      id: "departmentName",
-      field: "departmentName",
+      id: "jobTitle",
+      field: "jobTitle",
+      headerName: "Job Opening",
+      width: 180,
+    },
+    {
+      id: "companyName",
+      field: "companyName",
+      headerName: "Company",
+      width: 150,
+    },
+    {
+      id: "branchname",
+      field: "branchname",
       headerName: "Department",
       width: 150,
     },
     {
-      id: "designationName",
-      field: "designationName",
+      id: "departmentname",
+      field: "departmentname",
+      headerName: "Department",
+      width: 150,
+    },
+    {
+      id: "designationname",
+      field: "designationname",
       headerName: "Designation",
       width: 170,
     },
@@ -43,29 +57,27 @@ const useJobOpeningConfig = () => {
       width: 180,
     },
     {
-      id: "applicationCount",
-      field: "applicationCount",
-      headerName: "Applications",
-      width: 120,
-    },
-    {
-      id: "postedDate",
-      field: "postedDate",
+      id: "publishDate",
+      field: "publishDate",
       headerName: "Posted Date",
-      width: 140,
+      width: 120,
     },
     {
       id: "jobStatus",
       field: "jobStatus",
-      headerName: "Status",
-      width: 120,
+      headerName: "Job Status",
+      width: 100,
     },
     {
       id: "action",
       field: "action",
       headerName: "Action",
-      width: 70,
+      width: 80,
       type: "actions",
+
+      onClick: (data) => {
+        handleDelete(data._id);
+      },
     },
   ];
 
@@ -90,7 +102,7 @@ const useJobOpeningConfig = () => {
       prevFocusField: "jobTitle",
     },
     {
-      id: "departmentId",
+      id: "department",
       type: "selectWrapper",
       label: "Department",
       placeHolder: "Select Department",
@@ -98,10 +110,12 @@ const useJobOpeningConfig = () => {
       className: "col-span-4",
       nextFocusField: "designationId",
       prevFocusField: "jobOpeningId",
-      options: [],
+      api: api + apiEndpoints.organization.department.DepartmentHelp,
+      labelKey: "departmentname",
+      valueKey: "_id",
     },
     {
-      id: "designationId",
+      id: "designation",
       type: "selectWrapper",
       label: "Designation",
       placeHolder: "Select Designation",
@@ -109,10 +123,12 @@ const useJobOpeningConfig = () => {
       className: "col-span-4",
       nextFocusField: "companyId",
       prevFocusField: "departmentId",
-      options: [],
+      api: api + apiEndpoints.organization.designation.DesignationHelp,
+      labelKey: "designationname",
+      valueKey: "_id",
     },
     {
-      id: "companyId",
+      id: "company",
       type: "selectWrapper",
       label: "Company",
       placeHolder: "Select Company",
@@ -120,17 +136,21 @@ const useJobOpeningConfig = () => {
       className: "col-span-4",
       nextFocusField: "branchId",
       prevFocusField: "designationId",
-      options: [],
+      api: api + apiEndpoints.organization.company.CompanyHelp,
+      labelKey: "companyName",
+      valueKey: "_id",
     },
     {
-      id: "branchId",
+      id: "branch",
       type: "selectWrapper",
       label: "Branch",
       placeHolder: "Select Branch",
       className: "col-span-4",
       nextFocusField: "locationId",
       prevFocusField: "companyId",
-      options: [],
+      api: api + apiEndpoints.organization.branch.BranchHelp,
+      labelKey: "branchname",
+      valueKey: "_id",
     },
   ];
 
@@ -141,6 +161,7 @@ const useJobOpeningConfig = () => {
       label: "Number of Positions",
       placeHolder: "1",
       required: true,
+      min: 0,
       className: "col-span-4",
       nextFocusField: "employmentType",
     },
@@ -207,6 +228,7 @@ const useJobOpeningConfig = () => {
       placeHolder: "Select Experience Level",
       className: "col-span-4",
       nextFocusField: "minimumExperience",
+      min: 0,
       prevFocusField: "workMode",
       options: [
         {
@@ -238,6 +260,7 @@ const useJobOpeningConfig = () => {
       placeHolder: "Enter Minimum Experience",
       className: "col-span-4",
       nextFocusField: "maximumExperience",
+      min: 0,
       prevFocusField: "experienceRequired",
     },
     {
@@ -246,6 +269,7 @@ const useJobOpeningConfig = () => {
       label: "Maximum Experience",
       placeHolder: "Enter Maximum Experience",
       className: "col-span-4",
+      min: 0,
       nextFocusField: "hiringManagerId",
       prevFocusField: "minimumExperience",
     },
@@ -253,24 +277,28 @@ const useJobOpeningConfig = () => {
 
   const hiringInformationSchema = [
     {
-      id: "hiringManagerId",
+      id: "hiringManager",
       type: "selectWrapper",
       label: "Hiring Manager",
       placeHolder: "Select Hiring Manager",
-      required: true,
+      // required: true,
       className: "col-span-4",
       nextFocusField: "recruiterId",
-      options: [],
+      api: api + apiEndpoints.employee.employee.EmployeeHelp,
+      labelKey: "employeeName",
+      valueKey: "_id",
     },
     {
-      id: "recruiterId",
+      id: "recruiter",
       type: "selectWrapper",
       label: "Recruiter",
       placeHolder: "Select Recruiter",
       className: "col-span-4",
       nextFocusField: "priority",
       prevFocusField: "hiringManagerId",
-      options: [],
+      api: api + apiEndpoints.employee.employee.EmployeeHelp,
+      labelKey: "employeeName",
+      valueKey: "_id",
     },
     {
       id: "priority",
@@ -345,6 +373,7 @@ const useJobOpeningConfig = () => {
       className: "col-span-4",
       nextFocusField: "maximumSalary",
       prevFocusField: "salaryType",
+      min: 0,
     },
     {
       id: "maximumSalary",
@@ -354,6 +383,7 @@ const useJobOpeningConfig = () => {
       className: "col-span-4",
       nextFocusField: "currency",
       prevFocusField: "minimumSalary",
+      min: 0,
     },
     {
       id: "currency",

@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import useApiCall from "@/hooks/useApiCall";
 import useAlert from "@/hooks/useAlert";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
+import { formatDateForInput } from "@/utils/dateUtils";
 
 const JobOpeningListing = () => {
   const { deleteAlert, successAlert } = useAlert();
@@ -74,8 +75,16 @@ const JobOpeningListing = () => {
 
     if (res?.success) {
       const data = res?.data?.data || [];
+      const finalData = data.map((item) => ({
+        ...item,
+        departmentname: item?.department?.departmentname,
+        designationname: item?.designation?.designationname,
+        companyName: item?.company?.companyName,
+        branchname: item?.branch?.branchname,
+        publishDate: formatDateForInput(item?.publishDate),
+      }));
 
-      setJobListingData(data);
+      setJobListingData(finalData);
     }
   };
 
@@ -95,9 +104,7 @@ const JobOpeningListing = () => {
         onDoubleClick={handleDoubleClick}
         onAddClick={handleAdd}
         title="Job Openings"
-        panding={
-          isPending("deleteListing") || isPending("getDepartmentListing")
-        }
+        panding={isPending("deleteListing") || isPending("getJobListing")}
       />
     </>
   );

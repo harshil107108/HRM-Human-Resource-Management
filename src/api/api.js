@@ -80,6 +80,16 @@ const apiEndpoints = {
             DesignationHelp: "/organization/designation/getDesignationHelp",
         }
     },
+    
+    recruitment: {
+        jobOpening: {
+            JobOpeningAddEdit: "/recruitment/jobopening/addEditJobOpening",
+            JobOpeningGetData: "/recruitment/jobopening/getJobOpening",
+            JobOpeningDeleteByID: "/recruitment/jobopening/deleteJobOpeningById",
+            JobOpeningGetByID: "/recruitment/jobopening/getJobOpeningById",
+            JobOpeningHelp: "/recruitment/jobopening/getJobOpeningHelp",
+        },
+    },
 
     common: {
         imageUpload: "/api/imageupload"

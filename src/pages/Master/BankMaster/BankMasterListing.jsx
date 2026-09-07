@@ -1,5 +1,4 @@
 import { HpGrid } from "@/hp-grid/src";
-import React from "react";
 import useBankMasterConfig from "./useBankMasterConfig";
 import useModal from "@/hooks/useModal";
 import BankMasterModal from "./BankMasterModal";

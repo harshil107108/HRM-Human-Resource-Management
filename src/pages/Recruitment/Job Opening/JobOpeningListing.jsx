@@ -9,14 +9,8 @@ import useDocumentTitle from "@/hooks/useDocumentTitle";
 
 const JobOpeningListing = () => {
   const { deleteAlert, successAlert } = useAlert();
-
-  const { apiCall } = useApiCall();
-
+  const { apiCall, isPending } = useApiCall();
   const navigate = useNavigate();
-
-  // =========================================================
-  // DELETE JOB OPENING
-  // =========================================================
 
   const handleDelete = async (id) => {
     deleteAlert({
@@ -47,23 +41,11 @@ const JobOpeningListing = () => {
     });
   };
 
-  // =========================================================
-  // CONFIG
-  // =========================================================
-
   const { jobOpeningListingColDef } = useJobOpeningConfig({
     handleDelete,
   });
 
-  // =========================================================
-  // STATE
-  // =========================================================
-
   const [jobListingData, setJobListingData] = useState([]);
-
-  // =========================================================
-  // DOUBLE CLICK
-  // =========================================================
 
   const handleDoubleClick = (params) => {
     const { data } = params;
@@ -75,10 +57,6 @@ const JobOpeningListing = () => {
     });
   };
 
-  // =========================================================
-  // ADD JOB OPENING
-  // =========================================================
-
   const handleAdd = () => {
     navigate(`${location.pathname}/addedit`, {
       state: {
@@ -86,10 +64,6 @@ const JobOpeningListing = () => {
       },
     });
   };
-
-  // =========================================================
-  // GET JOB LISTING
-  // =========================================================
 
   const getJobListing = async () => {
     const res = await apiCall({
@@ -105,23 +79,11 @@ const JobOpeningListing = () => {
     }
   };
 
-  // =========================================================
-  // INITIAL LOAD
-  // =========================================================
-
   useEffect(() => {
     getJobListing();
   }, []);
 
-  // =========================================================
-  // DOCUMENT TITLE
-  // =========================================================
-
   useDocumentTitle("orvexa | Job Openings");
-
-  // =========================================================
-  // UI
-  // =========================================================
 
   return (
     <>
@@ -133,6 +95,9 @@ const JobOpeningListing = () => {
         onDoubleClick={handleDoubleClick}
         onAddClick={handleAdd}
         title="Job Openings"
+        panding={
+          isPending("deleteListing") || isPending("getDepartmentListing")
+        }
       />
     </>
   );

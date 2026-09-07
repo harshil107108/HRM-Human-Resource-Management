@@ -13,7 +13,7 @@ const AssetListing = () => {
   const location = useLocation();
 
   const { deleteAlert, successAlert } = useAlert();
-  const { apiCall } = useApiCall();
+  const { apiCall, isPending } = useApiCall();
 
   const [AssetListingData, setAssetListingData] = useState([]);
 
@@ -204,6 +204,7 @@ const AssetListing = () => {
           style={{ height: "100%" }}
           onAddClick={handleAdd}
           onDoubleClick={handleDoubleClick}
+          panding={isPending("deleteAsset") || isPending("getAssetListing")}
         />
       </div>
     </div>

@@ -1,15 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Select from "react-select";
 import { useFormStore } from "../../hooks/useFormStore";
-import {
-  labelClass,
-  wrapperClass,
-} from "../../styles/formtheme";
+import { labelClass, wrapperClass } from "../../styles/formtheme";
 
-export function shouldHandleSelectKeyDown(
-  event,
-  { form, id, prevFocusField }
-) {
+export function shouldHandleSelectKeyDown(event, { form, id, prevFocusField }) {
   if (event.key === "Tab" && event.shiftKey && prevFocusField) {
     event.preventDefault();
     form.methods.focusPrev(id);
@@ -45,9 +39,7 @@ export default function SelectWrapper({ field, form }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [draftValues, setDraftValues] = useState([]);
 
-  const isMultiSelect = Boolean(
-    field.isMultiSelect || field.multiSelect
-  );
+  const isMultiSelect = Boolean(field.isMultiSelect || field.multiSelect);
 
   // ============================================================
   // LOAD OPTIONS FROM API
@@ -65,7 +57,7 @@ export default function SelectWrapper({ field, form }) {
 
       if (!labelKey || !valueKey) {
         console.warn(
-          `[SelectWrapper] "${id}" requires labelKey and valueKey when api is provided.`
+          `[SelectWrapper] "${id}" requires labelKey and valueKey when api is provided.`,
         );
         setOptions([]);
         return;
@@ -86,14 +78,10 @@ export default function SelectWrapper({ field, form }) {
         const result = await response.json();
 
         if (!response.ok || result?.success === false) {
-          throw new Error(
-            result?.message || "Failed to load options"
-          );
+          throw new Error(result?.message || "Failed to load options");
         }
 
-        const apiData = Array.isArray(result?.data)
-          ? result.data
-          : [];
+        const apiData = Array.isArray(result?.data) ? result.data : [];
 
         const formattedOptions = apiData.map((item) => ({
           label: item[labelKey],
@@ -107,14 +95,12 @@ export default function SelectWrapper({ field, form }) {
       } catch (error) {
         console.error(
           `[SelectWrapper] Failed to load options for "${id}": `,
-          error
+          error,
         );
 
         if (isMounted) {
           setOptions([]);
-          setApiError(
-            error?.message || "Failed to load options"
-          );
+          setApiError(error?.message || "Failed to load options");
         }
       } finally {
         if (isMounted) {
@@ -128,9 +114,7 @@ export default function SelectWrapper({ field, form }) {
     return () => {
       isMounted = false;
     };
-
   }, [api, id, labelKey, valueKey]);
-
 
   // ============================================================
   // SELECTED VALUES
@@ -141,11 +125,7 @@ export default function SelectWrapper({ field, form }) {
       return value;
     }
 
-    if (
-      value === undefined ||
-      value === null ||
-      value === ""
-    ) {
+    if (value === undefined || value === null || value === "") {
       return [];
     }
 
@@ -165,25 +145,12 @@ export default function SelectWrapper({ field, form }) {
   const selectedValue = useMemo(() => {
     if (isMultiSelect) {
       return options.filter((item) =>
-        draftValues.some(
-          (selected) =>
-            String(selected) === String(item.value)
-        )
+        draftValues.some((selected) => String(selected) === String(item.value)),
       );
     }
 
-    return (
-      options.find(
-        (item) =>
-          String(item.value) === String(value)
-      ) || null
-    );
-  }, [
-    draftValues,
-    isMultiSelect,
-    options,
-    value,
-  ]);
+    return options.find((item) => String(item.value) === String(value)) || null;
+  }, [draftValues, isMultiSelect, options, value]);
 
   // ============================================================
   // CHANGE
@@ -192,22 +159,17 @@ export default function SelectWrapper({ field, form }) {
   const handleChange = useCallback(
     (selected) => {
       if (isMultiSelect) {
-        const nextValues = selected
-          ? selected.map((item) => item.value)
-          : [];
+        const nextValues = selected ? selected.map((item) => item.value) : [];
 
         setDraftValues(nextValues);
         return;
       }
 
-      form.methods.setValue(
-        id,
-        selected?.value ?? ""
-      );
+      form.methods.setValue(id, selected?.value ?? "");
 
       setIsMenuOpen(false);
     },
-    [form, id, isMultiSelect]
+    [form, id, isMultiSelect],
   );
 
   // ============================================================
@@ -224,22 +186,31 @@ export default function SelectWrapper({ field, form }) {
     setIsMenuOpen(false);
   }, [selectedValues]);
 
+  useEffect(() => {
+    if (!isMenuOpen) return undefined;
+
+    const closeMenuOnScroll = () => {
+      setIsMenuOpen(false);
+    };
+
+    window.addEventListener("scroll", closeMenuOnScroll, true);
+
+    return () => {
+      window.removeEventListener("scroll", closeMenuOnScroll, true);
+    };
+  }, [isMenuOpen]);
+
   // ============================================================
   // MULTI SELECT
   // ============================================================
 
-  const handleOptionToggle = useCallback(
-    (optionValue) => {
-      setDraftValues((prev) =>
-        prev.includes(optionValue)
-          ? prev.filter(
-            (item) => item !== optionValue
-          )
-          : [...prev, optionValue]
-      );
-    },
-    []
-  );
+  const handleOptionToggle = useCallback((optionValue) => {
+    setDraftValues((prev) =>
+      prev.includes(optionValue)
+        ? prev.filter((item) => item !== optionValue)
+        : [...prev, optionValue],
+    );
+  }, []);
 
   const handleSelectAll = useCallback(() => {
     setDraftValues((prev) => {
@@ -247,17 +218,12 @@ export default function SelectWrapper({ field, form }) {
         return [];
       }
 
-      return options.map(
-        (item) => item.value
-      );
+      return options.map((item) => item.value);
     });
   }, [options]);
 
   const handleApply = useCallback(() => {
-    form.methods.setValue(
-      id,
-      draftValues
-    );
+    form.methods.setValue(id, draftValues);
 
     setIsMenuOpen(false);
   }, [draftValues, form, id]);
@@ -277,11 +243,7 @@ export default function SelectWrapper({ field, form }) {
     setIsMenuOpen(false);
 
     form.methods.blurField(id);
-  }, [
-    form,
-    id,
-    selectedValues,
-  ]);
+  }, [form, id, selectedValues]);
 
   const handleKeyDown = useCallback(
     (event) => {
@@ -289,27 +251,18 @@ export default function SelectWrapper({ field, form }) {
         shouldHandleSelectKeyDown(event, {
           form,
           id,
-          prevFocusField:
-            field.prevFocusField,
+          prevFocusField: field.prevFocusField,
         })
       ) {
         return;
       }
 
-      if (
-        event.key === "Enter" &&
-        !isMultiSelect
-      ) {
+      if (event.key === "Enter" && !isMultiSelect) {
         event.preventDefault();
         form.methods.focusNext(id);
       }
     },
-    [
-      field.prevFocusField,
-      form,
-      id,
-      isMultiSelect,
-    ]
+    [field.prevFocusField, form, id, isMultiSelect],
   );
 
   // ============================================================
@@ -318,38 +271,26 @@ export default function SelectWrapper({ field, form }) {
 
   const renderOption = useCallback(
     (optionProps) => {
-      const {
-        data,
-        innerRef,
-        innerProps,
-      } = optionProps;
+      const { data, innerRef, innerProps } = optionProps;
 
-      const isSelected =
-        draftValues.some(
-          (item) =>
-            String(item) ===
-            String(data.value)
-        );
+      const isSelected = draftValues.some(
+        (item) => String(item) === String(data.value),
+      );
 
       return (
         <div
           ref={innerRef}
           {...innerProps}
-          onMouseDown={(event) =>
-            event.preventDefault()
-          }
+          onMouseDown={(event) => event.preventDefault()}
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
 
-            handleOptionToggle(
-              data.value
-            );
+            handleOptionToggle(data.value);
           }}
-          className={`flex cursor-pointer items-center gap-2 border-b border-slate-100 px-3 py-1.5 text-sm transition-colors duration-100 last:border-b-0 ${isSelected
-            ? "bg-sky-50"
-            : "hover:bg-slate-50"
-            }`}
+          className={`flex cursor-pointer items-center gap-2 border-b border-slate-100 px-3 py-1.5 text-sm transition-colors duration-100 last:border-b-0 ${
+            isSelected ? "bg-sky-50" : "hover:bg-slate-50"
+          }`}
         >
           <input
             type="checkbox"
@@ -358,38 +299,24 @@ export default function SelectWrapper({ field, form }) {
             className="h-4 w-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-2 focus:ring-sky-200 focus:ring-offset-0"
           />
 
-          <span className="truncate text-slate-700">
-            {data.label}
-          </span>
+          <span className="truncate text-slate-700">{data.label}</span>
         </div>
       );
     },
-    [
-      draftValues,
-      handleOptionToggle,
-    ]
+    [draftValues, handleOptionToggle],
   );
 
   const renderSingleOption = useCallback(
     (optionProps) => {
-      const {
-        data,
-        innerRef,
-        innerProps,
-        isSelected,
-        isFocused,
-      } = optionProps;
+      const { data, innerRef, innerProps, isSelected, isFocused } = optionProps;
 
       const optionIndex = options.findIndex(
         (item) =>
           String(item.value) === String(data.value) &&
-          String(item.label) === String(data.label)
+          String(item.label) === String(data.label),
       );
 
-      const zebraBackground =
-        optionIndex % 2 === 0
-          ? "#f8fafc"
-          : "#ffffff";
+      const zebraBackground = optionIndex % 2 === 0 ? "#f8fafc" : "#ffffff";
 
       return (
         <div
@@ -415,7 +342,7 @@ export default function SelectWrapper({ field, form }) {
         </div>
       );
     },
-    [options]
+    [options],
   );
 
   // ============================================================
@@ -430,13 +357,9 @@ export default function SelectWrapper({ field, form }) {
             <input
               type="checkbox"
               checked={
-                options.length > 0 &&
-                draftValues.length ===
-                options.length
+                options.length > 0 && draftValues.length === options.length
               }
-              onChange={
-                handleSelectAll
-              }
+              onChange={handleSelectAll}
               className="h-4 w-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-2 focus:ring-sky-200 focus:ring-offset-0"
             />
 
@@ -452,17 +375,13 @@ export default function SelectWrapper({ field, form }) {
           </div>
         )}
 
-        <div className="max-h-60 overflow-y-auto py-1.5">
-          {children}
-        </div>
+        <div className="max-h-60 overflow-y-auto py-1.5">{children}</div>
 
         {isMultiSelect && (
           <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-3 py-2.5">
             <button
               type="button"
-              onMouseDown={(event) =>
-                event.preventDefault()
-              }
+              onMouseDown={(event) => event.preventDefault()}
               onClick={handleApply}
               className="rounded-md bg-sky-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-sky-700 active:bg-sky-800"
             >
@@ -478,15 +397,14 @@ export default function SelectWrapper({ field, form }) {
       handleSelectAll,
       isMultiSelect,
       options.length,
-    ]
+    ],
   );
 
   // ============================================================
   // RENDER
   // ============================================================
 
-  const displayError =
-    error || apiError;
+  const displayError = error || apiError;
 
   return (
     <div className={`${wrapperClass} relative`}>
@@ -501,90 +419,52 @@ export default function SelectWrapper({ field, form }) {
         <label className={`${labelClass} min-h-5`}>
           {label}
 
-          {required && (
-            <span className="ml-1 text-red-500">
-              *
-            </span>
-          )}
+          {required && <span className="ml-1 text-red-500">*</span>}
         </label>
       )}
 
       <Select
         inputId={id}
-        ref={(node) =>
-          form.methods.registerRef(
-            id,
-            node
-          )
-        }
+        ref={(node) => form.methods.registerRef(id, node)}
         options={options}
         value={selectedValue}
-        placeholder={
-          loading
-            ? "Loading..."
-            : placeHolder || "Select"
-        }
+        placeholder={loading ? "Loading..." : placeHolder || "Select"}
         onChange={handleChange}
-        onFocus={
-          isMultiSelect
-            ? () => {
-              setIsFocused(true);
-              handleFocus();
-            }
-            : () => setIsFocused(true)
-        }
+        onFocus={() => {
+          setIsFocused(true);
+          handleFocus();
+        }}
         onBlur={(event) => {
           setIsFocused(false);
           handleBlur(event);
         }}
         onKeyDown={handleKeyDown}
-        isDisabled={
-          disabled || loading
-        }
+        isDisabled={disabled || loading}
         isLoading={loading}
         isMulti={isMultiSelect}
         isClearable={false}
         isSearchable
-        closeMenuOnSelect={
-          isMultiSelect
-            ? false
-            : true
-        }
+        closeMenuOnSelect={isMultiSelect ? false : true}
         hideSelectedOptions={false}
         menuPlacement="auto"
         menuPortalTarget={document.body}
-        menuIsOpen={
-          isMultiSelect
-            ? isMenuOpen
-            : undefined
-        }
-        onMenuOpen={
-          isMultiSelect
-            ? handleMenuOpen
-            : undefined
-        }
-        onMenuClose={
-          isMultiSelect
-            ? handleMenuClose
-            : undefined
-        }
+        menuIsOpen={isMenuOpen}
+        onMenuOpen={handleMenuOpen}
+        onMenuClose={handleMenuClose}
         classNamePrefix="form-select"
         className="w-full"
         components={
           isMultiSelect
             ? {
-              Option: renderOption,
-              MenuList: renderMenuList,
-            }
+                Option: renderOption,
+                MenuList: renderMenuList,
+              }
             : {
-              Option: renderSingleOption,
-            }
+                Option: renderSingleOption,
+              }
         }
-        styles={customStyles(
-          displayError
-        )}
+        styles={customStyles(displayError)}
       />
-
     </div>
   );
 }
@@ -600,12 +480,9 @@ const customStyles = (error) => ({
     height: 32,
     borderRadius: 5,
 
-    border: `1px solid ${error
-      ? "#ef4444"
-      : state.isFocused
-        ? "#0ea5e9"
-        : "#dbe1ea"
-      } `,
+    border: `1px solid ${
+      error ? "#ef4444" : state.isFocused ? "#0ea5e9" : "#dbe1ea"
+    } `,
 
     boxShadow: state.isFocused
       ? "0 0 0 2px rgba(14, 165, 233, 0.10)"
@@ -673,9 +550,7 @@ const customStyles = (error) => ({
     flexShrink: 0,
     color: "#64748b",
     padding: "0 5px 0 7px",
-    transform: state.selectProps.menuIsOpen
-      ? "rotate(180deg)"
-      : "rotate(0deg)",
+    transform: state.selectProps.menuIsOpen ? "rotate(180deg)" : "rotate(0deg)",
     transition: "all .2s",
   }),
 
@@ -706,8 +581,7 @@ const customStyles = (error) => ({
     overflow: "hidden",
     boxShadow:
       "0 16px 32px -8px rgba(15, 23, 42, 0.16), 0 4px 8px -2px rgba(15, 23, 42, 0.06)",
-    border:
-      "1px solid #e2e8f0",
+    border: "1px solid #e2e8f0",
     backgroundColor: "#fff",
   }),
 
@@ -716,8 +590,7 @@ const customStyles = (error) => ({
     padding: 0,
     maxHeight: 240,
     scrollbarWidth: "thin",
-    scrollbarColor:
-      "#cbd5e1 transparent",
+    scrollbarColor: "#cbd5e1 transparent",
     overflowY: "auto",
   }),
 
@@ -728,12 +601,11 @@ const customStyles = (error) => ({
     borderBottom: "1px solid #e5e7eb",
     marginBottom: 0,
     cursor: "pointer",
-    backgroundColor:
-      state.isSelected
-        ? "#e0f2fe"
-        : state.isFocused
-          ? "#f1f5f9"
-          : "#fff",
+    backgroundColor: state.isSelected
+      ? "#e0f2fe"
+      : state.isFocused
+        ? "#f1f5f9"
+        : "#fff",
     color: "#0f172a",
     fontSize: 12,
     fontWeight: state.isSelected ? 600 : 500,

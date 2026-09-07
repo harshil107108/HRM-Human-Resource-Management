@@ -1,11 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { useFormStore } from "../../hooks/useFormStore";
-import {
-  inputClass,
-  labelClass,
-  wrapperClass,
-} from "../../styles/formtheme";
+import { inputClass, labelClass, wrapperClass } from "../../styles/formtheme";
 
 /* ============================================================
    DateField — segmented DD/MM/YYYY input + calendar dropdown
@@ -34,7 +36,11 @@ const pad2 = (n) => String(n).padStart(2, "0");
 
 function todayParts() {
   const d = new Date();
-  return { day: pad2(d.getDate()), month: pad2(d.getMonth() + 1), year: String(d.getFullYear()) };
+  return {
+    day: pad2(d.getDate()),
+    month: pad2(d.getMonth() + 1),
+    year: String(d.getFullYear()),
+  };
 }
 
 function partsFromValue(value) {
@@ -44,10 +50,16 @@ function partsFromValue(value) {
 }
 
 function isRealDate(day, month, year) {
-  const d = Number(day), m = Number(month), y = Number(year);
+  const d = Number(day),
+    m = Number(month),
+    y = Number(year);
   if (!d || !m || !y) return false;
   const date = new Date(y, m - 1, d);
-  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
+  return (
+    date.getFullYear() === y &&
+    date.getMonth() === m - 1 &&
+    date.getDate() === d
+  );
 }
 
 function toIso(day, month, year) {
@@ -67,14 +79,19 @@ function clampToRange(iso, min, max) {
 }
 
 export function getDateValidationError(day, month, year, { min, max } = {}) {
-  const d = Number(day), m = Number(month), y = Number(year);
+  const d = Number(day),
+    m = Number(month),
+    y = Number(year);
 
   if (day === "" && month === "" && year === "") return "";
-  if (day !== "" && (Number.isNaN(d) || d < 1 || d > 31)) return "Day must be between 1 and 31";
-  if (month !== "" && (Number.isNaN(m) || m < 1 || m > 12)) return "Month must be between 1 and 12";
+  if (day !== "" && (Number.isNaN(d) || d < 1 || d > 31))
+    return "Day must be between 1 and 31";
+  if (month !== "" && (Number.isNaN(m) || m < 1 || m > 12))
+    return "Month must be between 1 and 12";
   if (year === "") return "";
   if (Number.isNaN(y) || y < 1000 || y > 9999) return "Year must be valid";
-  if (day !== "" && month !== "" && !isRealDate(day, month, year)) return "Enter a valid date";
+  if (day !== "" && month !== "" && !isRealDate(day, month, year))
+    return "Enter a valid date";
 
   if (day && month && year) {
     const iso = toIso(day, month, year);
@@ -91,14 +108,24 @@ function formatDisplay(iso) {
 }
 
 const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 const EMPTY_FORM_STORE = {
   methods: {
-    subscribe: () => () => { },
+    subscribe: () => () => {},
     getSnapshot: () => ({ values: {}, errors: {} }),
   },
 };
@@ -126,8 +153,17 @@ function buildCalendarGrid(viewYear, viewMonth /* 0-11 */) {
 
 function CalendarIcon(props) {
   return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
       <rect x="3" y="4.5" width="18" height="16" rx="2" />
       <path d="M3 9.5h18" />
       <path d="M8 2.5v4M16 2.5v4" />
@@ -135,10 +171,20 @@ function CalendarIcon(props) {
   );
 }
 function ChevronIcon({ direction = "left", ...props }) {
-  const d = direction === "left" ? "M14.5 4.5L8 11l6.5 6.5" : "M8.5 4.5L15 11l-6.5 6.5";
+  const d =
+    direction === "left" ? "M14.5 4.5L8 11l6.5 6.5" : "M8.5 4.5L15 11l-6.5 6.5";
   return (
-    <svg viewBox="0 0 22 22" width="14" height="14" fill="none" stroke="currentColor"
-      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg
+      viewBox="0 0 22 22"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
       <path d={d} />
     </svg>
   );
@@ -164,9 +210,7 @@ export default function DateField({ field, form, ...standaloneProps }) {
   const onChange = form
     ? (nextValue) => form.methods.setValue(id, nextValue)
     : standaloneOnChange;
-  const onBlur = form
-    ? () => form.methods.blurField(id)
-    : standaloneOnBlur;
+  const onBlur = form ? () => form.methods.blurField(id) : standaloneOnBlur;
   const isControlled = controlledValue !== undefined;
   const [innerValue, setInnerValue] = useState("");
   const value = isControlled ? controlledValue : innerValue;
@@ -205,13 +249,17 @@ export default function DateField({ field, form, ...standaloneProps }) {
     initialized.current = true;
     if (!value && defaultToday) {
       const t = todayParts();
-      setDay(t.day); setMonth(t.month); setYear(t.year);
+      setDay(t.day);
+      setMonth(t.month);
+      setYear(t.year);
       const iso = toIso(t.day, t.month, t.year);
       lastEmitted.current = iso;
       commitValue(iso);
     } else if (value) {
       const p = partsFromValue(value);
-      setDay(p.day); setMonth(p.month); setYear(p.year);
+      setDay(p.day);
+      setMonth(p.month);
+      setYear(p.year);
       lastEmitted.current = value;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -221,7 +269,9 @@ export default function DateField({ field, form, ...standaloneProps }) {
   useEffect(() => {
     if (value !== lastEmitted.current) {
       const p = partsFromValue(value);
-      setDay(p.day); setMonth(p.month); setYear(p.year);
+      setDay(p.day);
+      setMonth(p.month);
+      setYear(p.year);
       lastEmitted.current = value;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -245,9 +295,16 @@ export default function DateField({ field, form, ...standaloneProps }) {
 
   const validateAndCommit = useCallback(
     (d, m, y, { fillDefaults } = {}) => {
-      const nextDay = d || "", nextMonth = m || "", nextYear = y || "";
+      const nextDay = d || "",
+        nextMonth = m || "",
+        nextYear = y || "";
 
-      if (fillDefaults && nextDay.length === 2 && nextMonth.length === 2 && !nextYear) {
+      if (
+        fillDefaults &&
+        nextDay.length === 2 &&
+        nextMonth.length === 2 &&
+        !nextYear
+      ) {
         const currentYear = todayParts().year;
         setYear(currentYear);
         return validateAndCommit(nextDay, nextMonth, currentYear);
@@ -260,7 +317,10 @@ export default function DateField({ field, form, ...standaloneProps }) {
         return;
       }
 
-      const errText = getDateValidationError(nextDay, nextMonth, nextYear, { min, max });
+      const errText = getDateValidationError(nextDay, nextMonth, nextYear, {
+        min,
+        max,
+      });
       if (errText) {
         setError(errText);
         lastEmitted.current = undefined;
@@ -286,13 +346,19 @@ export default function DateField({ field, form, ...standaloneProps }) {
     const v = e.target.value.replace(/\D/g, "").slice(0, 2);
     setDay(v);
     validateAndCommit(v, month, year);
-    if (v.length === 2) { monthRef.current?.focus(); monthRef.current?.select(); }
+    if (v.length === 2) {
+      monthRef.current?.focus();
+      monthRef.current?.select();
+    }
   };
   const handleMonthChange = (e) => {
     const v = e.target.value.replace(/\D/g, "").slice(0, 2);
     setMonth(v);
     validateAndCommit(day, v, year);
-    if (v.length === 2) { yearRef.current?.focus(); yearRef.current?.select(); }
+    if (v.length === 2) {
+      yearRef.current?.focus();
+      yearRef.current?.select();
+    }
   };
   const handleYearChange = (e) => {
     const v = e.target.value.replace(/\D/g, "").slice(0, 4);
@@ -303,7 +369,8 @@ export default function DateField({ field, form, ...standaloneProps }) {
   const handleBlur = (e) => {
     // don't fire "leaving the field" logic when focus just moved between
     // the day/month/year segments of this same widget
-    if (wrapperRef.current && wrapperRef.current.contains(e.relatedTarget)) return;
+    if (wrapperRef.current && wrapperRef.current.contains(e.relatedTarget))
+      return;
     validateAndCommit(day, month, year, { fillDefaults: true });
     onBlur?.(); // FORM STORE HOOK: form.methods.blurField(id)
   };
@@ -312,8 +379,12 @@ export default function DateField({ field, form, ...standaloneProps }) {
     if (e.key === "Enter") {
       e.preventDefault();
       validateAndCommit(day, month, year, { fillDefaults: true });
-      const validationError = getDateValidationError(day, month, year, { min, max });
-      const isCompleteDate = day.length === 2 && month.length === 2 && year.length === 4;
+      const validationError = getDateValidationError(day, month, year, {
+        min,
+        max,
+      });
+      const isCompleteDate =
+        day.length === 2 && month.length === 2 && year.length === 4;
       if (!validationError && isCompleteDate) {
         form?.methods.focusNext(id);
       }
@@ -344,17 +415,25 @@ export default function DateField({ field, form, ...standaloneProps }) {
     }
     if (e.key === "Backspace" && e.target.value === "") {
       e.preventDefault();
-      if (segment === "month") { setDay((d) => d.slice(0, -1)); dayRef.current?.focus(); }
-      else if (segment === "year") { setMonth((m) => m.slice(0, -1)); monthRef.current?.focus(); }
+      if (segment === "month") {
+        setDay((d) => d.slice(0, -1));
+        dayRef.current?.focus();
+      } else if (segment === "year") {
+        setMonth((m) => m.slice(0, -1));
+        monthRef.current?.focus();
+      }
     }
   };
 
   const stepDay = (delta) => {
     if (disabled) return;
-    const base = value || toIso(todayParts().day, todayParts().month, todayParts().year);
+    const base =
+      value || toIso(todayParts().day, todayParts().month, todayParts().year);
     const next = clampToRange(addDays(base, delta), min, max);
     const p = partsFromValue(next);
-    setDay(p.day); setMonth(p.month); setYear(p.year);
+    setDay(p.day);
+    setMonth(p.month);
+    setYear(p.year);
     setError("");
     lastEmitted.current = next;
     commitValue(next);
@@ -364,7 +443,10 @@ export default function DateField({ field, form, ...standaloneProps }) {
   // ---- calendar ----
   const openCalendar = () => {
     if (disabled) return;
-    const base = value && !error ? value : toIso(todayParts().day, todayParts().month, todayParts().year);
+    const base =
+      value && !error
+        ? value
+        : toIso(todayParts().day, todayParts().month, todayParts().year);
     const p = partsFromValue(base);
     setViewDate({ year: Number(p.year), month: Number(p.month) - 1 });
     setFocusedDay(base);
@@ -375,7 +457,9 @@ export default function DateField({ field, form, ...standaloneProps }) {
     if (min && iso < min) return;
     if (max && iso > max) return;
     const p = partsFromValue(iso);
-    setDay(p.day); setMonth(p.month); setYear(p.year);
+    setDay(p.day);
+    setMonth(p.month);
+    setYear(p.year);
     setError("");
     lastEmitted.current = iso;
     commitValue(iso);
@@ -385,9 +469,16 @@ export default function DateField({ field, form, ...standaloneProps }) {
 
   const goMonth = (delta) => {
     setViewDate((v) => {
-      let m = v.month + delta, y = v.year;
-      if (m < 0) { m = 11; y -= 1; }
-      if (m > 11) { m = 0; y += 1; }
+      let m = v.month + delta,
+        y = v.year;
+      if (m < 0) {
+        m = 11;
+        y -= 1;
+      }
+      if (m > 11) {
+        m = 0;
+        y += 1;
+      }
       return { year: y, month: m };
     });
   };
@@ -404,8 +495,16 @@ export default function DateField({ field, form, ...standaloneProps }) {
       setViewDate({ year: Number(p.year), month: Number(p.month) - 1 });
       return;
     }
-    if (key === "PageUp") { e.preventDefault(); goMonth(-1); return; }
-    if (key === "PageDown") { e.preventDefault(); goMonth(1); return; }
+    if (key === "PageUp") {
+      e.preventDefault();
+      goMonth(-1);
+      return;
+    }
+    if (key === "PageDown") {
+      e.preventDefault();
+      goMonth(1);
+      return;
+    }
     if (key === "Home") {
       e.preventDefault();
       const p = partsFromValue(focusedDay);
@@ -424,7 +523,10 @@ export default function DateField({ field, form, ...standaloneProps }) {
     }
   };
 
-  const cells = useMemo(() => buildCalendarGrid(viewDate.year, viewDate.month), [viewDate]);
+  const cells = useMemo(
+    () => buildCalendarGrid(viewDate.year, viewDate.month),
+    [viewDate],
+  );
 
   const [calendarPosition, setCalendarPosition] = useState(null);
 
@@ -476,7 +578,7 @@ export default function DateField({ field, form, ...standaloneProps }) {
 
       <div className="relative">
         <div
-          className={`${inputClass} flex items-center gap-1 px-2.5 py-0 ${displayError ? "border-red-500 focus-within:border-red-500 focus-within:ring-red-100" : ""}`}
+          className={`${inputClass} flex min-w-0 items-center gap-0.5 overflow-hidden px-2 py-0 ${displayError ? "border-red-500 focus-within:border-red-500 focus-within:ring-red-100" : ""}`}
         >
           <button
             type="button"
@@ -484,16 +586,26 @@ export default function DateField({ field, form, ...standaloneProps }) {
             onClick={openCalendar}
             disabled={disabled}
             aria-label="Open calendar"
-            className="flex items-center justify-center text-slate-400 hover:text-sky-600 disabled:cursor-not-allowed"
+            className="flex shrink-0 items-center justify-center text-slate-400 hover:text-sky-600 disabled:cursor-not-allowed"
           >
             <CalendarIcon />
           </button>
 
-          <div className="flex items-center gap-0.5">
+          <div className="flex min-w-0 flex-1 items-center justify-center gap-0">
             <input
-              id={`${id}-day`} ref={(node) => { dayRef.current = node; form?.methods.registerRef(id, node); }} type="text" inputMode="numeric" maxLength={2}
-              placeholder="DD" value={day} disabled={disabled}
-              onChange={handleDayChange} onKeyDown={makeKeyDownHandler("day")}
+              id={`${id}-day`}
+              ref={(node) => {
+                dayRef.current = node;
+                form?.methods.registerRef(id, node);
+              }}
+              type="text"
+              inputMode="numeric"
+              maxLength={2}
+              placeholder="DD"
+              value={day}
+              disabled={disabled}
+              onChange={handleDayChange}
+              onKeyDown={makeKeyDownHandler("day")}
               onBlur={(event) => {
                 setIsFocused(false);
                 handleBlur(event);
@@ -502,13 +614,21 @@ export default function DateField({ field, form, ...standaloneProps }) {
                 setIsFocused(true);
                 e.target.select();
               }}
-              aria-label="Day" aria-invalid={Boolean(displayError)} className={`${segmentBase} w-6`}
+              aria-label="Day"
+              aria-invalid={Boolean(displayError)}
+              className={`${segmentBase} min-w-0 w-6 shrink`}
             />
             <span className="select-none text-slate-300">/</span>
             <input
-              ref={monthRef} type="text" inputMode="numeric" maxLength={2}
-              placeholder="MM" value={month} disabled={disabled}
-              onChange={handleMonthChange} onKeyDown={makeKeyDownHandler("month")}
+              ref={monthRef}
+              type="text"
+              inputMode="numeric"
+              maxLength={2}
+              placeholder="MM"
+              value={month}
+              disabled={disabled}
+              onChange={handleMonthChange}
+              onKeyDown={makeKeyDownHandler("month")}
               onBlur={(event) => {
                 setIsFocused(false);
                 handleBlur(event);
@@ -517,13 +637,21 @@ export default function DateField({ field, form, ...standaloneProps }) {
                 setIsFocused(true);
                 e.target.select();
               }}
-              aria-label="Month" aria-invalid={Boolean(displayError)} className={`${segmentBase} w-6`}
+              aria-label="Month"
+              aria-invalid={Boolean(displayError)}
+              className={`${segmentBase} min-w-0 w-6 shrink`}
             />
             <span className="select-none text-slate-300">/</span>
             <input
-              ref={yearRef} type="text" inputMode="numeric" maxLength={4}
-              placeholder="YYYY" value={year} disabled={disabled}
-              onChange={handleYearChange} onKeyDown={makeKeyDownHandler("year")}
+              ref={yearRef}
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              placeholder="YYYY"
+              value={year}
+              disabled={disabled}
+              onChange={handleYearChange}
+              onKeyDown={makeKeyDownHandler("year")}
               onBlur={(event) => {
                 setIsFocused(false);
                 handleBlur(event);
@@ -532,99 +660,168 @@ export default function DateField({ field, form, ...standaloneProps }) {
                 setIsFocused(true);
                 e.target.select();
               }}
-              aria-label="Year" aria-invalid={Boolean(displayError)} className={`${segmentBase} w-10`}
+              aria-label="Year"
+              aria-invalid={Boolean(displayError)}
+              className={`${segmentBase} min-w-0 w-10 shrink`}
             />
           </div>
 
-          <div className="ml-auto flex items-center">
-            <button type="button" tabIndex={-1} disabled={disabled} onClick={() => stepDay(-1)}
-              aria-label="Previous day" className="flex h-6 w-5 items-center justify-center text-slate-400 hover:text-sky-600 disabled:cursor-not-allowed">
+          <div className="ml-auto flex shrink-0 items-center">
+            <button
+              type="button"
+              tabIndex={-1}
+              disabled={disabled}
+              onClick={() => stepDay(-1)}
+              aria-label="Previous day"
+              className="flex h-6 w-4 items-center justify-center text-slate-400 hover:text-sky-600 disabled:cursor-not-allowed"
+            >
               <ChevronIcon direction="left" />
             </button>
-            <button type="button" tabIndex={-1} disabled={disabled} onClick={() => stepDay(1)}
-              aria-label="Next day" className="flex h-6 w-5 items-center justify-center text-slate-400 hover:text-sky-600 disabled:cursor-not-allowed">
+            <button
+              type="button"
+              tabIndex={-1}
+              disabled={disabled}
+              onClick={() => stepDay(1)}
+              aria-label="Next day"
+              className="flex h-6 w-4 items-center justify-center text-slate-400 hover:text-sky-600 disabled:cursor-not-allowed"
+            >
               <ChevronIcon direction="right" />
             </button>
           </div>
         </div>
 
-        {calendarOpen && calendarPosition && createPortal(
-          <div
-            ref={calendarRef}
-            role="dialog" aria-label="Choose date" onKeyDown={handleCalendarKeyDown}
-            className="fixed z-[9999] w-64 rounded-md border border-gray-200 bg-white p-2 shadow-lg"
-            style={calendarPosition}
-          >
-            <div className="mb-1 flex items-center justify-between px-1">
-              <button type="button" onClick={() => goMonth(-1)} aria-label="Previous month"
-                className="flex h-6 w-6 items-center justify-center rounded text-gray-500 hover:bg-gray-100">
-                <ChevronIcon direction="left" />
-              </button>
-              <span className="text-sm font-medium text-gray-800">
-                {MONTH_NAMES[viewDate.month]} {viewDate.year}
-              </span>
-              <button type="button" onClick={() => goMonth(1)} aria-label="Next month"
-                className="flex h-6 w-6 items-center justify-center rounded text-gray-500 hover:bg-gray-100">
-                <ChevronIcon direction="right" />
-              </button>
-            </div>
+        {calendarOpen &&
+          calendarPosition &&
+          createPortal(
+            <div
+              ref={calendarRef}
+              role="dialog"
+              aria-label="Choose date"
+              onKeyDown={handleCalendarKeyDown}
+              className="fixed z-[9999] w-64 rounded-md border border-gray-200 bg-white p-2 shadow-lg"
+              style={calendarPosition}
+            >
+              <div className="mb-1 flex items-center justify-between px-1">
+                <button
+                  type="button"
+                  onClick={() => goMonth(-1)}
+                  aria-label="Previous month"
+                  className="flex h-6 w-6 items-center justify-center rounded text-gray-500 hover:bg-gray-100"
+                >
+                  <ChevronIcon direction="left" />
+                </button>
+                <span className="text-sm font-medium text-gray-800">
+                  {MONTH_NAMES[viewDate.month]} {viewDate.year}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => goMonth(1)}
+                  aria-label="Next month"
+                  className="flex h-6 w-6 items-center justify-center rounded text-gray-500 hover:bg-gray-100"
+                >
+                  <ChevronIcon direction="right" />
+                </button>
+              </div>
 
-            <div className="grid grid-cols-7 gap-y-0.5 px-1">
-              {WEEKDAY_LABELS.map((wd) => (
-                <div key={wd} className="flex h-6 items-center justify-center text-[11px] font-medium text-gray-400">
-                  {wd}
-                </div>
-              ))}
-              {cells.map((cell, idx) => {
-                const cellYear = viewDate.year + (viewDate.month + cell.monthOffset < 0 ? -1 : viewDate.month + cell.monthOffset > 11 ? 1 : 0);
-                const cellMonth = ((viewDate.month + cell.monthOffset) + 12) % 12;
-                const iso = toIso(pad2(cell.day), pad2(cellMonth + 1), String(cellYear));
-                const isOutOfRange = (min && iso < min) || (max && iso > max);
-                const isSelected = value === iso;
-                const isFocused = focusedDay === iso;
-                const isToday = iso === toIso(todayParts().day, todayParts().month, todayParts().year);
-
-                return (
-                  <button
-                    key={idx} type="button" tabIndex={-1}
-                    disabled={isOutOfRange}
-                    onClick={() => selectDate(iso)}
-                    onMouseEnter={() => setFocusedDay(iso)}
-                    className={[
-                      "flex h-7 w-7 items-center justify-center rounded-full text-[13px] transition-colors",
-                      !cell.inMonth ? "text-gray-300" : "text-gray-700",
-                      isOutOfRange ? "cursor-not-allowed text-gray-200" : "hover:bg-blue-50",
-                      isSelected ? "bg-blue-600 text-white hover:bg-blue-600" : "",
-                      !isSelected && isFocused ? "ring-1 ring-blue-400" : "",
-                      !isSelected && isToday ? "font-semibold text-blue-600" : "",
-                    ].join(" ")}
+              <div className="grid grid-cols-7 gap-y-0.5 px-1">
+                {WEEKDAY_LABELS.map((wd) => (
+                  <div
+                    key={wd}
+                    className="flex h-6 items-center justify-center text-[11px] font-medium text-gray-400"
                   >
-                    {cell.day}
-                  </button>
-                );
-              })}
-            </div>
+                    {wd}
+                  </div>
+                ))}
+                {cells.map((cell, idx) => {
+                  const cellYear =
+                    viewDate.year +
+                    (viewDate.month + cell.monthOffset < 0
+                      ? -1
+                      : viewDate.month + cell.monthOffset > 11
+                        ? 1
+                        : 0);
+                  const cellMonth =
+                    (viewDate.month + cell.monthOffset + 12) % 12;
+                  const iso = toIso(
+                    pad2(cell.day),
+                    pad2(cellMonth + 1),
+                    String(cellYear),
+                  );
+                  const isOutOfRange = (min && iso < min) || (max && iso > max);
+                  const isSelected = value === iso;
+                  const isFocused = focusedDay === iso;
+                  const isToday =
+                    iso ===
+                    toIso(
+                      todayParts().day,
+                      todayParts().month,
+                      todayParts().year,
+                    );
 
-            <div className="mt-1 flex items-center justify-between border-t border-gray-100 px-1 pt-1.5">
-              <button type="button"
-                onClick={() => selectDate(toIso(todayParts().day, todayParts().month, todayParts().year))}
-                className="text-[12px] font-medium text-blue-600 hover:underline">
-                Today
-              </button>
-              <button type="button" onClick={() => setCalendarOpen(false)}
-                className="text-[12px] text-gray-400 hover:text-gray-600">
-                Close
-              </button>
-            </div>
-          </div>,
-          document.body,
-        )}
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      tabIndex={-1}
+                      disabled={isOutOfRange}
+                      onClick={() => selectDate(iso)}
+                      onMouseEnter={() => setFocusedDay(iso)}
+                      className={[
+                        "flex h-7 w-7 items-center justify-center rounded-full text-[13px] transition-colors",
+                        !cell.inMonth ? "text-gray-300" : "text-gray-700",
+                        isOutOfRange
+                          ? "cursor-not-allowed text-gray-200"
+                          : "hover:bg-blue-50",
+                        isSelected
+                          ? "bg-blue-600 text-white hover:bg-blue-600"
+                          : "",
+                        !isSelected && isFocused ? "ring-1 ring-blue-400" : "",
+                        !isSelected && isToday
+                          ? "font-semibold text-blue-600"
+                          : "",
+                      ].join(" ")}
+                    >
+                      {cell.day}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-1 flex items-center justify-between border-t border-gray-100 px-1 pt-1.5">
+                <button
+                  type="button"
+                  onClick={() =>
+                    selectDate(
+                      toIso(
+                        todayParts().day,
+                        todayParts().month,
+                        todayParts().year,
+                      ),
+                    )
+                  }
+                  className="text-[12px] font-medium text-blue-600 hover:underline"
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCalendarOpen(false)}
+                  className="text-[12px] text-gray-400 hover:text-gray-600"
+                >
+                  Close
+                </button>
+              </div>
+            </div>,
+            document.body,
+          )}
       </div>
 
       {!displayError && (min || max) && (
         <p className="mt-1 text-[11px] font-semibold text-slate-500">
-          {min && max ? `Allowed: ${formatDisplay(min)} – ${formatDisplay(max)}`
-            : min ? `Not before ${formatDisplay(min)}`
+          {min && max
+            ? `Allowed: ${formatDisplay(min)} – ${formatDisplay(max)}`
+            : min
+              ? `Not before ${formatDisplay(min)}`
               : `Not after ${formatDisplay(max)}`}
         </p>
       )}

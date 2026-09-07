@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useFormStore } from "../../hooks/useFormStore";
-import {
-  inputClass,
-  labelClass,
-  wrapperClass,
-} from "../../styles/formtheme";
+import { inputClass, labelClass, wrapperClass } from "../../styles/formtheme";
 
 export default function NumberField({ field, form }) {
   const {
@@ -58,10 +54,7 @@ export default function NumberField({ field, form }) {
         ? currentValue
         : Number(String(currentValue).replace(/^(-?)0+(?=\d)/, "$1"));
 
-    if (
-      normalizedValue !== currentValue &&
-      !Number.isNaN(normalizedValue)
-    ) {
+    if (normalizedValue !== currentValue && !Number.isNaN(normalizedValue)) {
       form.methods.setValue(id, normalizedValue);
     }
 
@@ -91,9 +84,7 @@ export default function NumberField({ field, form }) {
 
         const raw = draftValue;
         if (raw !== "") {
-          const normalizedValue = Number(
-            raw.replace(/^(-?)0+(?=\d)/, "$1"),
-          );
+          const normalizedValue = Number(raw.replace(/^(-?)0+(?=\d)/, "$1"));
 
           if (!Number.isNaN(normalizedValue)) {
             const normalizedText = String(normalizedValue);
@@ -134,7 +125,7 @@ export default function NumberField({ field, form }) {
         id={id}
         ref={(node) => form.methods.registerRef(id, node)}
         type="number"
-        value={isFocused ? draftValue : value ?? ""}
+        value={isFocused ? draftValue : (value ?? "")}
         placeholder={placeHolder}
         min={min}
         max={max}
@@ -153,8 +144,9 @@ export default function NumberField({ field, form }) {
         }}
         onKeyDown={handleKeyDown}
         aria-invalid={Boolean(error)}
-        className={`${inputClass} ${error ? "border-red-500 focus:border-red-500" : ""
-          }`}
+        className={`${inputClass} ${
+          error ? "border-red-500 focus:border-red-500" : ""
+        }`}
       />
     </div>
   );

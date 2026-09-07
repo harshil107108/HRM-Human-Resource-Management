@@ -11,6 +11,8 @@ import { registerGrid, unregisterGrid } from "./GridRegistry";
 import GridRow from "./GridRow";
 import { PlusIcon, SearchIcon } from "./icons";
 import { generateUUID, ensureRowIds, getColumnStyle } from "./utils";
+import { Lottie } from "lottie-react";
+import loadingAnimation from "../../assets/images/Animation.json";
 import noDataImage from "../../assets/images/Nodata.avif";
 import "./HpGrid.css";
 
@@ -155,6 +157,8 @@ function HpGrid(props) {
     onKeyDown, // (params) => void -- fires for every keydown on any cell, BEFORE HpGrid's own navigation logic runs. `params` = { event, key, rowIndex, colIndex, colId, field, value, row, colDef, rowData }. Call params.event.preventDefault() inside it to fully take over that key press yourself. Note: on an Enter press, `row`/`value` here may still be one tick behind (state hasn't flushed yet) - use onCellValueChange if you need the guaranteed up-to-date value.
     onSelectionChange, // (selectedRows) => void
     onDoubleClick,
+    pending = false,
+    panding = false,
 
     // ---- toolbar (title bar / search / + Add button, like the reference UI) ----
     title, // e.g. "Database & Branch"
@@ -183,6 +187,8 @@ function HpGrid(props) {
     // Defaults to `row.id`. Provide this if your rows don't have an `id` field.
     getRowId,
   } = props;
+
+  const isLoading = pending || panding;
 
   if (!id) {
     throw new Error(
@@ -950,6 +956,7 @@ function HpGrid(props) {
     <div
       className={["hp-grid", className].filter(Boolean).join(" ")}
       style={{ minHeight: 0, ...style }}
+      aria-busy={isLoading}
     >
       {showToolbar && (
         <div className="hp-grid-toolbar">
@@ -1052,7 +1059,21 @@ function HpGrid(props) {
             )}
 
             <div className="hp-grid-body">
-              {displayRows.length === 0 && (
+              {isLoading && (
+                <div
+                  className="hp-grid-loading"
+                  role="status"
+                  aria-label="Loading"
+                >
+                  <Lottie
+                    src={loadingAnimation}
+                    loop
+                    autoplay
+                    className="hp-grid-loading-animation"
+                  />
+                </div>
+              )}
+              {!isLoading && displayRows.length === 0 && (
                 <div className="hp-grid-empty">
                   <img src={noDataImage} alt="No data" />
                 </div>

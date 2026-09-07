@@ -1,4 +1,3 @@
-import React from "react";
 import { api, apiEndpoints } from "@/api/api";
 
 const useCompanyConfig = ({ handleDelete } = {}) => {

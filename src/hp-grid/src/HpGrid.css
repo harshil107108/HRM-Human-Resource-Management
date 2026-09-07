@@ -38,6 +38,22 @@
   border-radius: 6px;
 }
 
+.hp-grid-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(255 255 255 / 72%);
+  backdrop-filter: blur(1px);
+}
+
+.hp-grid-loading-animation {
+  width: min(320px, 60%);
+  height: 220px;
+}
+
 .hp-grid-table-shell {
   display: flex;
   flex-direction: column;
@@ -160,7 +176,10 @@
 }
 
 .hp-grid-scroll-content {
+  display: flex;
+  flex-direction: column;
   min-width: max-content;
+  min-height: 100%;
 }
 
 .hp-grid-scroll-content--fixed-columns {
@@ -314,9 +333,10 @@
 
 /* ---------------------------- body/rows ---------------------------- */
 .hp-grid-body {
+  position: relative;
   overflow: visible;
   flex: 1;
-  min-height: 0;
+  min-height: 260px;
 }
 
 .hp-grid-row {
@@ -342,6 +362,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  min-height: 260px;
   padding: 24px;
 }
 

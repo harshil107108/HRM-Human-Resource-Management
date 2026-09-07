@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFormStore } from "../../hooks/useFormStore";
 import {
   inputClass,
@@ -21,17 +21,26 @@ export default function NumberField({ field, form }) {
   const value = useFormStore(form, (snapshot) => snapshot.values[id]);
   const error = useFormStore(form, (snapshot) => snapshot.errors[id]);
   const [isFocused, setIsFocused] = useState(false);
+  const [draftValue, setDraftValue] = useState(() => String(value ?? ""));
+
+  useEffect(() => {
+    if (!isFocused) {
+      setDraftValue(String(value ?? ""));
+    }
+  }, [isFocused, value]);
 
   const handleChange = useCallback(
     (event) => {
       const raw = event.target.value;
+      setDraftValue(raw);
 
       if (raw === "") {
         form.methods.setValue(id, "");
         return;
       }
 
-      const numericValue = Number(raw);
+      const normalizedRaw = raw.replace(/^(-?)0+(?=\d)/, "$1");
+      const numericValue = Number(normalizedRaw);
       if (Number.isNaN(numericValue)) return;
 
       const digitLength = raw.replace(/[-+.]/g, "").length;
@@ -43,7 +52,18 @@ export default function NumberField({ field, form }) {
   );
 
   const handleBlur = useCallback(() => {
-    const currentValue = form.methods.getValue(id);
+    const currentValue = draftValue;
+    const normalizedValue =
+      currentValue === "" || currentValue === undefined
+        ? currentValue
+        : Number(String(currentValue).replace(/^(-?)0+(?=\d)/, "$1"));
+
+    if (
+      normalizedValue !== currentValue &&
+      !Number.isNaN(normalizedValue)
+    ) {
+      form.methods.setValue(id, normalizedValue);
+    }
 
     if (
       precision !== undefined &&
@@ -56,15 +76,33 @@ export default function NumberField({ field, form }) {
         id,
         Number(Number(currentValue).toFixed(Number(precision))),
       );
+      setDraftValue(
+        String(Number(Number(currentValue).toFixed(Number(precision)))),
+      );
     }
 
     form.methods.blurField(id);
-  }, [form, id, precision]);
+  }, [draftValue, form, id, precision]);
 
   const handleKeyDown = useCallback(
     (event) => {
       if (event.key === "Enter") {
         event.preventDefault();
+
+        const raw = draftValue;
+        if (raw !== "") {
+          const normalizedValue = Number(
+            raw.replace(/^(-?)0+(?=\d)/, "$1"),
+          );
+
+          if (!Number.isNaN(normalizedValue)) {
+            const normalizedText = String(normalizedValue);
+            event.currentTarget.value = normalizedText;
+            setDraftValue(normalizedText);
+            form.methods.setValue(id, normalizedValue);
+          }
+        }
+
         form.methods.focusNext(id);
       }
 
@@ -73,7 +111,7 @@ export default function NumberField({ field, form }) {
         form.methods.focusPrev(id);
       }
     },
-    [form, id, field.prevFocusField],
+    [draftValue, form, id, field.prevFocusField],
   );
 
   return (
@@ -96,7 +134,7 @@ export default function NumberField({ field, form }) {
         id={id}
         ref={(node) => form.methods.registerRef(id, node)}
         type="number"
-        value={value ?? ""}
+        value={isFocused ? draftValue : value ?? ""}
         placeholder={placeHolder}
         min={min}
         max={max}
@@ -108,7 +146,11 @@ export default function NumberField({ field, form }) {
           setIsFocused(false);
           handleBlur(event);
         }}
-        onFocus={() => setIsFocused(true)}
+        onFocus={(event) => {
+          setIsFocused(true);
+          setDraftValue(String(value ?? ""));
+          event.target.select();
+        }}
         onKeyDown={handleKeyDown}
         aria-invalid={Boolean(error)}
         className={`${inputClass} ${error ? "border-red-500 focus:border-red-500" : ""

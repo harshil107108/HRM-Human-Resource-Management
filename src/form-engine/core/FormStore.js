@@ -153,7 +153,13 @@ export class FormStore {
         return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
       },
       setValue: (id, value, { triggerHooks = true } = {}) => {
-        this.values = { ...this.values, [id]: value };
+        const field = this.methods.getFieldConfig(id);
+        const nextValue =
+          field?.type === "number" && value !== "" && value !== null && value !== undefined
+            ? Number(value)
+            : value;
+
+        this.values = { ...this.values, [id]: nextValue };
         this.touched = { ...this.touched, [id]: true };
 
         if (this.errors[id]) {
@@ -164,7 +170,6 @@ export class FormStore {
         this.emit();
 
         if (triggerHooks) {
-          const field = this.methods.getFieldConfig(id);
           if (typeof field?.onChange === "function") {
             field.onChange(this);
           }

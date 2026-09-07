@@ -23,7 +23,7 @@ const useJobOpeningConfig = ({ handleDelete } = {}) => {
     {
       id: "branchname",
       field: "branchname",
-      headerName: "Department",
+      headerName: "Branch",
       width: 150,
     },
     {

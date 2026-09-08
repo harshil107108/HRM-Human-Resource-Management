@@ -83,7 +83,14 @@ const EmployeeListing = () => {
         countryName: item?.countryId?.countryName || "",
         stateName: item?.stateId?.stateName || "",
         cityName: item?.cityId?.cityName || "",
-        reportingManagerName: item?.reportingManager?.firstName || "",
+
+        reportingManagerName: [
+          item?.reportingManager?.firstName,
+          item?.reportingManager?.middleName,
+          item?.reportingManager?.lastName,
+        ]
+          .filter(Boolean)
+          .join(" "),
 
         employmentType: item?.employmentType || "",
         employeeStatus: item?.employeeStatus || "",

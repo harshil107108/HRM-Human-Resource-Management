@@ -30,7 +30,7 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
       id: "departmentname",
       field: "departmentname",
       headerName: "Department",
-      width: 180,
+      width: 160,
     },
     {
       id: "designationName",
@@ -42,7 +42,7 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
       id: "reportingManagerName",
       field: "reportingManagerName",
       headerName: "Manager",
-      width: 180,
+      width: 200,
     },
     {
       id: "employmentType",
@@ -114,7 +114,7 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
       id: "currentAddress",
       field: "currentAddress",
       headerName: "Address",
-      width: 120,
+      width: 200,
     },
 
     {

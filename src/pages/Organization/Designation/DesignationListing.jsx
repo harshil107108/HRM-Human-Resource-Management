@@ -74,7 +74,21 @@ const DesignationListing = () => {
         companyName: item.company?.companyName || "",
         branchname: item.branch?.branchname || "",
         departmentname: item.department?.departmentname || "",
-        employeeCount: item.employeeCount || 0,
+        departmentHeadId: [
+          item?.departmentHeadId?.firstName,
+          item?.departmentHeadId?.middleName,
+          item?.departmentHeadId?.lastName,
+        ]
+          .filter(Boolean)
+          .join(" "),
+
+        mentorId: [
+          item?.mentorId?.firstName,
+          item?.mentorId?.middleName,
+          item?.mentorId?.lastName,
+        ]
+          .filter(Boolean)
+          .join(" "),
       }));
 
       setDesignationListingData(formattedData);

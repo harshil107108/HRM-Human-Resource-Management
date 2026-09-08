@@ -41,6 +41,13 @@ export default function SelectWrapper({ field, form }) {
 
   const isMultiSelect = Boolean(field.isMultiSelect || field.multiSelect);
 
+  //chnage when static option change
+  useEffect(() => {
+    if (!api) {
+      setOptions(staticOptions);
+    }
+  }, [api, staticOptions]);
+
   // ============================================================
   // LOAD OPTIONS FROM API
   // ============================================================

@@ -407,6 +407,14 @@
   cursor: default;
 }
 
+.hp-grid-cell--number {
+  justify-content: flex-end;
+}
+
+.hp-grid-cell--text {
+  justify-content: flex-start;
+}
+
 .hp-grid-cell--status {
   justify-content: center;
   padding-left: 0;

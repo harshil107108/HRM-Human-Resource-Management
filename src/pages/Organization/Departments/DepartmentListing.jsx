@@ -62,7 +62,7 @@ const DepartmentListing = () => {
   const getDepartmentListing = async () => {
     const res = await apiCall({
       id: "getDepartmentListing",
-      api: api + apiEndpoints.organization.department.DepartmentGetData,
+      api: api + apiEndpoints?.organization?.department?.DepartmentGetData,
       payload: {},
     });
 
@@ -75,6 +75,7 @@ const DepartmentListing = () => {
           branch,
           parentdepartment,
           reportingdepartment,
+          departmenthead,
           ...departmentData
         } = item;
 
@@ -84,6 +85,13 @@ const DepartmentListing = () => {
           branchname: branch?.branchname || "",
           parentdepartment: parentdepartment?.departmentname || "",
           reportingdepartment: reportingdepartment?.departmentname || "",
+          departmenthead: [
+            departmenthead?.firstName,
+            departmenthead?.middleName,
+            departmenthead?.lastName,
+          ]
+            .filter(Boolean)
+            .join(" "),
         };
       });
 

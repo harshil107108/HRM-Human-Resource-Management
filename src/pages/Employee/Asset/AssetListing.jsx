@@ -27,7 +27,7 @@ const AssetListing = () => {
       onClick: async () => {
         const res = await apiCall({
           id: "deleteAsset",
-          api: api + apiEndpoints.asset.asset.AssetDeleteByID,
+          api: api + apiEndpoints.employee,
           payload: {
             _id: id,
           },
@@ -67,11 +67,15 @@ const AssetListing = () => {
     });
   };
 
-  const getAssetListing = async () => {
+  const getAssetListing = async (assetStatus = "") => {
     const res = await apiCall({
       id: "getAssetListing",
-      api: api + apiEndpoints.asset.asset.AssetGetData,
-      payload: {},
+      api: api + apiEndpoints.employee.asset.AssetGetData,
+      payload: assetStatus
+        ? {
+            assetStatus,
+          }
+        : {},
     });
 
     if (res?.success) {
@@ -83,29 +87,24 @@ const AssetListing = () => {
         assetName: item?.assetName || "",
         assetCode: item?.assetCode || "",
 
-        categoryName: item?.categoryId?.categoryName || "",
+        categoryName: item?.assetCategory?.categoryName || "",
 
         assetTag: item?.assetTag || "",
         serialNumber: item?.serialNumber || "",
         brand: item?.brand || "",
         model: item?.model || "",
 
-        employeeName: [
-          item?.employeeId?.firstName,
-          item?.employeeId?.middleName,
-          item?.employeeId?.lastName,
+        assignedEmployee: [
+          item?.assignedEmployee?.firstName,
+          item?.assignedEmployee?.lastName,
         ]
           .filter(Boolean)
           .join(" "),
 
-        companyName: item?.companyId?.companyName || "",
-
-        branchName: item?.branchId?.branchname || "",
-
+        companyName: item?.company?.companyName || "",
+        branchname: item?.branch?.branchname || "",
         purchaseDate: formatDateForInput(item?.purchaseDate) || "",
-
         warrantyEndDate: formatDateForInput(item?.warrantyEndDate) || "",
-
         assetStatus: item?.assetStatus || "",
       }));
 
@@ -129,69 +128,73 @@ const AssetListing = () => {
         id: "totalAssets",
         title: "Total Assets",
         value: AssetListingData.length.toLocaleString(),
-        percentage: "↑ 12%",
-        description: "vs last month",
         icon: "▣",
         type: "blue",
+        status: "",
       },
 
       {
         id: "available",
         title: "Available",
-        value: getStatusCount("Available").toLocaleString(),
-        percentage: "↑ 26%",
-        description: "vs last month",
+        value: getStatusCount("AVAILABLE").toLocaleString(),
         icon: "✓",
         type: "green",
+        status: "AVAILABLE",
       },
 
       {
         id: "assigned",
         title: "Assigned",
-        value: getStatusCount("Assigned").toLocaleString(),
-        percentage: "↑ 63%",
-        description: "vs last month",
+        value: getStatusCount("ASSIGNED").toLocaleString(),
         icon: "♙",
         type: "purple",
+        status: "ASSIGNED",
       },
 
       {
         id: "underRepair",
         title: "Under Repair",
-        value: getStatusCount("Under Repair").toLocaleString(),
-        percentage: "↑ 8%",
-        description: "vs last month",
+        value: getStatusCount("UNDER_REPAIR").toLocaleString(),
         icon: "🔧",
         type: "orange",
+        status: "UNDER_REPAIR",
       },
 
       {
         id: "lost",
         title: "Lost",
-        value: getStatusCount("Lost").toLocaleString(),
-        percentage: "↓ 11%",
-        description: "vs last month",
+        value: getStatusCount("LOST").toLocaleString(),
         icon: "!",
         type: "red",
+        status: "LOST",
       },
 
       {
         id: "disposed",
         title: "Disposed",
-        value: getStatusCount("Disposed").toLocaleString(),
-        percentage: "↑ 15%",
-        description: "vs last month",
+        value: getStatusCount("DISPOSED").toLocaleString(),
         icon: "✓",
         type: "cyan",
+        status: "DISPOSED",
       },
     ];
   }, [AssetListingData]);
+
+  const handleStatusCardClick = (status) => {
+    getAssetListing(status);
+  };
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
       <div className="grid grid-cols-6 gap-2.5 mt-3 mr-2">
         {assetSummary.map((item) => (
-          <AssetCard key={item.id} {...item} />
+          <div
+            key={item.id}
+            onClick={() => handleStatusCardClick(item.status)}
+            className="cursor-pointer"
+          >
+            <AssetCard {...item} />
+          </div>
         ))}
       </div>
 

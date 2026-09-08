@@ -11,24 +11,7 @@ import useApiCall from "@/hooks/useApiCall";
 import { api, apiEndpoints } from "@/api/api";
 import { formatDateForInput } from "@/utils/dateUtils";
 import useAlert from "@/hooks/useAlert";
-
-const getUploadUrl = (filePath) => {
-  if (!filePath) return null;
-
-  const normalizedPath = filePath.replace(/\\/g, "/");
-  const uploadsIndex = normalizedPath.indexOf("/uploads/");
-
-  return uploadsIndex >= 0
-    ? `${api}${normalizedPath.slice(uploadsIndex)}`
-    : filePath.startsWith("http")
-      ? filePath
-      : `${api}/${normalizedPath.replace(/^\/+/, "")}`;
-};
-
-const getUploadName = (filePath) => {
-  if (!filePath) return null;
-  return filePath.replace(/\\/g, "/").split("/").pop();
-};
+import { getUploadUrl, getUploadName } from "@/utils/fileUpload";
 
 const Employee = () => {
   const locationData = useLocation();

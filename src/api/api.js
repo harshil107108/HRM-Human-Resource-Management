@@ -47,6 +47,13 @@ const apiEndpoints = {
             EmployeeDeleteByID: "/employee/deleteEmployeeById",
             EmployeeGetByID: "/employee/getEmployeeById",
             EmployeeHelp: "/employee/getEmployeeHelp",
+        },
+        asset: {
+            AssetAddEdit: "/employee/asset/addEditAsset",
+            AssetGetData: "/employee/asset/getAsset",
+            AssetDeleteByID: "/employee/asset/deleteAssetById",
+            AssetGetByID: "/employee/asset/getAssetById",
+            AssetHelp: "/employee/asset/getAssetHelp",
         }
     },
 

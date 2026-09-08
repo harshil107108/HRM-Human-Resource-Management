@@ -1,12 +1,12 @@
-// import { api, apiEndpoints } from "@/api/api";
+import { api, apiEndpoints } from "@/api/api";
 
-const useAssetConfig = () => {
+const useAssetConfig = ({ handleDelete } = {}) => {
   const assetListingColDef = [
     {
       id: "assetName",
       field: "assetName",
       headerName: "Asset",
-      width: 200,
+      width: 180,
     },
     {
       id: "assetCode",
@@ -15,8 +15,8 @@ const useAssetConfig = () => {
       width: 130,
     },
     {
-      id: "categoryName",
-      field: "categoryName",
+      id: "assetCategory",
+      field: "assetCategory",
       headerName: "Category",
       width: 150,
     },
@@ -24,7 +24,7 @@ const useAssetConfig = () => {
       id: "assetTag",
       field: "assetTag",
       headerName: "Asset Tag",
-      width: 150,
+      width: 120,
     },
     {
       id: "serialNumber",
@@ -45,8 +45,8 @@ const useAssetConfig = () => {
       width: 160,
     },
     {
-      id: "employeeName",
-      field: "employeeName",
+      id: "assignedEmployee",
+      field: "assignedEmployee",
       headerName: "Assigned To",
       width: 180,
     },
@@ -58,7 +58,7 @@ const useAssetConfig = () => {
     },
     {
       id: "branchName",
-      field: "branchName",
+      field: "branchname",
       headerName: "Branch",
       width: 150,
     },
@@ -86,9 +86,9 @@ const useAssetConfig = () => {
       headerName: "Action",
       width: 70,
       type: "actions",
-      // onClick: (data) => {
-      //     handleDelete?.(data._id);
-      // },
+      onClick: (data) => {
+        handleDelete?.(data._id);
+      },
     },
   ];
 
@@ -114,7 +114,7 @@ const useAssetConfig = () => {
       className: "col-span-3",
     },
     {
-      id: "assetCategoryId",
+      id: "assetCategory",
       type: "selectWrapper",
       label: "Asset Category",
       placeHolder: "Select Category",
@@ -122,9 +122,22 @@ const useAssetConfig = () => {
       nextFocusField: "assetTag",
       prevFocusField: "assetCode",
       className: "col-span-3",
-      // api: api + apiEndpoints.asset.assetCategory.AssetCategoryHelp,
-      // labelKey: "categoryName",
-      // valueKey: "_id",
+      options: [
+        { label: "IT Equipment", value: "it-equipment" },
+        { label: "Computer / Laptop", value: "computer-laptop" },
+        { label: "Mobile / Tablet", value: "mobile-tablet" },
+        { label: "Office Equipment", value: "office-equipment" },
+        { label: "Furniture", value: "furniture" },
+        { label: "Vehicle", value: "vehicle" },
+        { label: "Electrical Equipment", value: "electrical-equipment" },
+        { label: "Networking Equipment", value: "networking-equipment" },
+        { label: "Software / License", value: "software-license" },
+        { label: "Machinery", value: "machinery" },
+        { label: "Tools & Equipment", value: "tools-equipment" },
+        { label: "Security Equipment", value: "security-equipment" },
+        { label: "Communication Equipment", value: "communication-equipment" },
+        { label: "Other", value: "other" },
+      ],
     },
     {
       id: "assetTag",
@@ -221,6 +234,7 @@ const useAssetConfig = () => {
       placeHolder: "0.00",
       required: false,
       prefix: "₹",
+      precision: 2,
       nextFocusField: "vendor",
       prevFocusField: "purchaseDate",
       className: "col-span-4",
@@ -269,46 +283,78 @@ const useAssetConfig = () => {
 
   const organizationInformationSchema = [
     {
-      id: "companyId",
+      id: "company",
       type: "selectWrapper",
       label: "Company",
       placeHolder: "Select Company",
       required: true,
       nextFocusField: "branchId",
       className: "col-span-4",
-      // api: api + apiEndpoints.organization.company.CompanyHelp,
-      // labelKey: "companyName",
-      // valueKey: "_id",
+      api: api + apiEndpoints.organization.company.CompanyHelp,
+      labelKey: "companyName",
+      valueKey: "_id",
     },
     {
-      id: "branchId",
+      id: "branch",
       type: "selectWrapper",
       label: "Branch",
       placeHolder: "Select Branch",
       required: false,
       prevFocusField: "companyId",
-      nextFocusField: "locationId",
+      nextFocusField: "departmentId",
       className: "col-span-4",
-      // api: api + apiEndpoints.organization.branch.BranchHelp,
-      // labelKey: "branchname",
-      // valueKey: "_id",
+      api: api + apiEndpoints.organization.branch.BranchHelp,
+      labelKey: "branchname",
+      valueKey: "_id",
     },
     {
-      id: "locationId",
+      id: "department",
       type: "selectWrapper",
-      label: "Location",
-      placeHolder: "Select Location",
+      label: "Department",
+      placeHolder: "Select Department",
       required: false,
       prevFocusField: "branchId",
-      nextFocusField: "assetStatus",
+      nextFocusField: "assignedEmployee",
       className: "col-span-4",
-      // api: api + apiEndpoints.master.location.LocationHelp,
-      // labelKey: "locationName",
-      // valueKey: "_id",
+      api: api + apiEndpoints.organization.department.DepartmentHelp,
+      labelKey: "departmentname",
+      valueKey: "_id",
     },
   ];
 
-  const assetStatusSchema = [
+  const assignmentInformationSchema = [
+    {
+      id: "assignedEmployee",
+      type: "selectWrapper",
+      label: "Assign to Employee",
+      placeHolder: "Select Employee",
+      required: false,
+      nextFocusField: "assignedDate",
+      className: "col-span-4",
+      api: api + apiEndpoints.employee.employee.EmployeeHelp,
+      labelKey: "employeeName",
+      valueKey: "_id",
+    },
+    {
+      id: "assignedDate",
+      type: "date",
+      label: "Assigned Date",
+      placeHolder: "Select Assigned Date",
+      required: false,
+      prevFocusField: "assignedEmployeeId",
+      nextFocusField: "expectedReturnDate",
+      className: "col-span-4",
+    },
+    {
+      id: "expectedReturnDate",
+      type: "date",
+      label: "Expected Return Date",
+      placeHolder: "Select Return Date",
+      required: false,
+      prevFocusField: "assignedDate",
+      nextFocusField: "notes",
+      className: "col-span-4",
+    },
     {
       id: "assetStatus",
       type: "selectWrapper",
@@ -317,7 +363,7 @@ const useAssetConfig = () => {
       required: true,
       prevFocusField: "locationId",
       nextFocusField: "currentOwner",
-      className: "col-span-6",
+      className: "col-span-4",
       options: [
         {
           label: "Available",
@@ -340,51 +386,6 @@ const useAssetConfig = () => {
           value: "DISPOSED",
         },
       ],
-    },
-    {
-      id: "currentOwner",
-      type: "text",
-      label: "Current Owner",
-      placeHolder: "Not Assigned",
-      disabled: true,
-      required: false,
-      prevFocusField: "assetStatus",
-      className: "col-span-6",
-    },
-  ];
-
-  const assignmentInformationSchema = [
-    {
-      id: "assignedEmployeeId",
-      type: "selectWrapper",
-      label: "Assign to Employee",
-      placeHolder: "Select Employee",
-      required: false,
-      nextFocusField: "assignedDate",
-      className: "col-span-4",
-      // api: api + apiEndpoints.employee.employee.EmployeeHelp,
-      // labelKey: "employeeName",
-      // valueKey: "_id",
-    },
-    {
-      id: "assignedDate",
-      type: "date",
-      label: "Assigned Date",
-      placeHolder: "Select Assigned Date",
-      required: false,
-      prevFocusField: "assignedEmployeeId",
-      nextFocusField: "expectedReturnDate",
-      className: "col-span-4",
-    },
-    {
-      id: "expectedReturnDate",
-      type: "date",
-      label: "Expected Return Date",
-      placeHolder: "Select Return Date",
-      required: false,
-      prevFocusField: "assignedDate",
-      nextFocusField: "notes",
-      className: "col-span-4",
     },
   ];
 
@@ -413,6 +414,38 @@ const useAssetConfig = () => {
       required: false,
       className: "col-span-4",
     },
+    {
+      id: "assetStatus",
+      type: "selectWrapper",
+      label: "Asset Status",
+      placeHolder: "Select Status",
+      required: true,
+      prevFocusField: "locationId",
+      nextFocusField: "currentOwner",
+      className: "col-span-4",
+      options: [
+        {
+          label: "Available",
+          value: "AVAILABLE",
+        },
+        {
+          label: "Assigned",
+          value: "ASSIGNED",
+        },
+        {
+          label: "Under Repair",
+          value: "UNDER_REPAIR",
+        },
+        {
+          label: "Lost",
+          value: "LOST",
+        },
+        {
+          label: "Disposed",
+          value: "DISPOSED",
+        },
+      ],
+    },
   ];
 
   return {
@@ -421,7 +454,6 @@ const useAssetConfig = () => {
     assetDetailsSchema,
     purchaseInformationSchema,
     organizationInformationSchema,
-    assetStatusSchema,
     assignmentInformationSchema,
     documentInformationSchema,
   };

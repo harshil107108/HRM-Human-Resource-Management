@@ -144,7 +144,7 @@ export default function NumberField({ field, form }) {
         }}
         onKeyDown={handleKeyDown}
         aria-invalid={Boolean(error)}
-        className={`${inputClass} ${
+        className={`${inputClass} text-right ${
           error ? "border-red-500 focus:border-red-500" : ""
         }`}
       />

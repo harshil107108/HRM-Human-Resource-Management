@@ -196,7 +196,14 @@ export default function SelectWrapper({ field, form }) {
   useEffect(() => {
     if (!isMenuOpen) return undefined;
 
-    const closeMenuOnScroll = () => {
+    const closeMenuOnScroll = (event) => {
+      if (
+        event.target instanceof Element &&
+        event.target.closest('[class*="__menu-list"]')
+      ) {
+        return;
+      }
+
       setIsMenuOpen(false);
     };
 

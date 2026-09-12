@@ -1,4 +1,5 @@
-const api = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const defaultApiHost = typeof window !== "undefined" ? window.location.hostname : "localhost";
+const api = import.meta.env.VITE_API_URL || `http://${defaultApiHost}:5000`;
 
 const apiEndpoints = {
     master: {

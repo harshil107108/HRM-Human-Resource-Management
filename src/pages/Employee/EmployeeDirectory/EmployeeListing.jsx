@@ -6,6 +6,8 @@ import { useState, useEffect } from "react";
 import { api, apiEndpoints } from "@/api/api";
 import useApiCall from "@/hooks/useApiCall";
 import { formatDateForInput } from "@/utils/dateUtils";
+import { useTelephony } from "@/context/TelephonyContext";
+import { Phone, Edit, Trash2 } from "lucide-react";
 
 const EmployeeListing = () => {
   const navigate = useNavigate();
@@ -13,6 +15,7 @@ const EmployeeListing = () => {
 
   const { deleteAlert, successAlert } = useAlert();
   const { apiCall, isPending } = useApiCall();
+  const { initiateCall } = useTelephony();
 
   const handleDelete = async (id) => {
     deleteAlert({
@@ -37,6 +40,45 @@ const EmployeeListing = () => {
       },
     });
   };
+
+  const handleCall = (row) => {
+    const phoneNumber =
+      row.mobileNumber || row.alternateMobile || row.emergencyContactNumber;
+    initiateCall({
+      phoneNumber,
+      employeeName:
+        row.employeeName ||
+        `${row.firstName || ""} ${row.lastName || ""}`.trim() ||
+        "Employee",
+      designation: row.designationName,
+      department: row.departmentname,
+    });
+  };
+
+  const contextData = [
+    {
+      icon: <Phone size={14} className="text-emerald-600" />,
+      text: "Call Employee",
+      onClick: (row) => handleCall(row),
+    },
+    {
+      icon: <Edit size={14} />,
+      text: "Edit",
+      onClick: (row) => {
+        navigate(`${location.pathname}/addedit`, {
+          state: {
+            employeeid: row?._id,
+          },
+        });
+      },
+    },
+    {
+      icon: <Trash2 size={14} />,
+      text: "Delete",
+      danger: true,
+      onClick: (row) => handleDelete(row._id),
+    },
+  ];
 
   const { employeeListingColDef } = useEmployeeConfig({ handleDelete });
   const [EmployeeListingData, setEmployeeListingData] = useState([]);
@@ -122,6 +164,7 @@ const EmployeeListing = () => {
       onAddClick={handleAdd}
       onDoubleClick={handleDoubleClick}
       panding={isPending("deleteListing") || isPending("getEmployeeListing")}
+      contextData={contextData}
     />
   );
 };

@@ -25,11 +25,16 @@ import AssetListing from "@/pages/Employee/Asset/AssetListing";
 import Asset from "@/pages/Employee/Asset/Asset";
 import JobOpeningListing from "@/pages/Recruitment/Job Opening/JobOpeningListing";
 import JobOpening from "@/pages/Recruitment/Job Opening/JobOpening";
+import MobileDialer from "@/pages/MobileDialer/MobileDialer";
 
 const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/mobile-dialer",
+    element: <MobileDialer />,
   },
 
   {

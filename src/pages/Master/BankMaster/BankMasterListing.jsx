@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import useApiCall from "@/hooks/useApiCall";
 import useAlert from "@/hooks/useAlert";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
+import { Edit, Trash2 } from "lucide-react";
 
 const BankMasterListing = () => {
   const { deleteAlert, successAlert } = useAlert();
@@ -58,6 +59,27 @@ const BankMasterListing = () => {
     });
   };
 
+  const contextData = [
+    {
+      icon: <Edit size={14} />,
+      text: "Edit",
+      onClick: (row) => {
+        onModalOpen({
+          mode: "edit",
+          id: row._id,
+        });
+      },
+    },
+    {
+      icon: <Trash2 size={14} />,
+      text: "Delete",
+      danger: true,
+      onClick: (row) => {
+        handleDelete(row._id);
+      },
+    },
+  ];
+
   const getBankListing = async () => {
     const res = await apiCall({
       id: "getBankListing",
@@ -97,6 +119,7 @@ const BankMasterListing = () => {
         onAddClick={handleAdd}
         title="Bank"
         panding={isPending("deleteListing") || isPending("getBankListing")}
+        contextData={contextData}
       />
     </>
   );

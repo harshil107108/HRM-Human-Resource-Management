@@ -32,6 +32,8 @@ const GridRow = React.memo(function GridRow({
   onCellFocus,
   onCellKeyDown,
   onDoubleClick,
+  onContextMenu,
+  isContextActive,
   rowHeight,
   rowClassName,
 }) {
@@ -52,17 +54,31 @@ const GridRow = React.memo(function GridRow({
     }
   };
 
+  const handleContextMenu = (event) => {
+    if (typeof onContextMenu === "function") {
+      onContextMenu({
+        event,
+        row,
+        rowIndex,
+        data: row,
+        colDef,
+      });
+    }
+  };
+
   return (
     <div
       className={[
         "hp-grid-row",
         isSelected ? "hp-grid-row--selected" : "",
+        isContextActive ? "hp-grid-row--context-active" : "",
         dynamicRowClass,
       ]
         .filter(Boolean)
         .join(" ")}
       style={{ height: rowHeight }}
       onDoubleClick={handleDoubleClick}
+      onContextMenu={handleContextMenu}
     >
       {selectable && (
         <div className="hp-grid-cell hp-grid-cell--select-col">

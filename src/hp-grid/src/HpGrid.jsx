@@ -9,6 +9,7 @@ import React, {
 import { flushSync } from "react-dom";
 import { registerGrid, unregisterGrid } from "./GridRegistry";
 import GridRow from "./GridRow";
+import GridContextMenu from "./GridContextMenu";
 import { PlusIcon, SearchIcon } from "./icons";
 import { generateUUID, ensureRowIds, getColumnStyle } from "./utils";
 import { Lottie } from "lottie-react";
@@ -157,6 +158,8 @@ function HpGrid(props) {
     onKeyDown, // (params) => void -- fires for every keydown on any cell, BEFORE HpGrid's own navigation logic runs. `params` = { event, key, rowIndex, colIndex, colId, field, value, row, colDef, rowData }. Call params.event.preventDefault() inside it to fully take over that key press yourself. Note: on an Enter press, `row`/`value` here may still be one tick behind (state hasn't flushed yet) - use onCellValueChange if you need the guaranteed up-to-date value.
     onSelectionChange, // (selectedRows) => void
     onDoubleClick,
+    onContextMenu, // (params) => void -- optional external listener
+    contextData, // Array | ({ row, rowIndex, data, event, colDef }) => Array -- defines right-click context menu
     pending = false,
     panding = false,
 
@@ -207,6 +210,8 @@ function HpGrid(props) {
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [columnResize, setColumnResize] = useState(null);
+  // Context menu state for right click on row
+  const [contextMenu, setContextMenu] = useState(null);
   // Per-column filters: { [field]: filterValue }. Only fields with a
   // non-empty value are considered "active" - see displayRows below.
   const [columnFilters, setColumnFiltersState] = useState({});
@@ -265,6 +270,41 @@ function HpGrid(props) {
     setColumnFiltersState({});
     if (typeof onColumnFiltersChange === "function") onColumnFiltersChange({});
   }, [onColumnFiltersChange]);
+
+  const handleRowContextMenu = useCallback(
+    ({ event, row, rowIndex, data, colDef: rowColDef }) => {
+      if (typeof onContextMenu === "function") {
+        onContextMenu({ event, row, rowIndex, data, colDef: rowColDef });
+      }
+
+      if (!contextData) return;
+
+      let items = [];
+      if (typeof contextData === "function") {
+        items =
+          contextData({ row, rowIndex, data, event, colDef: rowColDef }) || [];
+      } else if (Array.isArray(contextData)) {
+        items = contextData;
+      }
+
+      if (items && items.length > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        setContextMenu({
+          x: event.clientX,
+          y: event.clientY,
+          row,
+          rowIndex,
+          items,
+        });
+      }
+    },
+    [contextData, onContextMenu],
+  );
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
 
   // rowIndex-colIndex -> actual focusable DOM node
   const cellRefs = useRef({});
@@ -737,6 +777,7 @@ function HpGrid(props) {
 
       // ---- misc ----
       refresh: () => setRowDataState((prev) => prev.slice()),
+      closeContextMenu: handleCloseContextMenu,
       getId: () => id,
     }),
     [
@@ -751,6 +792,7 @@ function HpGrid(props) {
       resolveRowId,
       clearColumnFilters,
       onColumnFiltersChange,
+      handleCloseContextMenu,
       id,
     ],
   );
@@ -1099,6 +1141,8 @@ function HpGrid(props) {
                   onCellFocus={handleCellFocus}
                   onCellKeyDown={handleCellKeyDown}
                   onDoubleClick={onDoubleClick}
+                  onContextMenu={handleRowContextMenu}
+                  isContextActive={contextMenu?.rowIndex === rowIndex}
                   rowHeight={rowHeight}
                   rowClassName={rowClassName}
                 />
@@ -1107,6 +1151,17 @@ function HpGrid(props) {
           </div>
         </div>
       </div>
+
+      {contextMenu && (
+        <GridContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenu.items}
+          row={contextMenu.row}
+          rowIndex={contextMenu.rowIndex}
+          onClose={handleCloseContextMenu}
+        />
+      )}
     </div>
   );
 }

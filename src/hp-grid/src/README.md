@@ -116,6 +116,8 @@ grid.focusOnCellIndex(2, "name"); // by row INDEX (position) + field/col name
 | `onSearchChange`    | `(term) => void`                                                          | Fires as the user types in the search box                                                                                                                                                                                                                           |
 | `addButtonLabel`    | `string`                                                                  | Label for the toolbar's add button, e.g. `"+ Add Database"`                                                                                                                                                                                                         |
 | `onAddClick`        | `() => void`                                                              | If provided, shows the teal "+ Add" button in the toolbar                                                                                                                                                                                                           |
+| `onContextMenu`     | `({ event, row, rowIndex, data, colDef }) => void`                        | Fires on row right-click                                                                                                                                                                                                                                            |
+| `contextData`       | `array \| ({ row, rowIndex, data, event, colDef }) => array`              | Array or generator of context menu items shown when right-clicking any cell/row (see Context Menu section below)                                                                                                                                                     |
 | `enterKeyMovement`  | `'right' \| 'down'`                                                       | What Enter does after committing a value. `'right'` (default): moves to the next column, same row, wrapping to the next row's first column at the end. `'down'`: classic spreadsheet behaviour, same column next row                                                |
 | `getRowId`          | `(row) => string \| number`                                               | How `applyTransaction`'s `update`/`remove` match rows. Defaults to `row.id`                                                                                                                                                                                         |
 
@@ -354,9 +356,59 @@ them yourself.
 - **Enter** — commits the value, then moves focus to the **next column, same row** by default (`enterKeyMovement="right"`), wrapping to the next row's first column at the end of a row. Set `enterKeyMovement="down"` for classic spreadsheet behaviour (same column, next row) instead.
 - **Escape** — blur the current cell
 
+## Context Menu (`contextData`)
+
+You can provide a right-click context menu by passing `contextData`:
+
+```jsx
+const contextMenuData = [
+  {
+    icon: <Phone size={14} />,
+    text: "Call",
+    onClick: (row, { rowIndex, event }) => {
+      console.log("Calling", row);
+    },
+  },
+  {
+    icon: <Activity size={14} />,
+    text: "Status",
+    onClick: (row) => {
+      console.log("Check status", row);
+    },
+  },
+  {
+    icon: <Trash2 size={14} />,
+    text: "Delete",
+    danger: true,
+    onClick: (row) => {
+      handleDelete(row._id);
+    },
+  },
+];
+
+<HpGrid
+  id="bankListing"
+  rowData={rowData}
+  colDef={colDef}
+  contextData={contextMenuData}
+/>
+```
+
+### Context item options:
+- `icon`: ReactNode / SVG component to render on the left
+- `text` / `label`: string or ReactNode for the item label
+- `onClick: (row, { row, rowIndex, data, event }) => void`: function triggered on click with row data
+- `danger: boolean`: highlights item in red (great for Delete / Remove actions)
+- `disabled: boolean | ((row, rowIndex) => boolean)`: conditionally disables item
+- `hidden: boolean | ((row, rowIndex) => boolean)`: conditionally hides item
+- `divider: boolean`: renders a separator line
+
+`contextData` can also be a function `(params) => [...]` to dynamically generate menu items per row!
+
 ## Styling
 
 All classes live in `HpGrid.css` under the `hp-grid-*` prefix (e.g.
 `.hp-grid-row--selected`, `.hp-grid-cell--focused`, `.hp-grid-input`).
 Override them globally, or use `colDef.className` / `rowClassName` for
 per-cell / per-row overrides.
+

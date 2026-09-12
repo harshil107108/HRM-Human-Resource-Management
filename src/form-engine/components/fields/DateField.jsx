@@ -558,7 +558,7 @@ export default function DateField({ field, form, ...standaloneProps }) {
 
   const displayError = error || formError;
   const segmentBase =
-    "h-7 bg-transparent text-center text-xs font-semibold text-slate-800 outline-none tabular-nums placeholder:text-slate-400 disabled:cursor-not-allowed disabled:text-slate-500";
+    "h-7 bg-transparent text-center text-xs font-bold text-slate-800 outline-none tabular-nums placeholder:font-medium placeholder:text-slate-400 disabled:cursor-not-allowed disabled:text-slate-500";
 
   return (
     <div className={`${wrapperClass} relative`} ref={wrapperRef}>

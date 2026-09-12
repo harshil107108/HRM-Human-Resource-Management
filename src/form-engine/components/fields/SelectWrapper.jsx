@@ -530,7 +530,7 @@ const customStyles = (error) => ({
     color: "#94a3b8",
     margin: 3,
     fontSize: 11,
-    fontWeight: 600,
+    fontWeight: 700,
     lineHeight: 1.2,
   }),
 
@@ -546,7 +546,7 @@ const customStyles = (error) => ({
     paddingRight: 8,
     boxSizing: "border-box",
     fontSize: 11,
-    fontWeight: 600,
+    fontWeight: 700,
     lineHeight: 1.2,
   }),
 
@@ -622,7 +622,7 @@ const customStyles = (error) => ({
         : "#fff",
     color: "#0f172a",
     fontSize: 12,
-    fontWeight: state.isSelected ? 600 : 500,
+    fontWeight: state.isSelected ? 700 : 600,
     lineHeight: 1.4,
     transition: "background-color .12s ease",
   }),

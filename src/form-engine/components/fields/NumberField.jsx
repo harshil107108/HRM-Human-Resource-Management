@@ -28,9 +28,8 @@ export default function NumberField({ field, form }) {
   const handleChange = useCallback(
     (event) => {
       const raw = event.target.value;
-      setDraftValue(raw);
-
       if (raw === "") {
+        setDraftValue(raw);
         form.methods.setValue(id, "");
         return;
       }
@@ -42,6 +41,7 @@ export default function NumberField({ field, form }) {
       const digitLength = raw.replace(/[-+.]/g, "").length;
       if (maxLength !== undefined && digitLength > Number(maxLength)) return;
 
+      setDraftValue(raw);
       form.methods.setValue(id, numericValue);
     },
     [form, id, maxLength],

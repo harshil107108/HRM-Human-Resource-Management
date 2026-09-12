@@ -1,5 +1,4 @@
 import { api, apiEndpoints } from "@/api/api";
-import React from "react";
 
 const useStateMasterConfig = ({ handleDelete } = {}) => {
   const stateListingColDef = [

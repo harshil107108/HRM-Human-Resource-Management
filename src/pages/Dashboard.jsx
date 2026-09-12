@@ -250,8 +250,6 @@ export default function EnterpriseDashboard() {
       <main className="flex-1 flex flex-col min-w-0">
         {/* Dashboard Content Container */}
         <div className="p-6 md:p-8 space-y-8 overflow-y-auto max-w-[1600px] mx-auto w-full">
-
-
           {/* Stats Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
@@ -380,10 +378,11 @@ export default function EnterpriseDashboard() {
                             initial={{ height: 0 }}
                             animate={{ height: bar.height }}
                             transition={{ duration: 0.8, delay: index * 0.05 }}
-                            className={`w-full rounded-t-md transition-all ${bar.highlighted
-                              ? "bg-blue-600 shadow-sm shadow-blue-500/20"
-                              : "bg-blue-200 group-hover:bg-blue-400"
-                              }`}
+                            className={`w-full rounded-t-md transition-all ${
+                              bar.highlighted
+                                ? "bg-blue-600 shadow-sm shadow-blue-500/20"
+                                : "bg-blue-200 group-hover:bg-blue-400"
+                            }`}
                           />
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-gray-900 text-white text-[10px] py-1 px-1.5 rounded shadow-lg whitespace-nowrap z-10 font-bold transition-all">
                             {bar.value}
@@ -498,7 +497,6 @@ export default function EnterpriseDashboard() {
                       />
                     </svg>
 
-                    {/* X-Axis labels */}
                     <div className="absolute inset-x-0 bottom-0 flex justify-between px-1 text-[10px] text-gray-400 font-semibold mt-2 pt-1 border-t border-gray-100">
                       <span>Jan</span>
                       <span>Mar</span>
@@ -511,7 +509,6 @@ export default function EnterpriseDashboard() {
                 </Card>
               </div>
 
-              {/* Data Grid Table: Employee Directory */}
               <Card className="overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-3">
                   <div>
@@ -525,7 +522,6 @@ export default function EnterpriseDashboard() {
 
                   <div className="flex items-center gap-2 w-full md:w-auto">
                     <div className="relative flex-1 md:w-60">
-                      {/* <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" /> */}
                       <input
                         className="w-full bg-gray-50 border border-gray-200 rounded-lg py-1.5 pl-8 pr-3 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white"
                         placeholder="Filter by name, design..."
@@ -637,15 +633,12 @@ export default function EnterpriseDashboard() {
               </Card>
             </div>
 
-            {/* Right sidebar details panel (col-span-12 on Mobile, lg:col-span-3 on Desktop) */}
             <div className="col-span-12 lg:col-span-3 space-y-6">
-              {/* Department Distribution Donut Card */}
               <Card className="p-6">
                 <h3 className="font-semibold text-gray-900 text-sm mb-5">
                   Department Distribution
                 </h3>
                 <div className="flex flex-col items-center">
-                  {/* Radial / Donut SVG layout */}
                   <div className="relative w-36 h-36 flex items-center justify-center">
                     <svg
                       className="w-full h-full transform -rotate-90"

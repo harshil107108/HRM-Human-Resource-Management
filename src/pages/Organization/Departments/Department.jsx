@@ -84,6 +84,7 @@ const Department = () => {
         description: data?.description || "",
         parentdepartment: data.parentdepartment?._id || "",
         reportingdepartment: data.reportingdepartment?._id || "",
+        departmenthead: data?.departmenthead?._id || "",
       });
     }
   };

@@ -11,37 +11,37 @@ import useAlert from "@/hooks/useAlert";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
 
 
+const initialValue = {
+  companyName: '',
+  legalName: '',
+  companyCode: '',
+  businessEmail: '',
+  phone: '',
+  website: '',
+  establishDate: '',
+  registrationNumber: null,
+  panNumber: null,
+  gstNumber: null,
+  industry: "",
+  date: "",
+  companySize: '',
+  addressLine1: '',
+  addressLine2: '',
+  country: '',
+  state: '',
+  city: '',
+  postalCode: "",
+};
+
 const Company = () => {
   const locationData = useLocation();
-  const companyId = locationData.state.companyid;
+  const companyId = locationData.state?.companyid;
   const navigate = useNavigate();
   const { apiCall } = useApiCall();
-  const { successAlert } = useAlert()
+  const { successAlert } = useAlert();
 
   const [companyImage, setCompanyImage] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
-
-  const initialValue = {
-    companyName: '',
-    legalName: '',
-    companyCode: '',
-    businessEmail: '',
-    phone: '',
-    website: '',
-    establishDate: '',
-    registrationNumber: null,
-    panNumber: null,
-    gstNumber: null,
-    industry: "",
-    date: Date.now(),
-    companySize: '',
-    addressLine1: '',
-    addressLine2: '',
-    country: '',
-    state: '',
-    city: '',
-    postalCode: "",
-  };
 
   const { businessInfoSchema1, AdditionalBusinessInformation, basicInfoSchema, addressSchema } = useCompanyConfig();
 

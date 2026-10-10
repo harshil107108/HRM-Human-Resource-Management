@@ -97,12 +97,12 @@ export default function NumberField({ field, form }) {
         form.methods.focusNext(id);
       }
 
-      if (event.key === "Tab" && event.shiftKey && field.prevFocusField) {
+      if (event.key === "Tab" && event.shiftKey) {
         event.preventDefault();
         form.methods.focusPrev(id);
       }
     },
-    [draftValue, form, id, field.prevFocusField],
+    [draftValue, form, id],
   );
 
   return (

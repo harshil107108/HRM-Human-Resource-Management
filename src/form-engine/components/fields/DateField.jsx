@@ -295,9 +295,9 @@ export default function DateField({ field, form, ...standaloneProps }) {
 
   const validateAndCommit = useCallback(
     (d, m, y, { fillDefaults } = {}) => {
-      const nextDay = d || "",
-        nextMonth = m || "",
-        nextYear = y || "";
+      const nextDay = d || "";
+      const nextMonth = m || "";
+      let nextYear = y || "";
 
       if (
         fillDefaults &&
@@ -307,7 +307,7 @@ export default function DateField({ field, form, ...standaloneProps }) {
       ) {
         const currentYear = todayParts().year;
         setYear(currentYear);
-        return validateAndCommit(nextDay, nextMonth, currentYear);
+        nextYear = currentYear;
       }
 
       if (!nextDay && !nextMonth && !nextYear) {
@@ -376,18 +376,42 @@ export default function DateField({ field, form, ...standaloneProps }) {
   };
 
   const makeKeyDownHandler = (segment) => (e) => {
+    if (e.key === "Tab") {
+      if (e.shiftKey) {
+        if (segment === "day") {
+          e.preventDefault();
+          form?.methods.focusPrev(id);
+          return;
+        } else if (segment === "month") {
+          e.preventDefault();
+          dayRef.current?.focus();
+          return;
+        } else if (segment === "year") {
+          e.preventDefault();
+          monthRef.current?.focus();
+          return;
+        }
+      } else {
+        if (segment === "day") {
+          e.preventDefault();
+          monthRef.current?.focus();
+          return;
+        } else if (segment === "month") {
+          e.preventDefault();
+          yearRef.current?.focus();
+          return;
+        } else if (segment === "year") {
+          e.preventDefault();
+          validateAndCommit(day, month, year, { fillDefaults: true });
+          form?.methods.focusNext(id);
+          return;
+        }
+      }
+    }
     if (e.key === "Enter") {
       e.preventDefault();
       validateAndCommit(day, month, year, { fillDefaults: true });
-      const validationError = getDateValidationError(day, month, year, {
-        min,
-        max,
-      });
-      const isCompleteDate =
-        day.length === 2 && month.length === 2 && year.length === 4;
-      if (!validationError && isCompleteDate) {
-        form?.methods.focusNext(id);
-      }
+      form?.methods.focusNext(id);
       return;
     }
     if (e.key === "ArrowDown") {

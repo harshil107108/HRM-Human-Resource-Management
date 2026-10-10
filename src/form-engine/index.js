@@ -66,6 +66,7 @@ const memoizeField = (FieldComponent) =>
 //   registerFieldType('date', DateField);
 registerFieldType("number", memoizeField(NumberField));
 registerFieldType("selectWrapper", memoizeField(SelectWrapper));
+registerFieldType("select", memoizeField(SelectWrapper));
 registerFieldType("text", memoizeField(TextField));
 registerFieldType("date", memoizeField(DateField));
 registerFieldType("checkbox", memoizeField(CheckboxField));

@@ -11,18 +11,28 @@ const getGridSpanStyle = (field) => {
     .filter(Boolean)
     .join(" ");
 
-  const spanMatch = classNames.match(/(?:^|\s)(?:[a-z-]+:)?col-span-(\d+|full)(?:\s|$)/);
+  const matches = [...classNames.matchAll(/(?:([a-z0-9-]+):)?col-span-(\d+|full)/g)];
 
-  if (!spanMatch) {
+  if (matches.length > 0) {
+    // Prioritize responsive breakpoint like md: or lg:, else prefer non-12, else last match
+    const responsive = matches.find((m) => m[1] === "md" || m[1] === "lg");
+    const nonFull = matches.find((m) => m[2] !== "12" && m[2] !== "full");
+    const chosen = responsive || nonFull || matches[matches.length - 1];
+    const spanValue = chosen[2];
+
     return {
-      gridColumn: "span 6 / span 6",
+      gridColumn: spanValue === "full" ? "1 / -1" : `span ${spanValue} / span ${spanValue}`,
     };
   }
 
-  const spanValue = spanMatch[1];
+  if (field.gridCols) {
+    return {
+      gridColumn: field.gridCols === "full" ? "1 / -1" : `span ${field.gridCols} / span ${field.gridCols}`,
+    };
+  }
 
   return {
-    gridColumn: spanValue === "full" ? "1 / -1" : `span ${spanValue} / span ${spanValue}`,
+    gridColumn: "span 6 / span 6",
   };
 };
 
@@ -39,7 +49,10 @@ export default function FormRenderer({
     return null;
   }
 
-  const schema = formSchema || form.methods.getSchema();
+  const rawSchema = formSchema || form.methods?.getSchema?.() || [];
+  const schema = Array.isArray(rawSchema)
+    ? rawSchema
+    : Object.entries(rawSchema).map(([key, val]) => ({ id: key, ...val }));
 
   return (
     <div

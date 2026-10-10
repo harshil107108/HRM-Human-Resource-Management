@@ -36,6 +36,12 @@ const GridRow = React.memo(function GridRow({
   isContextActive,
   rowHeight,
   rowClassName,
+  rowDraggable = false,
+  onRowDragStart,
+  onRowDragEnd,
+  onRowDragOver,
+  onRowDragLeave,
+  onRowDrop,
 }) {
   const dynamicRowClass =
     typeof rowClassName === "function"
@@ -72,11 +78,18 @@ const GridRow = React.memo(function GridRow({
         "hp-grid-row",
         isSelected ? "hp-grid-row--selected" : "",
         isContextActive ? "hp-grid-row--context-active" : "",
+        rowDraggable ? "hp-grid-row--draggable" : "",
         dynamicRowClass,
       ]
         .filter(Boolean)
         .join(" ")}
       style={{ height: rowHeight }}
+      draggable={rowDraggable}
+      onDragStart={rowDraggable ? (e) => onRowDragStart?.({ event: e, row, rowIndex }) : undefined}
+      onDragEnd={rowDraggable ? (e) => onRowDragEnd?.({ event: e, row, rowIndex }) : undefined}
+      onDragOver={(e) => onRowDragOver?.({ event: e, row, rowIndex })}
+      onDragLeave={(e) => onRowDragLeave?.({ event: e, row, rowIndex })}
+      onDrop={(e) => onRowDrop?.({ event: e, row, rowIndex })}
       onDoubleClick={handleDoubleClick}
       onContextMenu={handleContextMenu}
     >

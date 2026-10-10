@@ -3,8 +3,8 @@ import Select from "react-select";
 import { useFormStore } from "../../hooks/useFormStore";
 import { labelClass, wrapperClass } from "../../styles/formtheme";
 
-export function shouldHandleSelectKeyDown(event, { form, id, prevFocusField }) {
-  if (event.key === "Tab" && event.shiftKey && prevFocusField) {
+export function shouldHandleSelectKeyDown(event, { form, id }) {
+  if (event.key === "Tab" && event.shiftKey) {
     event.preventDefault();
     form.methods.focusPrev(id);
     return true;
@@ -265,7 +265,6 @@ export default function SelectWrapper({ field, form }) {
         shouldHandleSelectKeyDown(event, {
           form,
           id,
-          prevFocusField: field.prevFocusField,
         })
       ) {
         return;
@@ -276,7 +275,7 @@ export default function SelectWrapper({ field, form }) {
         form.methods.focusNext(id);
       }
     },
-    [field.prevFocusField, form, id, isMultiSelect],
+    [form, id, isMultiSelect],
   );
 
   // ============================================================

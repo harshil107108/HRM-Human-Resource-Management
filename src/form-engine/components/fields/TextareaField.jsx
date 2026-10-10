@@ -28,6 +28,21 @@ export default function TextareaField({ field, form }) {
     form.methods.blurField(id);
   }, [form, id]);
 
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (event.key === "Tab" && event.shiftKey) {
+        event.preventDefault();
+        form.methods.focusPrev(id);
+        return;
+      }
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        form.methods.focusNext(id);
+      }
+    },
+    [form, id],
+  );
+
   return (
     <div className={`${wrapperClass} relative`}>
       {error && isFocused && (
@@ -53,6 +68,7 @@ export default function TextareaField({ field, form }) {
         maxLength={maxLength}
         rows={rows}
         onChange={handleChange}
+        onKeyDown={handleKeyDown}
         onBlur={() => {
           setIsFocused(false);
           handleBlur();

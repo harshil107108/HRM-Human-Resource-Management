@@ -34,7 +34,10 @@ export function generateUUID() {
  * ids themselves.
  */
 export function ensureRowIds(rows) {
-  if (!Array.isArray(rows)) return rows;
+  if (!Array.isArray(rows)) {
+    if (rows && Array.isArray(rows.data)) return ensureRowIds(rows.data);
+    return [];
+  }
   return rows.map((row) =>
     row && row.id != null ? row : { ...row, id: generateUUID() },
   );

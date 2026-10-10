@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
+import useApiCall from "../hooks/useApiCall";
+import { apiEndpoints } from "../api/api";
 import {
   Users,
   CreditCard,
@@ -224,6 +226,40 @@ export default function EnterpriseDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [selectedDuration, setSelectedDuration] = useState("Last 7 Days");
+  const [liveStats, setLiveStats] = useState(null);
+  const [liveEmployees, setLiveEmployees] = useState(INITIAL_EMPLOYEES);
+
+  const { execute } = useApiCall();
+
+  const fetchDashboardStats = useCallback(async () => {
+    try {
+      const res = await execute({
+        endpoint: apiEndpoints.dashboard.stats,
+        method: "post",
+        body: {}
+      });
+      if (res?.success && res.data) {
+        setLiveStats(res.data);
+        if (res.data.recentEmployees && res.data.recentEmployees.length > 0) {
+          setLiveEmployees(res.data.recentEmployees.map(e => ({
+            id: e._id,
+            name: `${e.firstName || ""} ${e.lastName || ""}`,
+            email: e.email || "staff@enterprise.hrm",
+            avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+            department: (e.departmentId && typeof e.departmentId === "object" ? e.departmentId.departmentName : e.departmentId) || "Operations",
+            designation: (e.designationId && typeof e.designationId === "object" ? e.designationId.designationName : e.designationId) || "Specialist",
+            status: e.status || "Active"
+          })));
+        }
+      }
+    } catch (err) {
+      console.warn("Using default stats preview", err);
+    }
+  }, [execute]);
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, [fetchDashboardStats]);
 
   // Sparkline SVG Path definitions
   const sparkline1 =
@@ -237,7 +273,8 @@ export default function EnterpriseDashboard() {
   const sparkline8 = "M0 10 L50 15 L100 20";
 
   // Filters search queries
-  const filteredEmployees = INITIAL_EMPLOYEES.filter(
+  const activeEmployeeList = liveEmployees.length > 0 ? liveEmployees : INITIAL_EMPLOYEES;
+  const filteredEmployees = activeEmployeeList.filter(
     (emp) =>
       emp.name.toLowerCase().includes(employeeSearch.toLowerCase()) ||
       emp.department.toLowerCase().includes(employeeSearch.toLowerCase()) ||
@@ -254,7 +291,7 @@ export default function EnterpriseDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
               title="Total Employees"
-              value="1,284"
+              value={liveStats?.totalEmployees !== undefined ? String(liveStats.totalEmployees) : "1,284"}
               icon={<Users className="w-5 h-5 text-blue-600" />}
               trend="+12%"
               trendType="up"
@@ -263,7 +300,7 @@ export default function EnterpriseDashboard() {
             />
             <StatCard
               title="Present Today"
-              value="1,142"
+              value={liveStats?.presentToday !== undefined ? String(liveStats.presentToday) : "1,142"}
               icon={<UserCheck className="w-5 h-5 text-emerald-600" />}
               trend="94%"
               trendType="success"
@@ -272,7 +309,7 @@ export default function EnterpriseDashboard() {
             />
             <StatCard
               title="Absent"
-              value="42"
+              value={liveStats?.absentToday !== undefined ? String(liveStats.absentToday) : "42"}
               icon={<AlertCircle className="w-5 h-5 text-red-600" />}
               trend="-2%"
               trendType="down"
@@ -280,8 +317,8 @@ export default function EnterpriseDashboard() {
               sparklineColor="#ef4444"
             />
             <StatCard
-              title="Remote Work"
-              value="100"
+              title="Active Workforce"
+              value={liveStats?.activeEmployees !== undefined ? String(liveStats.activeEmployees) : "100"}
               icon={<Building2 className="w-5 h-5 text-indigo-600" />}
               trend="+5%"
               trendType="up"
@@ -290,7 +327,7 @@ export default function EnterpriseDashboard() {
             />
             <StatCard
               title="Leaves Pending"
-              value="18"
+              value={liveStats?.pendingLeaves !== undefined ? String(liveStats.pendingLeaves) : "18"}
               icon={<Clock className="w-5 h-5 text-amber-600" />}
               trend="Active"
               trendType="neutral"
@@ -298,8 +335,8 @@ export default function EnterpriseDashboard() {
               sparklineColor="#f59e0b"
             />
             <StatCard
-              title="Payroll This Month"
-              value="$482k"
+              title="Payroll Disbursed"
+              value={liveStats?.payrollThisMonth !== undefined ? (typeof liveStats.payrollThisMonth === 'number' ? `₹${liveStats.payrollThisMonth.toLocaleString()}` : String(liveStats.payrollThisMonth)) : "₹1.13M"}
               icon={<CreditCard className="w-5 h-5 text-teal-600" />}
               trend="+2.4%"
               trendType="success"
@@ -308,18 +345,18 @@ export default function EnterpriseDashboard() {
             />
             <StatCard
               title="New Hires"
-              value="24"
+              value={liveStats?.newHires !== undefined ? String(liveStats.newHires) : "24"}
               icon={<UserPlus className="w-5 h-5 text-violet-600" />}
-              trend="8 New"
+              trend="Recent"
               trendType="up"
               sparklineData={sparkline7}
               sparklineColor="#7c3aed"
             />
             <StatCard
               title="Open Positions"
-              value="14"
+              value={liveStats?.openPositions !== undefined ? String(liveStats.openPositions) : "14"}
               icon={<Briefcase className="w-5 h-5 text-rose-600" />}
-              trend="Urgent"
+              trend="Active"
               trendType="down"
               sparklineData={sparkline8}
               sparklineColor="#e11d48"

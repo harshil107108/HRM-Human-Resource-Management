@@ -52,8 +52,7 @@ export default function ModalBody({ children }) {
                         <p className="hp-modal-banner__title">Please fix the following before continuing:</p>
                         <ul className="hp-modal-banner__list">
                             {validationErrors.map((message, index) => (
-                                // eslint-disable-next-line react/no-array-index-key
-                                <li key={index}>{message}</li>
+                                <li key={`${message}-${index}`}>{message}</li>
                             ))}
                         </ul>
                     </div>

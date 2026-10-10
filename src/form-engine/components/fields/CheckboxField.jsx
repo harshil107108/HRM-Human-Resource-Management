@@ -64,12 +64,12 @@ export default function CheckboxField({ field, form }) {
         return;
       }
 
-      if (event.key === "Tab" && event.shiftKey && field.prevFocusField) {
+      if (event.key === "Tab" && event.shiftKey) {
         event.preventDefault();
         form.methods.focusPrev(id);
       }
     },
-    [field.prevFocusField, form, id],
+    [form, id],
   );
 
   return (

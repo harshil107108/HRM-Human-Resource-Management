@@ -233,7 +233,6 @@ const useDepatmentConfig = ({ handleDelete } = {}) => {
       placeHolder: "e.g. 245",
       required: true,
       prevFocusField: "employeecapacity",
-      nextFocusField: null,
       nextFocusField: "departmenthead",
     },
   ];

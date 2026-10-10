@@ -102,8 +102,22 @@ const JobOpeningListing = () => {
         colDef={jobOpeningListingColDef}
         style={{ height: "100%" }}
         onDoubleClick={handleDoubleClick}
+        onCardClick={handleDoubleClick}
         onAddClick={handleAdd}
         title="Job Openings"
+        toggle
+        cardTitleField="jobTitle"
+        cardSubtitleField="jobOpeningId"
+        cardStatusField="jobStatus"
+        cardFields={[
+          "companyName",
+          "departmentname",
+          "designationname",
+          "numberOfPositions",
+          "employmentType",
+          "hiringManagerName",
+          "publishDate",
+        ]}
         panding={isPending("deleteListing") || isPending("getJobListing")}
       />
     </>

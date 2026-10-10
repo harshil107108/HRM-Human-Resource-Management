@@ -9,27 +9,24 @@
  * ---------------------------------------------------------------------------
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 export default function ModalPortal({ children }) {
-    const containerRef = useRef(null);
-    const [mounted, setMounted] = useState(false);
-
-    if (!containerRef.current && typeof document !== 'undefined') {
-        containerRef.current = document.createElement('div');
-        containerRef.current.setAttribute('data-hp-common-modal-portal', 'true');
-    }
+    const [container, setContainer] = useState(null);
 
     useEffect(() => {
-        const node = containerRef.current;
-        document.body.appendChild(node);
-        setMounted(true);
+        const div = document.createElement('div');
+        div.setAttribute('data-hp-common-modal-portal', 'true');
+        document.body.appendChild(div);
+        setContainer(div);
         return () => {
-            document.body.removeChild(node);
+            if (div.parentNode) {
+                div.parentNode.removeChild(div);
+            }
         };
     }, []);
 
-    if (!mounted) return null;
-    return createPortal(children, containerRef.current);
+    if (!container) return null;
+    return createPortal(children, container);
 }

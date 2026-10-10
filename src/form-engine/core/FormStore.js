@@ -1,8 +1,25 @@
 import { useCallback, useSyncExternalStore } from "react";
 
+export const linkSequentialFocus = (schema) => {
+  if (!Array.isArray(schema)) return schema;
+  const focusable = schema.filter((f) => f && f.id && !f.disabled);
+  return schema.map((field) => {
+    if (!field || !field.id) return field;
+    const idx = focusable.findIndex((f) => f.id === field.id);
+    const prevField = idx > 0 ? focusable[idx - 1] : null;
+    const nextField = idx < focusable.length - 1 ? focusable[idx + 1] : null;
+    return {
+      ...field,
+      prevFocusField: field.prevFocusField || prevField?.id,
+      nextFocusField: field.nextFocusField || nextField?.id,
+    };
+  });
+};
+
 export class FormStore {
   constructor({ schema = [], initialValue = {} } = {}) {
-    this.schema = schema;
+    const linkedSchema = linkSequentialFocus(schema);
+    this.schema = linkedSchema;
 
     this.initialValue = { ...initialValue };
     this.values = { ...initialValue };
@@ -14,7 +31,7 @@ export class FormStore {
     };
 
     this._private = {
-      schemaMap: new Map(schema.map((field) => [field.id, field])),
+      schemaMap: new Map(linkedSchema.map((field) => [field.id, field])),
       refs: {},
       listeners: new Set(),
       fieldListeners: new Map(),
@@ -113,9 +130,10 @@ export class FormStore {
       getSchema: () => this.schema,
       getFieldConfig: (id) => this._private.schemaMap.get(id),
       setSchema: (nextSchema) => {
-        this.schema = nextSchema;
+        const linked = linkSequentialFocus(nextSchema);
+        this.schema = linked;
         this._private.schemaMap = new Map(
-          nextSchema.map((field) => [field.id, field]),
+          linked.map((field) => [field.id, field]),
         );
         this.emit();
       },
@@ -142,6 +160,7 @@ export class FormStore {
        * same implementation, just named for the linter.
        */
       watch: (id) => {
+        /* eslint-disable react-hooks/rules-of-hooks */
         const subscribe = useCallback(
           (onStoreChange) => this.methods.subscribe(onStoreChange),
           [],
@@ -151,6 +170,7 @@ export class FormStore {
           [id],
         );
         return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+        /* eslint-enable react-hooks/rules-of-hooks */
       },
       setValue: (id, value, { triggerHooks = true } = {}) => {
         const field = this.methods.getFieldConfig(id);
@@ -429,28 +449,83 @@ export class FormStore {
       },
       focusField: (id) => {
         const node = this._private.refs[id];
-        if (node && typeof node.focus === "function") {
-          node.focus();
-          if (typeof node.select === "function") node.select();
+        if (node) {
+          if (typeof node.focus === "function") {
+            try {
+              node.focus();
+              if (typeof node.select === "function") node.select();
+              return;
+            } catch (_) {}
+          }
+          if (node.inputRef && typeof node.inputRef.focus === "function") {
+            try {
+              node.inputRef.focus();
+              return;
+            } catch (_) {}
+          }
+          if (node.controlRef && typeof node.controlRef.focus === "function") {
+            try {
+              node.controlRef.focus();
+              return;
+            } catch (_) {}
+          }
+          const inner = node.querySelector?.("input, select, textarea, button, [tabindex='0']");
+          if (inner && typeof inner.focus === "function") {
+            try {
+              inner.focus();
+              if (typeof inner.select === "function") inner.select();
+              return;
+            } catch (_) {}
+          }
+        }
+        if (typeof document !== "undefined") {
+          const domEl =
+            document.getElementById(id) ||
+            document.getElementById(`${id}-day`) ||
+            document.querySelector(`[name="${id}"]`);
+          if (domEl && typeof domEl.focus === "function") {
+            try {
+              domEl.focus();
+              if (typeof domEl.select === "function") domEl.select();
+            } catch (_) {}
+          }
         }
       },
       focusNext: (id) => {
         const field = this.methods.getFieldConfig(id);
-        if (field?.nextFocusField)
-          this.methods.focusField(field.nextFocusField);
+        const targetId = field?.nextFocusField;
+        if (targetId && (this._private.refs[targetId] || (typeof document !== "undefined" && document.getElementById(targetId)))) {
+          this.methods.focusField(targetId);
+          return;
+        }
+        const currentIndex = this.schema.findIndex((f) => f.id === id);
+        if (currentIndex !== -1) {
+          for (let i = currentIndex + 1; i < this.schema.length; i++) {
+            const next = this.schema[i];
+            if (!next.disabled) {
+              this.methods.focusField(next.id);
+              return;
+            }
+          }
+        }
       },
       focusPrev: (id) => {
         const field = this.methods.getFieldConfig(id);
-        if (field?.prevFocusField)
-          this.methods.focusField(field.prevFocusField);
-      },
-      getFirstInvalidField: () => {
-        const schema = this.methods.getSchema?.() || [];
-        for (const field of schema) {
-          if (!field || !field.id) continue;
-          if (this.errors[field.id]) return field.id;
+        const targetId = field?.prevFocusField;
+        if (targetId && (this._private.refs[targetId] || (typeof document !== "undefined" && document.getElementById(targetId)))) {
+          this.methods.focusField(targetId);
+          return;
         }
-        return null;
+        const currentIndex = this.schema.findIndex((f) => f.id === id);
+        if (currentIndex !== -1) {
+          for (let i = currentIndex - 1; i >= 0; i--) {
+            const prev = this.schema[i];
+            if (!prev.disabled) {
+              this.methods.focusField(prev.id);
+              return;
+            }
+          }
+        }
       },
       focusOnField: (id) => {
         this.methods.focusField(id);

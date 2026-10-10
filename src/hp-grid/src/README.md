@@ -116,10 +116,39 @@ grid.focusOnCellIndex(2, "name"); // by row INDEX (position) + field/col name
 | `onSearchChange`    | `(term) => void`                                                          | Fires as the user types in the search box                                                                                                                                                                                                                           |
 | `addButtonLabel`    | `string`                                                                  | Label for the toolbar's add button, e.g. `"+ Add Database"`                                                                                                                                                                                                         |
 | `onAddClick`        | `() => void`                                                              | If provided, shows the teal "+ Add" button in the toolbar                                                                                                                                                                                                           |
+| `toggle`            | `boolean`                                                                 | Shows an opt-in List / Cards view toggle before the add button (default `false`)                                                                                                                                                                                      |
+| `cardTitleField`    | `string`                                                                  | Row field displayed as the card title; defaults to the first non-action column                                                                                                                                                                                       |
+| `cardSubtitleField` | `string`                                                                  | Optional row field displayed under the card title                                                                                                                                                                                                                    |
+| `cardStatusField`   | `string`                                                                  | Optional row field rendered as a status badge                                                                                                                                                                                                                        |
+| `cardFields`        | `array`                                                                   | Fields shown as card details, e.g. `["email", { field: "categoryName", label: "Category" }]`; defaults to up to four non-action columns                                                                                                                                 |
+| `onCardClick`       | `({ data, rowIndex }) => void`                                            | Optional card activation handler; defaults to `onDoubleClick`                                                                                                                                                                                                        |
 | `onContextMenu`     | `({ event, row, rowIndex, data, colDef }) => void`                        | Fires on row right-click                                                                                                                                                                                                                                            |
 | `contextData`       | `array \| ({ row, rowIndex, data, event, colDef }) => array`              | Array or generator of context menu items shown when right-clicking any cell/row (see Context Menu section below)                                                                                                                                                     |
 | `enterKeyMovement`  | `'right' \| 'down'`                                                       | What Enter does after committing a value. `'right'` (default): moves to the next column, same row, wrapping to the next row's first column at the end. `'down'`: classic spreadsheet behaviour, same column next row                                                |
 | `getRowId`          | `(row) => string \| number`                                               | How `applyTransaction`'s `update`/`remove` match rows. Defaults to `row.id`                                                                                                                                                                                         |
+
+### List and card views
+
+The card view is opt-in so existing `HpGrid` consumers keep their current
+table-only layout. Configure card fields to highlight the details most
+useful for the specific module:
+
+```jsx
+<HpGrid
+  id="candidateListing"
+  rowData={candidateRows}
+  colDef={candidateColumns}
+  toggle
+  cardTitleField="candidateName"
+  cardSubtitleField="jobTitle"
+  cardStatusField="stage"
+  cardFields={["email", "phone", "totalExperienceYears", "rating"]}
+  onCardClick={({ data }) => openCandidate(data)}
+  onAddClick={addCandidate}
+/>
+```
+
+Card view uses the same search and column-filtered rows as list view.
 
 ## Performance model - how editing avoids re-render storms
 
@@ -411,4 +440,3 @@ All classes live in `HpGrid.css` under the `hp-grid-*` prefix (e.g.
 `.hp-grid-row--selected`, `.hp-grid-cell--focused`, `.hp-grid-input`).
 Override them globally, or use `colDef.className` / `rowClassName` for
 per-cell / per-row overrides.
-

@@ -1,17 +1,35 @@
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore, useMemo } from "react";
+import formMethod from "../core/formMethod";
 
 export function useFormStore(store, selector = (snapshot) => snapshot) {
+  const safeStore = useMemo(() => {
+    if (store && store.methods && typeof store.methods.getSnapshot === "function") {
+      return store;
+    }
+    return formMethod.createForm({
+      schema: [],
+      initialValue: typeof store === "object" && store !== null ? store : {},
+    });
+  }, [store]);
+
   const subscribe = useCallback(
-    (onChange) => store.methods.subscribe(onChange),
-    [store],
+    (onChange) => safeStore.methods.subscribe(onChange),
+    [safeStore],
   );
 
   const getSnapshot = useCallback(
-    () => selector(store.methods.getSnapshot()),
-    [store, selector],
+    () => selector(safeStore.methods.getSnapshot()),
+    [safeStore, selector],
   );
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+
+  // If the caller passed a plain object expecting a formMethod store back
+  if (!store || !store.methods) {
+    return safeStore;
+  }
+
+  return snapshot;
 }
 
 /**

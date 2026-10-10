@@ -36,12 +36,12 @@ export default function PhoneField({ field, form }) {
                 return;
             }
 
-            if (event.key === "Tab" && event.shiftKey && field.prevFocusField) {
+            if (event.key === "Tab" && event.shiftKey) {
                 event.preventDefault();
                 form.methods.focusPrev(id);
             }
         },
-        [form, id, field.prevFocusField],
+        [form, id],
     );
 
     const handleBlur = useCallback(() => {

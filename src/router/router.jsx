@@ -26,6 +26,65 @@ import Asset from "@/pages/Employee/Asset/Asset";
 import JobOpeningListing from "@/pages/Recruitment/Job Opening/JobOpeningListing";
 import JobOpening from "@/pages/Recruitment/Job Opening/JobOpening";
 
+// Employee Modules
+import EmployeeProfiles from "@/pages/Employee/EmployeeProfiles";
+import EmployeeDocuments from "@/pages/Employee/EmployeeDocuments";
+import ExitManagementListing from "@/pages/Employee/ExitManagement/ExitManagementListing";
+
+// Attendance Modules
+import AttendanceLogListing from "@/pages/Attendance/Logs/AttendanceLogListing";
+import ShiftListing from "@/pages/Attendance/Shifts/ShiftListing";
+import AttendanceHolidayCalendar from "@/pages/Attendance/Holidays/AttendanceHolidayCalendar";
+import WeekendPolicyListing from "@/pages/Attendance/Weekends/WeekendPolicyListing";
+import AttendanceRequestListing from "@/pages/Attendance/Requests/AttendanceRequestListing";
+
+// Leave Modules
+import LeaveTypeListing from "@/pages/Leave/Types/LeaveTypeListing";
+import LeavePolicyListing from "@/pages/Leave/Policies/LeavePolicyListing";
+import LeaveRequestListing from "@/pages/Leave/Requests/LeaveRequestListing";
+import LeaveBalanceListing from "@/pages/Leave/Balance/LeaveBalanceListing";
+
+// Payroll Modules
+import SalaryStructureListing from "@/pages/Payroll/SalaryStructure/SalaryStructureListing";
+import PayrollProcessListing from "@/pages/Payroll/Process/PayrollProcessListing";
+import PayslipListing from "@/pages/Payroll/Payslips/PayslipListing";
+import LoanListing from "@/pages/Payroll/Loans/LoanListing";
+import ReimbursementListing from "@/pages/Payroll/Reimbursements/ReimbursementListing";
+import TaxListing from "@/pages/Payroll/Taxes/TaxListing";
+
+// Recruitment Modules
+import CandidateListing from "@/pages/Recruitment/Candidates/CandidateListing";
+import InterviewListing from "@/pages/Recruitment/Interviews/InterviewListing";
+import OfferLetterListing from "@/pages/Recruitment/OfferLetters/OfferLetterListing";
+import OnboardingListing from "@/pages/Recruitment/Onboarding/OnboardingListing";
+
+// Performance Modules
+import GoalListing from "@/pages/Performance/Goals/GoalListing";
+import ReviewListing from "@/pages/Performance/Reviews/ReviewListing";
+import AppraisalListing from "@/pages/Performance/Appraisals/AppraisalListing";
+import FeedbackListing from "@/pages/Performance/Feedback/FeedbackListing";
+
+// Reports Modules
+import EmployeeReports from "@/pages/Reports/EmployeeReports";
+import AttendanceReports from "@/pages/Reports/AttendanceReports";
+import PayrollReports from "@/pages/Reports/PayrollReports";
+import LeaveReports from "@/pages/Reports/LeaveReports";
+import RecruitmentReports from "@/pages/Reports/RecruitmentReports";
+
+// Administration Modules
+import UserListing from "@/pages/Administration/Users/UserListing";
+import RoleListing from "@/pages/Administration/Roles/RoleListing";
+import PermissionMatrix from "@/pages/Administration/Permissions/PermissionMatrix";
+import AuditLogListing from "@/pages/Administration/AuditLogs/AuditLogListing";
+import ActivityLogFeed from "@/pages/Administration/ActivityLogs/ActivityLogFeed";
+
+// Settings Modules
+import GeneralSettings from "@/pages/Settings/GeneralSettings";
+import NotificationSettings from "@/pages/Settings/NotificationSettings";
+import EmailTemplates from "@/pages/Settings/EmailTemplates";
+import IntegrationSettings from "@/pages/Settings/IntegrationSettings";
+import SecuritySettings from "@/pages/Settings/SecuritySettings";
+
 const router = createBrowserRouter([
   {
     path: "/login",
@@ -151,11 +210,11 @@ const router = createBrowserRouter([
       },
       {
         path: "employees/profiles",
-        element: <UnderConstruction moduleName="Employee Profiles" />,
+        element: <EmployeeProfiles />,
       },
       {
         path: "employees/documents",
-        element: <UnderConstruction moduleName="Employee Documents" />,
+        element: <EmployeeDocuments />,
       },
       {
         path: "employees/assets",
@@ -172,7 +231,7 @@ const router = createBrowserRouter([
       },
       {
         path: "employees/exit",
-        element: <UnderConstruction moduleName="Exit Management" />,
+        element: <ExitManagementListing />,
       },
 
       // ============================================
@@ -181,23 +240,23 @@ const router = createBrowserRouter([
 
       {
         path: "attendance/logs",
-        element: <UnderConstruction moduleName="Attendance Logs" />,
+        element: <AttendanceLogListing />,
       },
       {
         path: "attendance/shifts",
-        element: <UnderConstruction moduleName="Shift Management" />,
+        element: <ShiftListing />,
       },
       {
         path: "attendance/holidays",
-        element: <UnderConstruction moduleName="Holiday Calendar" />,
+        element: <AttendanceHolidayCalendar />,
       },
       {
         path: "attendance/weekends",
-        element: <UnderConstruction moduleName="Weekend Policies" />,
+        element: <WeekendPolicyListing />,
       },
       {
         path: "attendance/requests",
-        element: <UnderConstruction moduleName="Attendance Requests" />,
+        element: <AttendanceRequestListing />,
       },
 
       // ============================================
@@ -206,19 +265,19 @@ const router = createBrowserRouter([
 
       {
         path: "leave/requests",
-        element: <UnderConstruction moduleName="Leave Requests" />,
+        element: <LeaveRequestListing />,
       },
       {
         path: "leave/types",
-        element: <UnderConstruction moduleName="Leave Types" />,
+        element: <LeaveTypeListing />,
       },
       {
         path: "leave/policies",
-        element: <UnderConstruction moduleName="Leave Policies" />,
+        element: <LeavePolicyListing />,
       },
       {
         path: "leave/balance",
-        element: <UnderConstruction moduleName="Leave Balance" />,
+        element: <LeaveBalanceListing />,
       },
 
       // ============================================
@@ -227,27 +286,27 @@ const router = createBrowserRouter([
 
       {
         path: "payroll/salary-structure",
-        element: <UnderConstruction moduleName="Salary Structure" />,
+        element: <SalaryStructureListing />,
       },
       {
         path: "payroll/process",
-        element: <UnderConstruction moduleName="Payroll Processing" />,
+        element: <PayrollProcessListing />,
       },
       {
         path: "payroll/payslips",
-        element: <UnderConstruction moduleName="Payslips" />,
+        element: <PayslipListing />,
       },
       {
         path: "payroll/loans",
-        element: <UnderConstruction moduleName="Loan Management" />,
+        element: <LoanListing />,
       },
       {
         path: "payroll/reimbursements",
-        element: <UnderConstruction moduleName="Reimbursements" />,
+        element: <ReimbursementListing />,
       },
       {
         path: "payroll/taxes",
-        element: <UnderConstruction moduleName="Tax Management" />,
+        element: <TaxListing />,
       },
 
       // ============================================
@@ -269,19 +328,19 @@ const router = createBrowserRouter([
       },
       {
         path: "recruitment/candidates",
-        element: <UnderConstruction moduleName="Candidates" />,
+        element: <CandidateListing />,
       },
       {
         path: "recruitment/interviews",
-        element: <UnderConstruction moduleName="Interview Scheduler" />,
+        element: <InterviewListing />,
       },
       {
         path: "recruitment/offers",
-        element: <UnderConstruction moduleName="Offer Letters" />,
+        element: <OfferLetterListing />,
       },
       {
         path: "recruitment/onboarding",
-        element: <UnderConstruction moduleName="Employee Onboarding" />,
+        element: <OnboardingListing />,
       },
 
       // ============================================
@@ -290,19 +349,19 @@ const router = createBrowserRouter([
 
       {
         path: "performance/goals",
-        element: <UnderConstruction moduleName="Goals" />,
+        element: <GoalListing />,
       },
       {
         path: "performance/reviews",
-        element: <UnderConstruction moduleName="Performance Reviews" />,
+        element: <ReviewListing />,
       },
       {
         path: "performance/appraisals",
-        element: <UnderConstruction moduleName="Appraisals" />,
+        element: <AppraisalListing />,
       },
       {
         path: "performance/feedback",
-        element: <UnderConstruction moduleName="Feedback" />,
+        element: <FeedbackListing />,
       },
 
       // ============================================
@@ -311,23 +370,23 @@ const router = createBrowserRouter([
 
       {
         path: "reports/employees",
-        element: <UnderConstruction moduleName="Employee Reports" />,
+        element: <EmployeeReports />,
       },
       {
         path: "reports/attendance",
-        element: <UnderConstruction moduleName="Attendance Reports" />,
+        element: <AttendanceReports />,
       },
       {
         path: "reports/payroll",
-        element: <UnderConstruction moduleName="Payroll Reports" />,
+        element: <PayrollReports />,
       },
       {
         path: "reports/leave",
-        element: <UnderConstruction moduleName="Leave Reports" />,
+        element: <LeaveReports />,
       },
       {
         path: "reports/recruitment",
-        element: <UnderConstruction moduleName="Recruitment Reports" />,
+        element: <RecruitmentReports />,
       },
 
       // ============================================
@@ -336,23 +395,23 @@ const router = createBrowserRouter([
 
       {
         path: "administration/users",
-        element: <UnderConstruction moduleName="User Management" />,
+        element: <UserListing />,
       },
       {
         path: "administration/roles",
-        element: <UnderConstruction moduleName="Roles & Permissions" />,
+        element: <RoleListing />,
       },
       {
         path: "administration/permissions",
-        element: <UnderConstruction moduleName="Permissions" />,
+        element: <PermissionMatrix />,
       },
       {
         path: "administration/audit-logs",
-        element: <UnderConstruction moduleName="Audit Logs" />,
+        element: <AuditLogListing />,
       },
       {
         path: "administration/activity-logs",
-        element: <UnderConstruction moduleName="Activity Logs" />,
+        element: <ActivityLogFeed />,
       },
 
       // ============================================
@@ -361,23 +420,23 @@ const router = createBrowserRouter([
 
       {
         path: "settings/general",
-        element: <UnderConstruction moduleName="General Settings" />,
+        element: <GeneralSettings />,
       },
       {
         path: "settings/notifications",
-        element: <UnderConstruction moduleName="Notification Settings" />,
+        element: <NotificationSettings />,
       },
       {
         path: "settings/email",
-        element: <UnderConstruction moduleName="Email Templates" />,
+        element: <EmailTemplates />,
       },
       {
         path: "settings/integrations",
-        element: <UnderConstruction moduleName="Integrations" />,
+        element: <IntegrationSettings />,
       },
       {
         path: "settings/security",
-        element: <UnderConstruction moduleName="Security Settings" />,
+        element: <SecuritySettings />,
       },
     ],
   },

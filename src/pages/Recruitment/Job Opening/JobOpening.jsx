@@ -9,6 +9,11 @@ import useApiCall from "@/hooks/useApiCall";
 import useAlert from "@/hooks/useAlert";
 import { formatDateForInput } from "@/utils/dateUtils";
 
+const generateJobOpeningId = () => {
+  const randomNumber = Math.floor(100000 + Math.random() * 900000);
+  return `${randomNumber}`;
+};
+
 const JobOpening = () => {
   const locationData = useLocation();
   const JobOpeningId = locationData?.state?.jobOpeningId;
@@ -26,12 +31,7 @@ const JobOpening = () => {
     additionalInformationSchema,
   } = useJobOpeningConfig();
 
-  const generateJobOpeningId = () => {
-    const randomNumber = Math.floor(100000 + Math.random() * 900000);
-    return `${randomNumber}`;
-  };
-
-  const initialValue = {
+  const initialValue = useMemo(() => ({
     jobTitle: "",
     jobOpeningId: generateJobOpeningId(),
     department: "",
@@ -64,7 +64,7 @@ const JobOpening = () => {
     allowInternalApplications: false,
     remarks: "",
     isActive: true,
-  };
+  }), []);
 
   const formmethod = useMemo(() => {
     return formMethod.createForm({

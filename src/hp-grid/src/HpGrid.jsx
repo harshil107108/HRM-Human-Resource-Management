@@ -11,6 +11,7 @@ import { registerGrid, unregisterGrid } from "./GridRegistry";
 import GridRow from "./GridRow";
 import GridContextMenu from "./GridContextMenu";
 import { PlusIcon, SearchIcon } from "./icons";
+import { LayoutGrid, List, ChevronRight } from "lucide-react";
 import { generateUUID, ensureRowIds, getColumnStyle } from "./utils";
 import { Lottie } from "lottie-react";
 import loadingAnimation from "../../assets/images/Animation.json";
@@ -141,6 +142,27 @@ function matchesColumnFilter(value, filterValue, filterType, col) {
   }
 }
 
+function normalizeColDef(cols) {
+  if (!Array.isArray(cols)) return [];
+  return cols.map((col, idx) => ({
+    ...col,
+    id: col.id || col.field || col.key || `col_${idx}`,
+    field: col.field || col.key || col.id,
+    headerName: col.headerName || col.label || col.header || "",
+  }));
+}
+
+function getCardStatusTone(status) {
+  const normalized = status.toLowerCase();
+  if (/available|active|completed|accepted|hired|selected|passed/.test(normalized))
+    return "hp-grid-card-status--positive";
+  if (/rejected|declined|cancelled|canceled|inactive|lost|disposed|failed/.test(normalized))
+    return "hp-grid-card-status--negative";
+  if (/pending|draft|scheduled|repair|progress|review|interview|offered/.test(normalized))
+    return "hp-grid-card-status--warning";
+  return "hp-grid-card-status--neutral";
+}
+
 function HpGrid(props) {
   const {
     id,
@@ -171,6 +193,27 @@ function HpGrid(props) {
     onSearchChange, // (term) => void -- optional external listener
     addButtonLabel = "Add New", // e.g. "+ Add Database" / "+ Add Group"
     onAddClick, // if provided, the "+ Add" button is shown
+    toggle = false,
+    cardTitleField,
+    cardSubtitleField,
+    cardFields,
+    cardStatusField,
+    onCardClick,
+    cardDraggable = false,
+    onCardDragStart,
+    onCardDragEnd,
+    onCardDragOver,
+    onCardDragLeave,
+    onCardDrop,
+    getCardClassName,
+
+    // ---- row drag and drop support ----
+    rowDraggable = false,
+    onRowDragStart,
+    onRowDragEnd,
+    onRowDragOver,
+    onRowDragLeave,
+    onRowDrop,
 
     // ---- per-column filter row (rendered directly under the header) ----
     columnFilterable = true, // set false to hide the whole filter row
@@ -202,13 +245,14 @@ function HpGrid(props) {
   const [rowData, setRowDataState] = useState(() =>
     ensureRowIds(initialRowData),
   );
-  const [colDef, setColDefState] = useState(initialColDef);
+  const [colDef, setColDefState] = useState(() => normalizeColDef(initialColDef));
   const [selectedIndices, setSelectedIndices] = useState(() => new Set());
   const [focusedCell, setFocusedCell] = useState({
     rowIndex: null,
     colIndex: null,
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState("list");
   const [columnResize, setColumnResize] = useState(null);
   // Context menu state for right click on row
   const [contextMenu, setContextMenu] = useState(null);
@@ -219,6 +263,10 @@ function HpGrid(props) {
   useEffect(() => {
     setRowDataState(ensureRowIds(initialRowData));
   }, [initialRowData]);
+
+  useEffect(() => {
+    setColDefState(normalizeColDef(initialColDef));
+  }, [initialColDef]);
 
   // Keep latest state in refs so imperative API methods (which are only
   // created once) always read fresh data instead of a stale closure.
@@ -244,6 +292,27 @@ function HpGrid(props) {
   useLayoutEffect(() => {
     columnFiltersRef.current = columnFilters;
   }, [columnFilters]);
+
+  const scrollAreaRef = useRef(null);
+  const [scrollAreaWidth, setScrollAreaWidth] = useState(0);
+
+  useEffect(() => {
+    const el = scrollAreaRef.current;
+    if (!el) return;
+    const updateWidth = () => {
+      if (el) {
+        setScrollAreaWidth(el.clientWidth);
+      }
+    };
+    updateWidth();
+    const ro = new ResizeObserver(updateWidth);
+    ro.observe(el);
+    window.addEventListener("resize", updateWidth);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", updateWidth);
+    };
+  }, []);
 
   // Updates (or clears, when value === "") a single column's filter value.
   // Defined up here (rather than next to displayRows) so it - and
@@ -621,7 +690,8 @@ function HpGrid(props) {
 
   const selectAll = useCallback(() => {
     setSelectedIndices(() => {
-      const next = new Set(rowDataRef.current.map((_, i) => i));
+      const list = Array.isArray(rowDataRef.current) ? rowDataRef.current : [];
+      const next = new Set(list.map((_, i) => i));
       emitSelectionChange(next);
       return next;
     });
@@ -805,8 +875,9 @@ function HpGrid(props) {
   /* ----------------------------------------------------------------
    * Render
    * ---------------------------------------------------------------- */
+  const safeRowData = Array.isArray(rowData) ? rowData : [];
   const allSelected =
-    rowData.length > 0 && selectedIndices.size === rowData.length;
+    safeRowData.length > 0 && selectedIndices.size === safeRowData.length;
 
   // Search filters what's displayed only - the original array index is kept
   // as `rowIndex` for every row, so focusOnCellIndex/updateCell/etc. always
@@ -820,7 +891,7 @@ function HpGrid(props) {
   );
 
   const displayRows = useMemo(() => {
-    let indexed = rowData.map((row, rowIndex) => ({ row, rowIndex }));
+    let indexed = safeRowData.map((row, rowIndex) => ({ row, rowIndex }));
 
     if (searchable && searchTerm.trim()) {
       const term = searchTerm.trim().toLowerCase();
@@ -987,7 +1058,49 @@ function HpGrid(props) {
     );
   };
 
-  const showToolbar = Boolean(title || icon || searchable || onAddClick);
+  const showToolbar = Boolean(title || icon || searchable || onAddClick || toggle);
+  const isCardView = toggle && viewMode === "card";
+  const cardTitleColumn =
+    colDef.find((col) => col.field === cardTitleField) ||
+    colDef.find((col) => col.type !== "actions");
+  const cardSubtitleColumn = colDef.find(
+    (col) => col.field === cardSubtitleField,
+  );
+  const cardStatusColumn = colDef.find(
+    (col) => col.field === cardStatusField,
+  );
+  const visibleCardFields = useMemo(() => {
+    const fields = Array.isArray(cardFields)
+      ? cardFields
+      : colDef
+          .filter(
+            (col) =>
+              col.type !== "actions" &&
+              col.field !== cardTitleColumn?.field &&
+              col.field !== cardStatusColumn?.field,
+          )
+          .slice(0, 4);
+
+    return fields
+      .map((item) => (typeof item === "string" ? { field: item } : item))
+      .filter(
+        (item) =>
+          item &&
+          typeof item.field === "string" &&
+          item.field !== cardTitleColumn?.field &&
+          item.field !== cardStatusColumn?.field &&
+          colDef.find((col) => col.field === item.field)?.type !== "actions",
+      )
+      .map((item) => ({
+        field: item.field,
+        label:
+          item.label ||
+          colDef.find((col) => col.field === item.field)?.headerName ||
+          item.field,
+      }));
+  }, [cardFields, cardTitleColumn?.field, cardStatusColumn?.field, colDef]);
+  const cardClickHandler =
+    typeof onCardClick === "function" ? onCardClick : onDoubleClick;
   const hasOnlyFixedColumns =
     colDef.length > 0 &&
     colDef.every(
@@ -1018,6 +1131,44 @@ function HpGrid(props) {
                 />
               </div>
             )}
+            {toggle && (
+              <div
+                className="hp-grid-view-toggle"
+                role="group"
+                aria-label="View mode"
+              >
+                <button
+                  type="button"
+                  className={`hp-grid-view-toggle-btn ${viewMode === "list" ? "hp-grid-view-toggle-btn--active" : ""}`}
+                  onClick={() => setViewMode("list")}
+                  aria-label="List view"
+                  aria-pressed={viewMode === "list"}
+                  title="List view"
+                >
+                  <List
+                    size={14}
+                    className="hp-grid-view-toggle-icon"
+                    aria-hidden="true"
+                  />
+                  <span>List</span>
+                </button>
+                <button
+                  type="button"
+                  className={`hp-grid-view-toggle-btn ${viewMode === "card" ? "hp-grid-view-toggle-btn--active" : ""}`}
+                  onClick={() => setViewMode("card")}
+                  aria-label="Cards view"
+                  aria-pressed={viewMode === "card"}
+                  title="Cards view"
+                >
+                  <LayoutGrid
+                    size={14}
+                    className="hp-grid-view-toggle-icon"
+                    aria-hidden="true"
+                  />
+                  <span>Cards</span>
+                </button>
+              </div>
+            )}
             {typeof onAddClick === "function" && (
               <button
                 type="button"
@@ -1033,11 +1184,12 @@ function HpGrid(props) {
       )}
 
       <div className="hp-grid-table-shell">
-        <div className="hp-grid-scroll-area">
+        <div className="hp-grid-scroll-area" ref={scrollAreaRef}>
           <div
-            className={`hp-grid-scroll-content ${hasOnlyFixedColumns ? "hp-grid-scroll-content--fixed-columns" : ""}`}
+            className={`hp-grid-scroll-content ${hasOnlyFixedColumns ? "hp-grid-scroll-content--fixed-columns" : ""} ${isCardView ? "hp-grid-scroll-content--cards" : ""}`}
           >
-            <div className="hp-grid-header" style={{ height: headerHeight }}>
+            {!isCardView && (
+              <div className="hp-grid-header" style={{ height: headerHeight }}>
               {selectable && (
                 <div className="hp-grid-cell hp-grid-cell--select-col hp-grid-header-cell">
                   <input
@@ -1069,9 +1221,10 @@ function HpGrid(props) {
                   />
                 </div>
               ))}
-            </div>
+              </div>
+            )}
 
-            {columnFilterable && (
+            {columnFilterable && !isCardView && (
               <div className="hp-grid-header-filters">
                 {selectable && (
                   <div className="hp-grid-cell hp-grid-cell--select-col hp-grid-filter-cell hp-grid-filter-cell--empty" />
@@ -1100,7 +1253,11 @@ function HpGrid(props) {
               </div>
             )}
 
-            <div className="hp-grid-body">
+
+
+            <div
+              className={`hp-grid-body ${isCardView ? "hp-grid-body--cards hp-grid-card-view" : ""}`}
+            >
               {isLoading && (
                 <div
                   className="hp-grid-loading"
@@ -1116,11 +1273,207 @@ function HpGrid(props) {
                 </div>
               )}
               {!isLoading && displayRows.length === 0 && (
-                <div className="hp-grid-empty">
+                <div
+                  className="hp-grid-empty"
+                  style={
+                    !isCardView && scrollAreaWidth > 0
+                      ? {
+                          position: "sticky",
+                          left: 0,
+                          width: `${scrollAreaWidth}px`,
+                          maxWidth: `${scrollAreaWidth}px`,
+                        }
+                      : undefined
+                  }
+                >
                   <img src={noDataImage} alt="No data" />
                 </div>
               )}
-              {displayRows.map(({ row, rowIndex }) => (
+              {isCardView
+                ? displayRows.map(({ row, rowIndex }) => {
+                    const statusValue = cardStatusColumn
+                      ? row[cardStatusColumn.field]
+                      : undefined;
+                    const status =
+                      typeof statusValue === "string" ||
+                      typeof statusValue === "number"
+                        ? String(statusValue)
+                        : "";
+                    const titleValue = cardTitleColumn
+                      ? row[cardTitleColumn.field]
+                      : undefined;
+                    const subtitleValue = cardSubtitleColumn
+                      ? row[cardSubtitleColumn.field]
+                      : undefined;
+                    const titleText =
+                      titleValue === null ||
+                      titleValue === undefined ||
+                      titleValue === ""
+                        ? "Untitled record"
+                        : String(titleValue);
+                    const subtitleText =
+                      subtitleValue !== null &&
+                      subtitleValue !== undefined &&
+                      subtitleValue !== "" &&
+                      typeof subtitleValue !== "object"
+                        ? String(subtitleValue)
+                        : "";
+                    const avatarLetter = (
+                      titleText !== "Untitled record"
+                        ? titleText
+                        : subtitleText || "R"
+                    )
+                      .trim()
+                      .charAt(0)
+                      .toUpperCase() || "R";
+
+                    const details = visibleCardFields
+                      .map(({ field, label }) => {
+                        const value = row[field];
+                        if (
+                          value === null ||
+                          value === undefined ||
+                          value === "" ||
+                          typeof value === "object"
+                        ) {
+                          return null;
+                        }
+                        return (
+                          <div className="hp-grid-card-detail" key={field}>
+                            <span className="hp-grid-card-detail-label">
+                              {label}
+                            </span>
+                            <span
+                              className="hp-grid-card-detail-value"
+                              title={String(value)}
+                            >
+                              {typeof value === "boolean"
+                                ? value
+                                  ? "Yes"
+                                  : "No"
+                                : String(value)}
+                            </span>
+                          </div>
+                        );
+                      })
+                      .filter(Boolean);
+
+                    const cardContent = (
+                      <>
+                        <div
+                          className="hp-grid-card-top-accent"
+                          aria-hidden="true"
+                        />
+                        <div className="hp-grid-card-heading">
+                          <div className="hp-grid-card-top-row">
+                            <div
+                              className="hp-grid-card-avatar"
+                              aria-hidden="true"
+                            >
+                              {avatarLetter}
+                            </div>
+                            {status && (
+                              <span
+                                className={`hp-grid-card-status ${getCardStatusTone(status)}`}
+                              >
+                                <span
+                                  className="hp-grid-card-status-dot"
+                                  aria-hidden="true"
+                                />
+                                <span className="hp-grid-card-status-text">
+                                  {status}
+                                </span>
+                              </span>
+                            )}
+                          </div>
+                          <div className="hp-grid-card-title-wrap">
+                            <span
+                              className="hp-grid-card-title"
+                              title={titleText}
+                            >
+                              {titleText}
+                            </span>
+                            {subtitleText && (
+                              <span
+                                className="hp-grid-card-subtitle"
+                                title={subtitleText}
+                              >
+                                {subtitleText}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {details.length > 0 && (
+                          <div className="hp-grid-card-details">{details}</div>
+                        )}
+                        <div className="hp-grid-card-footer">
+                          <span className="hp-grid-card-meta">
+                            #{rowIndex + 1}
+                          </span>
+                          {cardClickHandler && (
+                            <span className="hp-grid-card-action">
+                              <span>View details</span>
+                              <ChevronRight
+                                size={12}
+                                className="hp-grid-card-action-icon"
+                                aria-hidden="true"
+                              />
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    );
+                    const customCardClass =
+                      typeof getCardClassName === "function"
+                        ? getCardClassName({ row, rowIndex })
+                        : "";
+                    const cardClassName = [
+                      "hp-grid-card",
+                      cardClickHandler && "hp-grid-card--interactive",
+                      cardDraggable && "hp-grid-card--draggable",
+                      customCardClass,
+                    ]
+                      .filter(Boolean)
+                      .join(" ");
+
+                    const dragProps = {
+                      draggable: cardDraggable,
+                      onDragStart: cardDraggable
+                        ? (e) => onCardDragStart?.({ event: e, row, rowIndex })
+                        : undefined,
+                      onDragEnd: cardDraggable
+                        ? (e) => onCardDragEnd?.({ event: e, row, rowIndex })
+                        : undefined,
+                      onDragOver: (e) =>
+                        onCardDragOver?.({ event: e, row, rowIndex }),
+                      onDragLeave: (e) =>
+                        onCardDragLeave?.({ event: e, row, rowIndex }),
+                      onDrop: (e) => onCardDrop?.({ event: e, row, rowIndex }),
+                    };
+
+                    return cardClickHandler ? (
+                      <button
+                        type="button"
+                        key={row.id ?? rowIndex}
+                        className={cardClassName}
+                        onClick={() =>
+                          cardClickHandler({ data: row, rowIndex })
+                        }
+                        {...dragProps}
+                      >
+                        {cardContent}
+                      </button>
+                    ) : (
+                      <article
+                        key={row.id ?? rowIndex}
+                        className={cardClassName}
+                        {...dragProps}
+                      >
+                        {cardContent}
+                      </article>
+                    );
+                  })
+                : displayRows.map(({ row, rowIndex }) => (
                 <GridRow
                   key={row.id ?? rowIndex}
                   row={row}
@@ -1145,8 +1498,14 @@ function HpGrid(props) {
                   isContextActive={contextMenu?.rowIndex === rowIndex}
                   rowHeight={rowHeight}
                   rowClassName={rowClassName}
+                  rowDraggable={rowDraggable}
+                  onRowDragStart={onRowDragStart}
+                  onRowDragEnd={onRowDragEnd}
+                  onRowDragOver={onRowDragOver}
+                  onRowDragLeave={onRowDragLeave}
+                  onRowDrop={onRowDrop}
                 />
-              ))}
+                ))}
             </div>
           </div>
         </div>

@@ -9,6 +9,7 @@ const Toggle = ({
     title = "Head Office",
     description = "Mark this option as enabled.",
     disabled = false,
+    icon,
     toggleData,
     setToggleData,
 }) => {
@@ -32,7 +33,7 @@ const Toggle = ({
 
                 <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
-                        <Building2 className="h-4 w-4" />
+                        {icon || <Building2 className="h-4 w-4" />}
                     </div>
 
                     <div>

@@ -125,10 +125,6 @@ export const NAVIGATION_SCHEMA = [
         path: "/attendance/holidays",
       },
       {
-        label: "Weekend Policies",
-        path: "/attendance/weekends",
-      },
-      {
         label: "Attendance Requests",
         path: "/attendance/requests",
       },
@@ -146,6 +142,10 @@ export const NAVIGATION_SCHEMA = [
       {
         label: "Leave Requests",
         path: "/leave/requests",
+      },
+      {
+        label: "Leave Approvals",
+        path: "/leave/approvals",
       },
       {
         label: "Leave Types",

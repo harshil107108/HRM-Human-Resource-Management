@@ -1395,7 +1395,7 @@ function HpGridBase(props) {
   );
   const cardStatusColumn = colDef.find(
     (col) => col.field === cardStatusField,
-  );
+  ) || (cardStatusField ? { field: cardStatusField } : undefined);
   const visibleCardFields = useMemo(() => {
     const fields = Array.isArray(cardFields)
       ? cardFields

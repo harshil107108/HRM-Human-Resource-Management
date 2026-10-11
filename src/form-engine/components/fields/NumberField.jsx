@@ -14,6 +14,7 @@ export default function NumberField({ field, form }) {
     minLength,
     maxLength,
     disabled,
+    readOnly,
   } = field;
   const value = useFormStore(form, (snapshot) => snapshot.values[id]);
   const error = useFormStore(form, (snapshot) => snapshot.errors[id]);
@@ -130,6 +131,7 @@ export default function NumberField({ field, form }) {
         minLength={minLength}
         maxLength={maxLength}
         disabled={disabled}
+        readOnly={readOnly}
         onChange={handleChange}
         onBlur={(event) => {
           setIsFocused(false);

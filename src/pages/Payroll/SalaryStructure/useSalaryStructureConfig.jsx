@@ -1,3 +1,37 @@
+const getSalaryTotals = (values = {}) => {
+  const amount = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  const roundCurrency = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
+
+  const grossSalary = roundCurrency(
+    amount(values.basicSalary) +
+      amount(values.hra) +
+      amount(values.da) +
+      amount(values.conveyance) +
+      amount(values.specialAllowance),
+  );
+  const totalDeductions = roundCurrency(
+    amount(values.providentFund) +
+      amount(values.esi) +
+      amount(values.professionalTax) +
+      amount(values.otherDeductions),
+  );
+
+  return {
+    grossSalary,
+    totalDeductions,
+    netSalary: roundCurrency(grossSalary - totalDeductions),
+  };
+};
+
+const updateSalaryTotals = (form) => {
+  form.methods.setValues(getSalaryTotals(form.methods.getValues()), {
+    triggerHooks: false,
+  });
+};
+
 const useSalaryStructureConfig = ({ handleDelete } = {}) => {
   const salaryStructureListingColDef = [
     {
@@ -73,77 +107,120 @@ const useSalaryStructureConfig = ({ handleDelete } = {}) => {
       type: "number",
       label: "Basic Salary (₹)",
       required: true,
-      placeHolder: "30000",
+      min: 0,
+      minMessage: "Salary amounts cannot be negative.",
+      precision: 2,
+      onChange: updateSalaryTotals,
       className: "col-span-3",
     },
     {
       id: "hra",
       type: "number",
       label: "HRA (₹)",
-      placeHolder: "12000",
+      min: 0,
+      minMessage: "Salary amounts cannot be negative.",
+      precision: 2,
+      onChange: updateSalaryTotals,
       className: "col-span-3",
     },
     {
       id: "da",
       type: "number",
       label: "Dearness Allowance (₹)",
-      placeHolder: "3000",
+      min: 0,
+      minMessage: "Salary amounts cannot be negative.",
+      precision: 2,
+      onChange: updateSalaryTotals,
       className: "col-span-3",
     },
     {
       id: "conveyance",
       type: "number",
       label: "Conveyance Allowance (₹)",
-      placeHolder: "2000",
+      min: 0,
+      minMessage: "Salary amounts cannot be negative.",
+      precision: 2,
+      onChange: updateSalaryTotals,
       className: "col-span-3",
     },
     {
       id: "specialAllowance",
       type: "number",
       label: "Special Allowance (₹)",
-      placeHolder: "5000",
+      min: 0,
+      minMessage: "Salary amounts cannot be negative.",
+      precision: 2,
+      onChange: updateSalaryTotals,
       className: "col-span-3",
     },
     {
       id: "grossSalary",
       type: "number",
       label: "Gross Salary (₹)",
-      placeHolder: "52000",
+      min: 0,
+      minMessage: "Gross salary cannot be negative.",
+      precision: 2,
+      readOnly: true,
       className: "col-span-3",
     },
     {
-      id: "epf",
+      id: "providentFund",
       type: "number",
       label: "Provident Fund (EPF) (₹)",
-      placeHolder: "1800",
+      min: 0,
+      minMessage: "Deduction amounts cannot be negative.",
+      precision: 2,
+      onChange: updateSalaryTotals,
       className: "col-span-3",
     },
     {
       id: "esi",
       type: "number",
       label: "ESI (₹)",
-      placeHolder: "0",
+      min: 0,
+      minMessage: "Deduction amounts cannot be negative.",
+      precision: 2,
+      onChange: updateSalaryTotals,
       className: "col-span-3",
     },
     {
       id: "professionalTax",
       type: "number",
       label: "Professional Tax (₹)",
-      placeHolder: "200",
-      className: "col-span-4",
+      min: 0,
+      minMessage: "Deduction amounts cannot be negative.",
+      precision: 2,
+      onChange: updateSalaryTotals,
+      className: "col-span-3",
+    },
+    {
+      id: "otherDeductions",
+      type: "number",
+      label: "Other Deductions (₹)",
+      min: 0,
+      minMessage: "Deduction amounts cannot be negative.",
+      precision: 2,
+      onChange: updateSalaryTotals,
+      className: "col-span-3",
     },
     {
       id: "totalDeductions",
       type: "number",
       label: "Total Deductions (₹)",
-      placeHolder: "2000",
+      min: 0,
+      minMessage: "Deduction amounts cannot be negative.",
+      precision: 2,
+      readOnly: true,
       className: "col-span-4",
     },
     {
       id: "netSalary",
       type: "number",
       label: "Net Salary (₹)",
-      placeHolder: "50000",
+      min: 0,
+      minMessage: "Total deductions cannot exceed gross salary.",
+      precision: 2,
+      readOnly: true,
       className: "col-span-4",
     },
     {
@@ -157,17 +234,16 @@ const useSalaryStructureConfig = ({ handleDelete } = {}) => {
 
   const initialValue = {
     structureName: "",
-    basicSalary: 30000,
-    hra: 12000,
-    da: 3000,
-    conveyance: 2000,
-    specialAllowance: 5000,
-    epf: 1800,
-    esi: 0,
-    professionalTax: 200,
-    grossSalary: 52000,
-    totalDeductions: 2000,
-    netSalary: 50000,
+    basicSalary: "",
+    hra: "",
+    da: "",
+    conveyance: "",
+    specialAllowance: "",
+    providentFund: "",
+    esi: "",
+    professionalTax: "",
+    otherDeductions: "",
+    ...getSalaryTotals(),
     isActive: true,
     description: "",
   };
@@ -181,4 +257,5 @@ const useSalaryStructureConfig = ({ handleDelete } = {}) => {
 };
 
 export { useSalaryStructureConfig };
+export { getSalaryTotals };
 export default useSalaryStructureConfig;

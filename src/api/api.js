@@ -148,12 +148,6 @@ const apiEndpoints = {
             ShiftGetByID: "/attendance/shift/getShiftById",
             ShiftHelp: "/attendance/shift/getShiftHelp",
         },
-        weekend: {
-            WeekendAddEdit: "/attendance/weekend/addEditWeekendPolicy",
-            WeekendGetData: "/attendance/weekend/getWeekendPolicies",
-            WeekendDeleteByID: "/attendance/weekend/deleteWeekendPolicyById",
-            WeekendGetByID: "/attendance/weekend/getWeekendPolicyById",
-        },
         request: {
             RequestAddEdit: "/attendance/request/addEditAttendanceRequest",
             RequestGetData: "/attendance/request/getAttendanceRequests",
@@ -181,6 +175,9 @@ const apiEndpoints = {
             RequestGetData: "/leave/request/getLeaveRequests",
             RequestDeleteByID: "/leave/request/deleteLeaveRequestById",
             RequestGetByID: "/leave/request/getLeaveRequestById",
+        },
+        approval: {
+            UpdateRequestStatus: "/leave/approval/updateLeaveRequestStatus",
         },
         balance: {
             BalanceAddEdit: "/leave/balance/addEditLeaveBalance",
@@ -314,12 +311,6 @@ const apiEndpoints = {
         deleteShift: "/attendance/shift/deleteShiftById",
         getShiftById: "/attendance/shift/getShiftById",
         getShiftHelp: "/attendance/shift/getShiftHelp",
-    },
-    weekendPolicy: {
-        getWeekendPolicy: "/attendance/weekend/getWeekendPolicies",
-        addEditWeekendPolicy: "/attendance/weekend/addEditWeekendPolicy",
-        deleteWeekendPolicy: "/attendance/weekend/deleteWeekendPolicyById",
-        getWeekendPolicyById: "/attendance/weekend/getWeekendPolicyById",
     },
     attendanceLog: {
         getAttendanceLog: "/attendance/log/getAttendanceLogs",

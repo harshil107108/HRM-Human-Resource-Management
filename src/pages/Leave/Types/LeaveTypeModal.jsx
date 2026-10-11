@@ -44,7 +44,15 @@ const LeaveTypeModal = ({
             payload: { _id: typeId },
         });
         if (res?.success && res.data?.data) {
-            formInstance.methods.setValues(res.data.data);
+            const type = res.data.data;
+            formInstance.methods.setValues({
+                ...type,
+                daysAllowedPerYear:
+                    type.daysAllowedPerYear ?? type.daysAllowed ?? 12,
+                status:
+                    type.status ||
+                    (type.isActive === false ? "Inactive" : "Active"),
+            });
         }
     };
 
@@ -52,7 +60,14 @@ const LeaveTypeModal = ({
         if (open) {
             if (typeId) {
                 if (data) {
-                    formInstance.methods.setValues(data);
+                    formInstance.methods.setValues({
+                        ...data,
+                        daysAllowedPerYear:
+                            data.daysAllowedPerYear ?? data.daysAllowed ?? 12,
+                        status:
+                            data.status ||
+                            (data.isActive === false ? "Inactive" : "Active"),
+                    });
                 } else {
                     getTypeById();
                 }
@@ -72,8 +87,10 @@ const LeaveTypeModal = ({
             return;
         }
 
+        const { status, ...leaveTypeData } = formData;
         const payload = {
-            ...formData,
+            ...leaveTypeData,
+            isActive: status !== "Inactive",
             ...(typeId ? { _id: typeId } : {}),
         };
 

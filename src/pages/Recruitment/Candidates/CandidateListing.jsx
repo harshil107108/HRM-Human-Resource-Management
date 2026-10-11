@@ -11,6 +11,7 @@ import useAlert from "@/hooks/useAlert";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
 import StatusCard from "@/components/common/StatusCard";
 import useDragAndDrop from "@/hooks/useDragAndDrop";
+import { confirmStatusChange } from "@/utils/confirmStatusChange";
 import {
   Users,
   UserPlus,
@@ -112,7 +113,7 @@ const CandidateListing = () => {
   };
 
   const handleRequestStageChange = useCallback(
-    (candidate, targetStage, stageTitle) => {
+    async (candidate, targetStage, stageTitle) => {
       if (!candidate || !targetStage) return;
 
       if (candidate.stage === targetStage) {
@@ -122,6 +123,15 @@ const CandidateListing = () => {
         });
         return;
       }
+
+      const confirmed = await confirmStatusChange({
+        fieldName: "Candidate Stage",
+        currentValue: candidate.stage,
+        nextValue: targetStage,
+        currentLabel: candidate.stage,
+        nextLabel: stageTitle || targetStage,
+      });
+      if (!confirmed) return;
 
       // Linking feature: Moving candidate to "Interview" opens interview scheduling modal
       if (targetStage === "Interview") {

@@ -1,5 +1,12 @@
 import { api, apiEndpoints } from "@/api/api";
 
+const getTodayDate = () => {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${today.getFullYear()}-${month}-${day}`;
+};
+
 const useJobOpeningConfig = ({ handleDelete } = {}) => {
   const jobOpeningListingColDef = [
     {
@@ -45,12 +52,13 @@ const useJobOpeningConfig = ({ handleDelete } = {}) => {
       width: 140,
       render: (positions, row) => {
         const filled = row.filledPositions || 0;
-        const total = positions || 1;
-        const isFilled = filled >= total;
+        const total = positions || 0;
+        const remaining = Math.max(0, total - filled);
+        const isFilled = remaining === 0;
         return (
           <div className="flex items-center gap-1.5">
             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${isFilled ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>
-              {filled} / {total} {isFilled ? "(Filled)" : "Open"}
+              {remaining} / {total} Remaining
             </span>
           </div>
         );
@@ -543,6 +551,15 @@ const useJobOpeningConfig = ({ handleDelete } = {}) => {
       className: "col-span-2",
       nextFocusField: "closingDate",
       prevFocusField: "jobStatus",
+      validate: (value, values) => {
+        if (value && value < getTodayDate()) {
+          return "Publish Date can't be before today";
+        }
+        if (value && values.closingDate && value > values.closingDate) {
+          return "Publish Date can't be after Closing Date";
+        }
+        return undefined;
+      },
     },
     {
       id: "closingDate",
@@ -552,6 +569,10 @@ const useJobOpeningConfig = ({ handleDelete } = {}) => {
       className: "col-span-2",
       nextFocusField: "publishOnCareerPage",
       prevFocusField: "publishDate",
+      validate: (value, values) =>
+        value && values.publishDate && value < values.publishDate
+          ? "Closing Date can't be before Publish Date"
+          : undefined,
     },
     {
       id: "publishOnCareerPage",

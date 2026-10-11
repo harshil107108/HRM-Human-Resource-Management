@@ -81,6 +81,27 @@ const JobOpening = () => {
     });
   }, []);
 
+  const publishDate = formmethod.methods.watch("publishDate");
+  const closingDate = formmethod.methods.watch("closingDate");
+  const today = new Date();
+  const todayDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const publishingSchemaWithLimits = publishingInformationSchema.map((field) => {
+    if (field.id === "publishDate") {
+      return {
+        ...field,
+        min: todayDate,
+        max: closingDate || undefined,
+      };
+    }
+    if (field.id === "closingDate") {
+      return {
+        ...field,
+        min: publishDate || todayDate,
+      };
+    }
+    return field;
+  });
+
   const handleSave = async () => {
     const result = await formmethod.methods.handleFormSave(
       async (data) => {
@@ -280,7 +301,7 @@ const JobOpening = () => {
           <div className="p-4">
             <FormRenderer
               formMethod={formmethod}
-              formSchema={publishingInformationSchema}
+              formSchema={publishingSchemaWithLimits}
             />
           </div>
         </div>

@@ -130,7 +130,7 @@ const useAssetConfig = ({ handleDelete } = {}) => {
       label: "Asset Name",
       placeHolder: "Enter Asset Name",
       required: true,
-      nextFocusField: "assetCode",
+      nextFocusField: "assetCategory",
       className: "col-span-3",
     },
     {
@@ -140,7 +140,7 @@ const useAssetConfig = ({ handleDelete } = {}) => {
       placeHolder: "Auto Generated",
       required: true,
       disabled: true,
-      nextFocusField: "assetCategoryId",
+      nextFocusField: "assetCategory",
       prevFocusField: "assetName",
       className: "col-span-3",
     },
@@ -151,7 +151,7 @@ const useAssetConfig = ({ handleDelete } = {}) => {
       placeHolder: "Select Category",
       required: true,
       nextFocusField: "assetTag",
-      prevFocusField: "assetCode",
+      prevFocusField: "assetName",
       className: "col-span-3",
       options: [
         { label: "IT Equipment", value: "it-equipment" },
@@ -177,7 +177,7 @@ const useAssetConfig = ({ handleDelete } = {}) => {
       placeHolder: "Enter Asset Tag",
       required: true,
       nextFocusField: "brand",
-      prevFocusField: "assetCategoryId",
+      prevFocusField: "assetCategory",
       className: "col-span-3",
     },
   ];
@@ -351,7 +351,7 @@ const useAssetConfig = ({ handleDelete } = {}) => {
       placeHolder: "Select Department",
       required: false,
       prevFocusField: "branchId",
-      nextFocusField: "assignedEmployee",
+      nextFocusField: "assetStatus",
       className: "col-span-4",
       api: api + apiEndpoints.organization.department.DepartmentHelp,
       labelKey: "departmentname",
@@ -366,7 +366,7 @@ const useAssetConfig = ({ handleDelete } = {}) => {
       label: "Asset Status",
       placeHolder: "Select Status",
       required: true,
-      prevFocusField: "locationId",
+      prevFocusField: "department",
       nextFocusField: "currentOwner",
       className: "col-span-4",
       options: [

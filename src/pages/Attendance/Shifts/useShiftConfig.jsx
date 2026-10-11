@@ -98,18 +98,16 @@ export const useShiftConfig = ({ handleDelete } = {}) => {
         },
         {
             id: "startTime",
-            type: "text",
-            label: "Start Time (HH:MM)",
+            type: "time12",
+            label: "Start Time",
             required: true,
-            placeholder: "09:00",
             className: "col-span-3"
         },
         {
             id: "endTime",
-            type: "text",
-            label: "End Time (HH:MM)",
+            type: "time12",
+            label: "End Time",
             required: true,
-            placeholder: "18:00",
             className: "col-span-3"
         },
         {

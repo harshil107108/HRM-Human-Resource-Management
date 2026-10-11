@@ -11,6 +11,7 @@ import useDocumentTitle from "@/hooks/useDocumentTitle";
 import { formatDateForInput } from "@/utils/dateUtils";
 import StatusCard from "@/components/common/StatusCard";
 import useDragAndDrop from "@/hooks/useDragAndDrop";
+import { confirmStatusChange } from "@/utils/confirmStatusChange";
 import {
   Users,
   FileText,
@@ -163,6 +164,15 @@ const ExitManagementListing = () => {
         text: `${exitRecord.employeeName} will be permanently deleted from the Employee module. All assigned assets must already be returned. This can't be undone.`,
         confirmButtonText: "Complete & Remove",
         cancelButtonText: "Cancel",
+      });
+      if (!confirmed) return;
+    } else {
+      const confirmed = await confirmStatusChange({
+        fieldName: "Exit Status",
+        currentValue: exitRecord.overallStatus,
+        nextValue: targetStatus,
+        currentLabel: exitRecord.overallStatus,
+        nextLabel: statusTitle || targetStatus,
       });
       if (!confirmed) return;
     }

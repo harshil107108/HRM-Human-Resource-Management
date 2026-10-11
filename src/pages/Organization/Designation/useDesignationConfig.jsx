@@ -42,18 +42,7 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
       headerName: "Department",
       width: 160,
     },
-    {
-      id: "probationPeriod",
-      field: "probationPeriod",
-      headerName: "Probation Period",
-      width: 140,
-    },
-    {
-      id: "noticePeriod",
-      field: "noticePeriod",
-      headerName: "Notice Period",
-      width: 120,
-    },
+
     {
       id: "departmentHeadId",
       field: "departmentHeadId",

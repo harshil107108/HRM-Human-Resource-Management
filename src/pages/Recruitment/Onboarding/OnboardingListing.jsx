@@ -11,6 +11,7 @@ import useDocumentTitle from "@/hooks/useDocumentTitle";
 import { formatDateForInput } from "@/utils/dateUtils";
 import StatusCard from "@/components/common/StatusCard";
 import useDragAndDrop from "@/hooks/useDragAndDrop";
+import { confirmStatusChange } from "@/utils/confirmStatusChange";
 import {
   Users,
   Clock,
@@ -137,7 +138,7 @@ const OnboardingListing = () => {
   };
 
   const handleRequestStatusChange = useCallback(
-    (onboarding, targetStatus, statusTitle) => {
+    async (onboarding, targetStatus, statusTitle) => {
       if (!onboarding || !targetStatus) return;
 
       const rawName =
@@ -161,6 +162,15 @@ const OnboardingListing = () => {
         });
         return;
       }
+
+      const confirmed = await confirmStatusChange({
+        fieldName: "Onboarding Status",
+        currentValue: onboarding.status,
+        nextValue: targetStatus,
+        currentLabel: onboarding.status,
+        nextLabel: statusTitle || targetStatus,
+      });
+      if (!confirmed) return;
 
       executeStatusUpdate(onboarding, targetStatus, statusTitle);
     },

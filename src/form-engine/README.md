@@ -386,9 +386,10 @@ form.methods.offFieldChange("age", callback); // or call unsubscribe()
 
 ## Extending with new field types
 
-`number`, `text`, `selectWrapper`, `date`, `checkbox`, `phone`, `email`, and
-`textarea` all ship as built-in types already registered in `index.js`. To add
-one of your own:
+`number`, `text`, `selectWrapper`, `date`, `checkbox`, `phone`, `email`,
+`textarea`, and `time12` all ship as built-in types already registered in
+`index.js`. The `time12` field presents hour, minute, and AM/PM selectors while
+storing a compatible 24-hour `HH:mm` value. To add one of your own:
 
 ```jsx
 import { registerFieldType } from "./form-engine";

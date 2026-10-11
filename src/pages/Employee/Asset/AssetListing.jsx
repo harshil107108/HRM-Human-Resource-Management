@@ -10,6 +10,7 @@ import { formatDateForInput } from "@/utils/dateUtils";
 import AssetCard from "./AssetCard";
 import AssetAssignModal from "./AssetAssignModal";
 import useDragAndDrop from "@/hooks/useDragAndDrop";
+import { confirmStatusChange } from "@/utils/confirmStatusChange";
 import {
   Layers,
   CheckCircle2,
@@ -276,7 +277,7 @@ const AssetListing = () => {
 
   // Handles requested status change from drag-and-drop with all edge cases
   const handleRequestStatusChange = useCallback(
-    (asset, targetStatus, statusTitle) => {
+    async (asset, targetStatus, statusTitle) => {
       if (!asset || !targetStatus) return;
 
       // Edge Case 1: Same status drop -> do not trigger network request
@@ -290,6 +291,15 @@ const AssetListing = () => {
 
       // Edge Case 2: Changing status to ASSIGNED -> popup employee selection modal
       if (targetStatus === "ASSIGNED") {
+        const confirmed = await confirmStatusChange({
+          fieldName: "Asset Status",
+          currentValue: asset.assetStatus,
+          nextValue: targetStatus,
+          currentLabel: asset.assetStatus,
+          nextLabel: statusTitle || targetStatus,
+        });
+        if (!confirmed) return;
+
         setAssignModalState({
           open: true,
           asset,
@@ -312,6 +322,14 @@ const AssetListing = () => {
       }
 
       // Edge Case 4: Standard transition
+      const confirmed = await confirmStatusChange({
+        fieldName: "Asset Status",
+        currentValue: asset.assetStatus,
+        nextValue: targetStatus,
+        currentLabel: asset.assetStatus,
+        nextLabel: statusTitle || targetStatus,
+      });
+      if (!confirmed) return;
       executeStatusUpdate(asset, targetStatus, null, statusTitle);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

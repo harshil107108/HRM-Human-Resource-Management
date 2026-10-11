@@ -58,6 +58,7 @@ const tidyDividers = (items) => {
 export const createRowContextMenu = ({
   onEdit,
   editLabel = "Edit",
+  canEdit,
   isReadOnly,
   onDelete,
   canDelete,
@@ -74,7 +75,10 @@ export const createRowContextMenu = ({
     if (!row) return [];
     const items = [];
 
-    if (typeof onEdit === "function") {
+    if (
+      typeof onEdit === "function" &&
+      (typeof canEdit !== "function" || canEdit(row))
+    ) {
       const readOnly = typeof isReadOnly === "function" && isReadOnly(row);
       items.push({
         id: "edit",

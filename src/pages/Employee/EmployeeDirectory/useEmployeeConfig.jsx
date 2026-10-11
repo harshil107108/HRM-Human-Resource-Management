@@ -1,6 +1,6 @@
 import { api, apiEndpoints } from "@/api/api";
 
-const useEmployeeConfig = ({ handleDelete } = {}) => {
+const useEmployeeConfig = ({ handleDelete, isEditing = false } = {}) => {
   const employeeListingColDef = [
     {
       id: "firstName",
@@ -682,9 +682,9 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
       id: "password",
       type: "text",
       inputType: "password",
-      label: "Password",
-      placeHolder: "Generate Password",
-      required: true,
+      label: isEditing ? "New Password" : "Password",
+      placeHolder: isEditing ? "Leave blank to keep current password" : "Enter password",
+      required: !isEditing,
       className: "col-span-4",
       isGeneratePassword: true,
       prevFocusField: "username",

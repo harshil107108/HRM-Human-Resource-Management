@@ -52,6 +52,11 @@ const LeaveTypeListing = () => {
       const data = res.data?.data || [];
       const formatted = data.map((item) => ({
         ...item,
+        daysAllowedPerYear:
+          item.daysAllowedPerYear ?? item.daysAllowed ?? 0,
+        status:
+          item.status ||
+          (item.isActive === false ? "Inactive" : "Active"),
         isPaidText: item.isPaid ? "Yes" : "No",
         isCarryForwardText: item.isCarryForward
           ? `Yes (Max ${item.maxCarryForwardDays || 0}d)`
@@ -103,6 +108,7 @@ const LeaveTypeListing = () => {
         onDoubleClick={handleDoubleClick}
         onAddClick={handleAdd}
         title="Leave Types"
+        selectable={false}
         columnFilterable={true}
         panding={isPending("deleteLeaveType") || isPending("getLeaveTypeListing")}
       />

@@ -9,6 +9,14 @@ import { api, apiEndpoints } from "@/api/api";
 import useAlert from "@/hooks/useAlert";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
 
+const formatTimeForDisplay = (value) => {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value || "");
+  if (!match) return value || "";
+
+  const hour24 = Number(match[1]);
+  return `${hour24 % 12 || 12}:${match[2]} ${hour24 < 12 ? "AM" : "PM"}`;
+};
+
 const ShiftListing = () => {
   const { apiCall, isPending } = useApiCall();
   const { deleteAlert, successAlert } = useAlert();
@@ -53,6 +61,8 @@ const ShiftListing = () => {
       const data = Array.isArray(raw) ? raw : [];
       const formatted = data.map((item) => ({
         ...item,
+        startTime: formatTimeForDisplay(item.startTime),
+        endTime: formatTimeForDisplay(item.endTime),
         isNightShiftText: item.isNightShift ? "Yes" : "No",
       }));
       setShiftData(formatted);

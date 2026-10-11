@@ -10,6 +10,7 @@ import useDocumentTitle from "@/hooks/useDocumentTitle";
 import { formatDateForInput } from "@/utils/dateUtils";
 import StatusCard from "@/components/common/StatusCard";
 import useDragAndDrop from "@/hooks/useDragAndDrop";
+import { confirmStatusChange } from "@/utils/confirmStatusChange";
 import {
   Briefcase,
   CheckCircle2,
@@ -20,7 +21,7 @@ import {
 } from "lucide-react";
 
 const JobOpeningListing = () => {
-  const { deleteAlert, successAlert } = useAlert();
+  const { deleteAlert, successAlert, warningAlert } = useAlert();
   const { apiCall, isPending } = useApiCall();
   const navigate = useNavigate();
 
@@ -49,7 +50,7 @@ const JobOpeningListing = () => {
           });
 
           getJobListing();
-        }
+        } 
       },
     });
   };
@@ -102,7 +103,6 @@ const JobOpeningListing = () => {
     getJobListing();
   }, [getJobListing]);
 
-  // Execute status update (e.g. from drag & drop)
   const executeStatusUpdate = async (job, targetStatus, statusTitle) => {
     try {
       const res = await apiCall({
@@ -127,7 +127,7 @@ const JobOpeningListing = () => {
   };
 
   const handleRequestStatusChange = useCallback(
-    (job, targetStatus, statusTitle) => {
+    async (job, targetStatus, statusTitle) => {
       if (!job || !targetStatus) return;
 
       if (job.jobStatus?.toUpperCase() === targetStatus.toUpperCase()) {
@@ -138,13 +138,31 @@ const JobOpeningListing = () => {
         return;
       }
 
+      if (
+        targetStatus.toUpperCase() === "ACTIVE" &&
+        (job.filledPositions || 0) >= (job.numberOfPositions || 0)
+      ) {
+        warningAlert({
+          title: "Increase Positions Before Activating",
+          text: `All ${job.numberOfPositions || 0} position(s) for "${job.jobTitle}" are filled. Edit the job opening and increase Number of Positions above ${job.filledPositions || 0} before setting it to Active.`,
+        });
+        return;
+      }
+
+      const confirmed = await confirmStatusChange({
+        fieldName: "Job Opening Status",
+        currentValue: job.jobStatus,
+        nextValue: targetStatus,
+        currentLabel: job.jobStatus,
+        nextLabel: statusTitle || targetStatus,
+      });
+      if (!confirmed) return;
+
       executeStatusUpdate(job, targetStatus, statusTitle);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [executeStatusUpdate],
+    [executeStatusUpdate, warningAlert],
   );
 
-  // Drag and Drop Hook
   const {
     draggedItem: draggingJob,
     isDragging,
@@ -180,15 +198,6 @@ const JobOpeningListing = () => {
         isDisabled: true,
       },
       {
-        id: "active",
-        title: "Active",
-        value: getStatusCount("ACTIVE").toLocaleString(),
-        icon: <CheckCircle2 size={18} className="stroke-[2.2]" />,
-        type: "green",
-        status: "ACTIVE",
-        isDisabled: false,
-      },
-      {
         id: "draft",
         title: "Draft",
         value: getStatusCount("DRAFT").toLocaleString(),
@@ -197,6 +206,16 @@ const JobOpeningListing = () => {
         status: "DRAFT",
         isDisabled: false,
       },
+      {
+        id: "active",
+        title: "Active",
+        value: getStatusCount("ACTIVE").toLocaleString(),
+        icon: <CheckCircle2 size={18} className="stroke-[2.2]" />,
+        type: "green",
+        status: "ACTIVE",
+        isDisabled: false,
+      },
+
       {
         id: "onHold",
         title: "On Hold",
@@ -238,7 +257,8 @@ const JobOpeningListing = () => {
   const displayedJobs = useMemo(() => {
     if (!selectedFilterStatus) return jobListingData;
     return jobListingData.filter(
-      (item) => item.jobStatus?.toUpperCase() === selectedFilterStatus.toUpperCase(),
+      (item) =>
+        item.jobStatus?.toUpperCase() === selectedFilterStatus.toUpperCase(),
     );
   }, [jobListingData, selectedFilterStatus]);
 
@@ -286,7 +306,8 @@ const JobOpeningListing = () => {
               {...item}
               isSelectedFilter={
                 item.status
-                  ? selectedFilterStatus.toUpperCase() === item.status.toUpperCase()
+                  ? selectedFilterStatus.toUpperCase() ===
+                    item.status.toUpperCase()
                   : selectedFilterStatus === ""
               }
               isDraggingAny={isDragging}

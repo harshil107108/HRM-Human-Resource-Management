@@ -2,7 +2,9 @@ import { HpCommonModal } from "@/hp-common-modal";
 import { formMethod, FormRenderer } from "@/form-engine";
 import { DollarSign } from "lucide-react";
 import { useEffect, useMemo } from "react";
-import useSalaryStructureConfig from "./useSalaryStructureConfig";
+import useSalaryStructureConfig, {
+  getSalaryTotals,
+} from "./useSalaryStructureConfig";
 import useApiCall from "@/hooks/useApiCall";
 import { api, apiEndpoints } from "@/api/api";
 
@@ -23,24 +25,9 @@ const SalaryStructureModal = ({ onModalClose, onSaved, open, extraParams }) => {
   const handleSave = async () => {
     const result = await formmethod.methods.handleFormSave(
       async (data) => {
-        const basic = Number(data.basicSalary) || 0;
-        const hra = Number(data.hra) || 0;
-        const da = Number(data.da) || 0;
-        const conv = Number(data.conveyance) || 0;
-        const spec = Number(data.specialAllowance) || 0;
-        const gross = basic + hra + da + conv + spec;
-
-        const epf = Number(data.epf) || 0;
-        const esi = Number(data.esi) || 0;
-        const pt = Number(data.professionalTax) || 0;
-        const totalDeductions = epf + esi + pt;
-        const netSalary = gross - totalDeductions;
-
         const payload = {
           ...data,
-          grossSalary: gross,
-          totalDeductions,
-          netSalary,
+          ...getSalaryTotals(data),
           ...(structureId ? { _id: structureId } : {}),
         };
 

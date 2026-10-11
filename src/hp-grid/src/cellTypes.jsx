@@ -190,55 +190,66 @@ registerCellType("custom", {
 //     actions: [ { icon: <MyIcon/>, label: 'Duplicate', onClick: (row, rowIndex) => {} } ] // optional extras
 //   }
 registerCellType("actions", {
-  formatView: (value, colDef, row, rowIndex) => (
-    <div className="hp-grid-actions">
-      {typeof colDef.onClick === "function" && (
-        <button
-          type="button"
-          className="hp-grid-action-btn hp-grid-action-btn--delete"
-          title={colDef.deleteDisabled ? "You don't have permission" : colDef.actionLabel || "Delete"}
-          disabled={colDef.deleteDisabled}
-          onClick={() => !colDef.deleteDisabled && colDef.onClick(row, rowIndex)}
-        >
-          <TrashIcon />
-        </button>
-      )}
-      {typeof colDef.onEdit === "function" && (
-        <button
-          type="button"
-          className="hp-grid-action-btn hp-grid-action-btn--edit"
-          title={colDef.editDisabled ? "You don't have permission" : "Edit"}
-          disabled={colDef.editDisabled}
-          onClick={() => !colDef.editDisabled && colDef.onEdit(row, rowIndex)}
-        >
-          <PencilIcon />
-        </button>
-      )}
-      {typeof colDef.onDelete === "function" && (
-        <button
-          type="button"
-          className="hp-grid-action-btn hp-grid-action-btn--delete"
-          title={colDef.deleteDisabled ? "You don't have permission" : "Delete"}
-          disabled={colDef.deleteDisabled}
-          onClick={() => !colDef.deleteDisabled && colDef.onDelete(row, rowIndex)}
-        >
-          <TrashIcon />
-        </button>
-      )}
-      {Array.isArray(colDef.actions) &&
-        colDef.actions.map((action, i) => (
+  formatView: (value, colDef, row, rowIndex) => {
+    const deleteDisabled =
+      typeof colDef.deleteDisabled === "function"
+        ? colDef.deleteDisabled(row)
+        : colDef.deleteDisabled;
+    const editDisabled =
+      typeof colDef.editDisabled === "function"
+        ? colDef.editDisabled(row)
+        : colDef.editDisabled;
+
+    return (
+      <div className="hp-grid-actions">
+        {typeof colDef.onClick === "function" && (
           <button
-            key={i}
             type="button"
-            className={`hp-grid-action-btn hp-grid-action-btn--${action.type || "default"}`}
-            title={action.label}
-            onClick={() => action.onClick(row, rowIndex)}
+            className="hp-grid-action-btn hp-grid-action-btn--delete"
+            title={deleteDisabled ? "Only pending leave requests can be deleted" : colDef.actionLabel || "Delete"}
+            disabled={deleteDisabled}
+            onClick={() => !deleteDisabled && colDef.onClick(row, rowIndex)}
           >
-            {action.icon}
+            <TrashIcon />
           </button>
-        ))}
-    </div>
-  ),
+        )}
+        {typeof colDef.onEdit === "function" && (
+          <button
+            type="button"
+            className="hp-grid-action-btn hp-grid-action-btn--edit"
+            title={editDisabled ? "Only pending leave requests can be edited" : "Edit"}
+            disabled={editDisabled}
+            onClick={() => !editDisabled && colDef.onEdit(row, rowIndex)}
+          >
+            <PencilIcon />
+          </button>
+        )}
+        {typeof colDef.onDelete === "function" && (
+          <button
+            type="button"
+            className="hp-grid-action-btn hp-grid-action-btn--delete"
+            title={deleteDisabled ? "Only pending leave requests can be deleted" : "Delete"}
+            disabled={deleteDisabled}
+            onClick={() => !deleteDisabled && colDef.onDelete(row, rowIndex)}
+          >
+            <TrashIcon />
+          </button>
+        )}
+        {Array.isArray(colDef.actions) &&
+          colDef.actions.map((action, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`hp-grid-action-btn hp-grid-action-btn--${action.type || "default"}`}
+              title={action.label}
+              onClick={() => action.onClick(row, rowIndex)}
+            >
+              {action.icon}
+            </button>
+          ))}
+      </div>
+    );
+  },
 });
 
 /* ---------------------------- status ------------------------------- */

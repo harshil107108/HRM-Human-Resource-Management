@@ -11,6 +11,7 @@ import useDocumentTitle from "@/hooks/useDocumentTitle";
 import { formatDateForInput } from "@/utils/dateUtils";
 import StatusCard from "@/components/common/StatusCard";
 import useDragAndDrop from "@/hooks/useDragAndDrop";
+import { confirmStatusChange } from "@/utils/confirmStatusChange";
 import {
   FileText,
   FileEdit,
@@ -125,7 +126,7 @@ const OfferLetterListing = () => {
   };
 
   const handleRequestStatusChange = useCallback(
-    (offer, targetStatus, statusTitle) => {
+    async (offer, targetStatus, statusTitle) => {
       if (!offer || !targetStatus) return;
 
       if (offer.status === targetStatus) {
@@ -147,6 +148,15 @@ const OfferLetterListing = () => {
         });
         return;
       }
+
+      const confirmed = await confirmStatusChange({
+        fieldName: "Offer Status",
+        currentValue: offer.status,
+        nextValue: targetStatus,
+        currentLabel: offer.status,
+        nextLabel: statusTitle || targetStatus,
+      });
+      if (!confirmed) return;
 
       executeStatusUpdate(offer, targetStatus, statusTitle);
     },

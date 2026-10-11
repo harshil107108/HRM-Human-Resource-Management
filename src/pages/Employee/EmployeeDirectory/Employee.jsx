@@ -161,7 +161,7 @@ const Employee = () => {
     payrollInformationSchema,
     accessInformationSchema,
     reviewInformationSchema,
-  } = useEmployeeConfig();
+  } = useEmployeeConfig({ isEditing: Boolean(EmployeeId) });
 
   const generateEmployeeId = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -231,7 +231,6 @@ const Employee = () => {
     try {
       const values = formmethod.methods.getValues();
       const formData = new FormData();
-      console.log(formData);
       Object.entries(values).forEach(([key, value]) => {
         if (
           key === "profilePhoto" ||
@@ -252,6 +251,10 @@ const Employee = () => {
           formData.append(key, value);
         }
       });
+
+      if (EmployeeId) {
+        formData.append("_id", EmployeeId);
+      }
 
       if (profilePhoto instanceof File) {
         formData.append("profileImage", profilePhoto);
@@ -376,6 +379,7 @@ const Employee = () => {
         basicSalary: data.basicSalary ?? "",
 
         username: data.username || "",
+        password: "",
         primaryRole: data.primaryRole || "",
         userGroup: data.userGroup || "",
 

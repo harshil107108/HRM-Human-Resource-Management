@@ -11,6 +11,7 @@ import useDocumentTitle from "@/hooks/useDocumentTitle";
 import { formatDateForInput } from "@/utils/dateUtils";
 import StatusCard from "@/components/common/StatusCard";
 import useDragAndDrop from "@/hooks/useDragAndDrop";
+import { confirmStatusChange } from "@/utils/confirmStatusChange";
 import {
   Calendar,
   Code,
@@ -70,6 +71,16 @@ const InterviewListing = () => {
         candidateEmail: item.candidate?.email || "",
         candidatePhone: item.candidate?.phone || "",
         jobTitle: item.jobOpening?.jobTitle || "N/A",
+        cardStatus:
+          item.recommendation === "Hire" ||
+          item.recommendation === "Strong Hire" ||
+          item.candidate?.stage === "Offered" ||
+          item.candidate?.stage === "Hired"
+            ? "Hired"
+            : item.recommendation === "Reject" ||
+                item.candidate?.stage === "Rejected"
+              ? "Rejected"
+              : item.roundName,
         interviewerName: item.interviewer
           ? `${item.interviewer.firstName || ""} ${item.interviewer.lastName || ""}`
           : "N/A",
@@ -88,7 +99,6 @@ const InterviewListing = () => {
     return (
       item?.recommendation === "Hire" ||
       item?.recommendation === "Strong Hire" ||
-      (item?.status === "Completed" && item?.recommendation !== "Reject") ||
       item?.candidate?.stage === "Offered" ||
       item?.candidate?.stage === "Hired"
     );
@@ -104,12 +114,9 @@ const InterviewListing = () => {
   // Execute round or hire/reject update when dragging and dropping interview
   const executeRoundUpdate = async (interview, targetRound, roundTitle) => {
     try {
-      const candidateId = interview.candidate?._id || interview.candidate;
-      const jobOpeningId = interview.jobOpening?._id || interview.jobOpening;
-
       if (targetRound === "Hired") {
         // Mark interview as completed and recommended for Hire (backend automatically updates candidate stage and creates offer letter)
-        await apiCall({
+        const res = await apiCall({
           id: "updateInterviewHired",
           api: api + apiEndpoints.recruitment.interview.InterviewAddEdit,
           payload: {
@@ -118,6 +125,10 @@ const InterviewListing = () => {
             recommendation: "Hire",
           },
         });
+
+        if (!res?.success) {
+          throw new Error(res?.message || "Failed to mark candidate as hired");
+        }
 
         successAlert({
           title: "Candidate Hired!",
@@ -129,7 +140,7 @@ const InterviewListing = () => {
 
       if (targetRound === "Rejected") {
         // Mark interview as completed with Reject (backend automatically updates candidate stage)
-        await apiCall({
+        const res = await apiCall({
           id: "updateInterviewRejected",
           api: api + apiEndpoints.recruitment.interview.InterviewAddEdit,
           payload: {
@@ -138,6 +149,10 @@ const InterviewListing = () => {
             recommendation: "Reject",
           },
         });
+
+        if (!res?.success) {
+          throw new Error(res?.message || "Failed to reject candidate");
+        }
 
         successAlert({
           title: "Candidate Rejected",
@@ -170,7 +185,7 @@ const InterviewListing = () => {
   };
 
   const handleRequestRoundChange = useCallback(
-    (interview, targetRound, roundTitle) => {
+    async (interview, targetRound, roundTitle) => {
       if (!interview || !targetRound) return;
 
       if (targetRound === "Hired" && isInterviewHired(interview)) {
@@ -200,6 +215,20 @@ const InterviewListing = () => {
         });
         return;
       }
+
+      const currentRound = isInterviewHired(interview)
+        ? "Hired"
+        : isInterviewRejected(interview)
+          ? "Rejected"
+          : interview.roundName;
+      const confirmed = await confirmStatusChange({
+        fieldName: "Interview Stage",
+        currentValue: currentRound,
+        nextValue: targetRound,
+        currentLabel: currentRound,
+        nextLabel: roundTitle || targetRound,
+      });
+      if (!confirmed) return;
 
       executeRoundUpdate(interview, targetRound, roundTitle);
     },
@@ -441,7 +470,7 @@ const InterviewListing = () => {
           defaultView="card"
           cardTitleField="candidateName"
           cardSubtitleField="jobTitle"
-          cardStatusField="roundName"
+          cardStatusField="cardStatus"
           cardFields={[
             "interviewerName",
             "scheduledDate",

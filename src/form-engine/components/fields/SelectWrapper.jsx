@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Select from "react-select";
 import { useFormStore } from "../../hooks/useFormStore";
 import { labelClass, wrapperClass } from "../../styles/formtheme";
 import { beginActivity } from "../../../utils/networkActivity";
+import { confirmStatusChange } from "../../../utils/confirmStatusChange";
 import FieldErrorTooltip from "./FieldErrorTooltip";
 
 export function shouldHandleSelectKeyDown(event, { form, id }) {
@@ -13,6 +14,24 @@ export function shouldHandleSelectKeyDown(event, { form, id }) {
   }
 
   return false;
+}
+
+export function shouldOpenSelectMenuOnSpace(event, isMenuOpen) {
+  if (event.key !== " " || isMenuOpen || event.altKey || event.ctrlKey || event.metaKey) {
+    return false;
+  }
+
+  event.preventDefault();
+  return true;
+}
+
+export function shouldAdvanceSelectOnEnter(event, isMenuOpen) {
+  if (event.key !== "Enter" || isMenuOpen) {
+    return false;
+  }
+
+  event.preventDefault();
+  return true;
 }
 
 export default function SelectWrapper({ field, form }) {
@@ -40,6 +59,7 @@ export default function SelectWrapper({ field, form }) {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [draftValues, setDraftValues] = useState([]);
+  const enterSelectionRef = useRef(false);
 
   const isMultiSelect = Boolean(field.isMultiSelect || field.multiSelect);
 
@@ -170,7 +190,7 @@ export default function SelectWrapper({ field, form }) {
   // ============================================================
 
   const handleChange = useCallback(
-    (selected) => {
+    async (selected) => {
       if (isMultiSelect) {
         const nextValues = selected ? selected.map((item) => item.value) : [];
 
@@ -178,11 +198,38 @@ export default function SelectWrapper({ field, form }) {
         return;
       }
 
+      const shouldAdvanceAfterSelection = enterSelectionRef.current;
+      if (/(status|stage|round)/i.test(`${id} ${label || ""}`)) {
+        const nextValue = selected?.value ?? "";
+        const currentOption = options.find(
+          (option) => String(option.value) === String(value),
+        );
+        const confirmed = await confirmStatusChange({
+          fieldName: label || "Status",
+          currentValue: value,
+          nextValue,
+          currentLabel: currentOption?.label,
+          nextLabel: selected?.label,
+        });
+
+        if (!confirmed) {
+          setDraftValues(selectedValues);
+          setIsMenuOpen(false);
+          enterSelectionRef.current = false;
+          return;
+        }
+      }
+
       form.methods.setValue(id, selected?.value ?? "");
 
       setIsMenuOpen(false);
+
+      if (shouldAdvanceAfterSelection) {
+        enterSelectionRef.current = false;
+        requestAnimationFrame(() => form.methods.focusNext(id));
+      }
     },
-    [form, id, isMultiSelect],
+    [form, id, isMultiSelect, label, options, selectedValues, value],
   );
 
   // ============================================================
@@ -199,26 +246,10 @@ export default function SelectWrapper({ field, form }) {
     setIsMenuOpen(false);
   }, [selectedValues]);
 
-  useEffect(() => {
-    if (!isMenuOpen) return undefined;
-
-    const closeMenuOnScroll = (event) => {
-      if (
-        event.target instanceof Element &&
-        event.target.closest('[class*="__menu-list"]')
-      ) {
-        return;
-      }
-
-      setIsMenuOpen(false);
-    };
-
-    window.addEventListener("scroll", closeMenuOnScroll, true);
-
-    return () => {
-      window.removeEventListener("scroll", closeMenuOnScroll, true);
-    };
-  }, [isMenuOpen]);
+  const shouldCloseMenuOnScroll = useCallback((event) => {
+    const menu = document.querySelector(".form-select__menu");
+    return !menu?.contains(event.target);
+  }, []);
 
   // ============================================================
   // MULTI SELECT
@@ -252,12 +283,6 @@ export default function SelectWrapper({ field, form }) {
   // FOCUS
   // ============================================================
 
-  const handleFocus = useCallback(() => {
-    if (!disabled) {
-      setIsMenuOpen(true);
-    }
-  }, [disabled]);
-
   const handleBlur = useCallback(() => {
     setDraftValues(selectedValues);
     setIsMenuOpen(false);
@@ -276,12 +301,23 @@ export default function SelectWrapper({ field, form }) {
         return;
       }
 
-      if (event.key === "Enter" && !isMultiSelect) {
-        event.preventDefault();
-        form.methods.focusNext(id);
+      if (event.key === "Enter") {
+        if (shouldAdvanceSelectOnEnter(event, isMenuOpen)) {
+          form.methods.focusNext(id);
+        } else if (isMenuOpen && !isMultiSelect) {
+          enterSelectionRef.current = true;
+          window.setTimeout(() => {
+            enterSelectionRef.current = false;
+          }, 0);
+        }
+        return;
+      }
+
+      if (shouldOpenSelectMenuOnSpace(event, isMenuOpen)) {
+        setIsMenuOpen(true);
       }
     },
-    [form, id, isMultiSelect],
+    [form, id, isMenuOpen, isMultiSelect],
   );
 
   // ============================================================
@@ -445,10 +481,11 @@ export default function SelectWrapper({ field, form }) {
         options={options}
         value={selectedValue}
         placeholder={loading ? "Loading..." : placeHolder || "Select"}
+        autoComplete="new-password"
+        openMenuOnFocus={false}
         onChange={handleChange}
         onFocus={() => {
           setIsFocused(true);
-          handleFocus();
         }}
         onBlur={(event) => {
           setIsFocused(false);
@@ -464,6 +501,9 @@ export default function SelectWrapper({ field, form }) {
         hideSelectedOptions={false}
         menuPlacement="auto"
         menuPortalTarget={document.body}
+        menuPosition="fixed"
+        menuShouldScrollIntoView={false}
+        closeMenuOnScroll={shouldCloseMenuOnScroll}
         menuIsOpen={isMenuOpen}
         onMenuOpen={handleMenuOpen}
         onMenuClose={handleMenuClose}

@@ -56,9 +56,10 @@ const LeaveRequestListing = () => {
         employeeName: item.employeeId
           ? `${item.employeeId.firstName || ""} ${item.employeeId.lastName || ""} (${item.employeeId.employeeId || ""})`
           : "N/A",
-        leaveTypeName: item.leaveTypeId?.typeName || item.leaveTypeId?.typeCode || "N/A",
+        leaveTypeName: item.leaveType?.typeName || item.leaveTypeId?.typeName || item.leaveType?.typeCode || "N/A",
         startDate: formatDateForInput(item.startDate),
         endDate: formatDateForInput(item.endDate),
+        days: item.totalDays ?? item.days ?? 0,
       }));
       setRequestData(formatted);
     }
@@ -73,8 +74,9 @@ const LeaveRequestListing = () => {
   };
 
   const handleDoubleClick = (data) => {
-    const id = data?.data?._id;
-    if (id) {
+    const row = data?.data;
+    const id = row?._id;
+    if (id && row.status === "Pending") {
       onModalOpen({ mode: "edit", id });
     }
   };
@@ -85,6 +87,8 @@ const LeaveRequestListing = () => {
   const contextData = createRowContextMenu({
     onEdit: (row) => handleDoubleClick({ data: row }),
     onDelete: (row) => handleDelete(row._id),
+    canEdit: (row) => row.status === "Pending",
+    canDelete: (row) => row.status === "Pending",
   });
 
   return (

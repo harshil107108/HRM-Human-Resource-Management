@@ -19,16 +19,25 @@ const CandidateModal = ({ onModalClose, onSaved, open, extraParams }) => {
       schema: [...schemaWithOptions],
       initialValue,
     });
+  }, []);
+
+  // Keep a single form instance so values loaded by getById survive
+  // when dropdown options arrive; only push the new options in.
+  useEffect(() => {
+    formmethod.methods.setSchema([...schemaWithOptions]);
   }, [schemaWithOptions]);
 
   const loadJobOpeningsHelp = async () => {
     const res = await apiCall({
       id: "getJobOpeningHelp",
-      api: api + apiEndpoints.recruitment.jobOpening.JobOpeningGetData,
+      api: api + apiEndpoints.recruitment.jobOpening.JobOpeningHelp,
       payload: {},
     });
     if (res?.success) {
-      const options = (res.data?.data || []).map((job) => ({
+      const activeJobs = (res.data?.data || []).filter(
+        (job) => !job.jobStatus || job.jobStatus === "ACTIVE"
+      );
+      const options = activeJobs.map((job) => ({
         label: `${job.jobTitle || ""} (${job.jobOpeningId || ""})`,
         value: job._id,
       }));
@@ -79,8 +88,22 @@ const CandidateModal = ({ onModalClose, onSaved, open, extraParams }) => {
 
     if (res?.success && res.data?.data) {
       const d = res.data.data;
+      let firstName = d.firstName || "";
+      let middleName = d.middleName || "";
+      let lastName = d.lastName || "";
+
+      if (!firstName && !lastName && d.candidateName) {
+        const parts = d.candidateName.trim().split(/\s+/);
+        firstName = parts[0] || "";
+        middleName = parts.length > 2 ? parts.slice(1, -1).join(" ") : "";
+        lastName = parts.length > 1 ? parts[parts.length - 1] : "";
+      }
+
       formmethod.methods.setValues({
         ...d,
+        firstName,
+        middleName,
+        lastName,
         jobOpening: d.jobOpening?._id || d.jobOpening || "",
       });
     }

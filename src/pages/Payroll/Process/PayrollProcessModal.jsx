@@ -18,7 +18,7 @@ const PayrollProcessModal = ({ onModalClose, onSaved, open, extraParams }) => {
       schema: [...payrollProcessSchema],
       initialValue,
     });
-  }, [payrollProcessSchema]);
+  }, []);
 
   const handleSave = async () => {
     const result = await formmethod.methods.handleFormSave(

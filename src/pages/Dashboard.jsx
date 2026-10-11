@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import useApiCall from "../hooks/useApiCall";
-import { apiEndpoints } from "../api/api";
+import { api, apiEndpoints } from "../api/api";
+import { getUploadUrl } from "../utils/fileUpload";
+import { HpCommonModal } from "@/hp-common-modal";
 import {
   Users,
   CreditCard,
@@ -16,94 +18,80 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
+  Activity,
+  RefreshCw,
 } from "lucide-react";
 
-const INITIAL_EMPLOYEES = [
-  {
-    id: "1",
-    name: "Elena Vance",
-    email: "elena.v@enterprise.hrm",
-    avatar:
-      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-    department: "Engineering",
-    designation: "Senior Dev",
-    status: "Active",
-  },
-  {
-    id: "2",
-    name: "Mark J. Peterson",
-    email: "mark.p@enterprise.hrm",
-    avatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-    department: "Marketing",
-    designation: "Content Strategist",
-    status: "Remote",
-  },
-  {
-    id: "3",
-    name: "Sarah Connor",
-    email: "s.connor@enterprise.hrm",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
-    department: "Human Resources",
-    designation: "HR Manager",
-    status: "Active",
-  },
-  {
-    id: "4",
-    name: "James Wilson",
-    email: "j.wilson@enterprise.hrm",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-    department: "Product",
-    designation: "UI Designer",
-    status: "On Leave",
-  },
-];
+// ==========================================
+// DATA HELPERS (all values come from /dashboard/getDashboardStats)
+// ==========================================
 
-const RECENT_ACTIVITIES = [
-  {
-    id: "1",
-    type: "join",
-    title: "New Employee Joined",
-    description: "Elena Vance joined Engineering team",
-    time: "2 Hours Ago",
-  },
-  {
-    id: "2",
-    type: "payroll",
-    title: "Payroll Generated",
-    description: "Monthly payroll for Sales dept finalized",
-    time: "5 Hours Ago",
-  },
-  {
-    id: "3",
-    type: "leave",
-    title: "Leave Approved",
-    description: "James Wilson's vacation request approved",
-    time: "Yesterday",
-  },
-];
+const DIRECTORY_PAGE_SIZE = 5;
 
-const UPCOMING_EVENTS = [
-  {
-    id: "1",
-    title: "Interview: Senior PM",
-    time: "10:30 AM • Room 4B",
-    badge: { month: "OCT", day: "12", variant: "danger" },
-  },
-  {
-    id: "2",
-    title: "Sarah's Work Anniv.",
-    time: "5 Years Milestone!",
-    badge: { month: "OCT", day: "14", variant: "secondary" },
-  },
-  {
-    id: "3",
-    title: "Townhall Meeting",
-    time: "Global Q3 Updates",
-    badge: { month: "OCT", day: "15", variant: "primary" },
-  },
+// Sparkline path in the cards' 100x32 viewBox; flat line when there's no data.
+const buildSparkline = (values = []) => {
+  if (!values.length) return "M0 20 L100 20";
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const range = max - min;
+  const step = values.length > 1 ? 100 / (values.length - 1) : 100;
+  return values
+    .map((v, i) => {
+      const y = range === 0 ? 20 : 28 - ((v - min) / range) * 24;
+      return `${i === 0 ? "M" : "L"}${(i * step).toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(" ");
+};
+
+// Line path in the growth chart's 100x40 viewBox (y=38 is zero).
+const buildGrowthLine = (values, max) =>
+  values
+    .map((v, i) => {
+      const x = values.length > 1 ? (i / (values.length - 1)) * 100 : 0;
+      const y = 38 - (max ? (v / max) * 30 : 0);
+      return `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(" ");
+
+const formatCount = (value) =>
+  value === undefined || value === null ? "—" : Number(value).toLocaleString();
+
+const formatCurrency = (value) => {
+  if (value === undefined || value === null) return "—";
+  const n = Number(value) || 0;
+  if (n >= 10000000) return `₹${(n / 10000000).toFixed(2)}Cr`;
+  if (n >= 100000) return `₹${(n / 100000).toFixed(2)}L`;
+  return `₹${n.toLocaleString("en-IN")}`;
+};
+
+const timeAgo = (iso) => {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+  const minutes = Math.round((Date.now() - then) / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes} Minute${minutes > 1 ? "s" : ""} Ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} Hour${hours > 1 ? "s" : ""} Ago`;
+  const days = Math.round(hours / 24);
+  if (days === 1) return "Yesterday";
+  if (days < 30) return `${days} Days Ago`;
+  return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+};
+
+const initialsOf = (name = "") =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "?";
+
+// Department donut colours, in legend order.
+const DEPARTMENT_COLORS = [
+  { stroke: "#2563eb", dot: "bg-blue-600" },
+  { stroke: "#64748b", dot: "bg-slate-500" },
+  { stroke: "#f59e0b", dot: "bg-amber-500" },
+  { stroke: "#cbd5e1", dot: "bg-slate-300" },
 ];
 
 // ==========================================
@@ -144,6 +132,8 @@ const Badge = ({ status }) => {
     Active: "bg-green-50 text-green-700 border-green-200/60",
     Remote: "bg-blue-50 text-blue-700 border-blue-200/60",
     "On Leave": "bg-amber-50 text-amber-700 border-amber-200/60",
+    "Notice Period": "bg-orange-50 text-orange-700 border-orange-200/60",
+    Inactive: "bg-gray-50 text-gray-600 border-gray-200/60",
   };
 
   return (
@@ -152,6 +142,145 @@ const Badge = ({ status }) => {
     >
       {status}
     </span>
+  );
+};
+
+// One row of the activity timeline (used by the card and the "View All" popup).
+const ActivityItem = ({ activity }) => {
+  const getIconConfig = () => {
+    switch (activity.type) {
+      case "join":
+        return {
+          element: <UserPlus className="w-3.5 h-3.5 text-green-600" />,
+          bg: "bg-green-50 border-green-200",
+        };
+      case "payroll":
+        return {
+          element: <CreditCard className="w-3.5 h-3.5 text-blue-600" />,
+          bg: "bg-blue-50 border-blue-200",
+        };
+      default:
+        return {
+          element: <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />,
+          bg: "bg-amber-50 border-amber-200",
+        };
+    }
+  };
+
+  const cfg = getIconConfig();
+
+  return (
+    <div className="relative flex gap-4 pl-8">
+      <div
+        className={`absolute left-0 w-7 h-7 ${cfg.bg} border rounded-full flex items-center justify-center ring-4 ring-white z-10`}
+      >
+        {cfg.element}
+      </div>
+      <div>
+        <p className="text-xs font-bold text-gray-900 leading-none">
+          {activity.title}
+        </p>
+        <p className="text-xs text-gray-500 mt-1 font-medium leading-relaxed">
+          {activity.description}
+        </p>
+        <span className="inline-block text-[9px] text-gray-400 font-semibold tracking-wider mt-1 uppercase">
+          {timeAgo(activity.time)}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const ACTIVITY_FILTERS = [
+  { key: "all", label: "All" },
+  { key: "join", label: "Employees" },
+  { key: "payroll", label: "Payroll" },
+  { key: "leave", label: "Leave" },
+  { key: "exit", label: "Exit" },
+];
+
+// "View All" popup: loads the full activity feed when opened.
+const AllActivitiesModal = ({ open, onClose }) => {
+  const { apiCall, isPending } = useApiCall();
+  const [activities, setActivities] = useState([]);
+  const [filter, setFilter] = useState("all");
+
+  const loadActivities = useCallback(async () => {
+    const res = await apiCall({
+      id: "getAllActivities",
+      api: api + apiEndpoints.dashboard.recentActivities,
+      payload: { limit: 200 },
+    });
+    if (res?.success) setActivities(res.data?.data || []);
+  }, [apiCall]);
+
+  useEffect(() => {
+    if (open) loadActivities();
+  }, [open, loadActivities]);
+
+  const visible =
+    filter === "all" ? activities : activities.filter((a) => a.type === filter);
+  const loading = isPending("getAllActivities");
+
+  return (
+    <HpCommonModal
+      open={open}
+      title="All Activity"
+      subTitle="Everything happening across employees, payroll, leave and exits"
+      icon={<Activity size={20} />}
+      size="md"
+      onClose={onClose}
+      showSaveButton={false}
+      showClearButton={false}
+      cancelText="Close"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
+        <div className="flex flex-wrap gap-1.5">
+          {ACTIVITY_FILTERS.map((f) => {
+            const count =
+              f.key === "all"
+                ? activities.length
+                : activities.filter((a) => a.type === f.key).length;
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setFilter(f.key)}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
+                  filter === f.key
+                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                {f.label} <span className="text-gray-400">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          onClick={loadActivities}
+          disabled={loading}
+          className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 disabled:opacity-50"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
+      </div>
+
+      {loading && activities.length === 0 ? (
+        <p className="text-xs text-gray-400">Loading activity…</p>
+      ) : visible.length === 0 ? (
+        <p className="text-xs text-gray-400">No activity to show.</p>
+      ) : (
+        <div className="space-y-6 relative">
+          <div className="absolute left-[13px] top-1.5 bottom-1.5 w-[1.5px] bg-gray-200" />
+          {visible.map((act) => (
+            <ActivityItem key={act.id} activity={act} />
+          ))}
+        </div>
+      )}
+    </HpCommonModal>
   );
 };
 
@@ -227,59 +356,88 @@ export default function EnterpriseDashboard() {
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [selectedDuration, setSelectedDuration] = useState("Last 7 Days");
   const [liveStats, setLiveStats] = useState(null);
-  const [liveEmployees, setLiveEmployees] = useState(INITIAL_EMPLOYEES);
+  const [directoryPage, setDirectoryPage] = useState(1);
+  const [showAllActivities, setShowAllActivities] = useState(false);
 
-  const { execute } = useApiCall();
+  const { apiCall } = useApiCall();
 
   const fetchDashboardStats = useCallback(async () => {
-    try {
-      const res = await execute({
-        endpoint: apiEndpoints.dashboard.stats,
-        method: "post",
-        body: {}
-      });
-      if (res?.success && res.data) {
-        setLiveStats(res.data);
-        if (res.data.recentEmployees && res.data.recentEmployees.length > 0) {
-          setLiveEmployees(res.data.recentEmployees.map(e => ({
-            id: e._id,
-            name: `${e.firstName || ""} ${e.lastName || ""}`,
-            email: e.email || "staff@enterprise.hrm",
-            avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-            department: (e.departmentId && typeof e.departmentId === "object" ? e.departmentId.departmentName : e.departmentId) || "Operations",
-            designation: (e.designationId && typeof e.designationId === "object" ? e.designationId.designationName : e.designationId) || "Specialist",
-            status: e.status || "Active"
-          })));
-        }
-      }
-    } catch (err) {
-      console.warn("Using default stats preview", err);
+    const res = await apiCall({
+      id: "getDashboardStats",
+      api: api + apiEndpoints.dashboard.stats,
+      payload: {},
+    });
+    if (res?.success && res.data?.data) {
+      setLiveStats(res.data.data);
     }
-  }, [execute]);
+  }, [apiCall]);
 
   useEffect(() => {
     fetchDashboardStats();
   }, [fetchDashboardStats]);
 
-  // Sparkline SVG Path definitions
-  const sparkline1 =
-    "M0 25 L10 22 L20 28 L30 15 L40 18 L50 10 L60 12 L70 5 L80 15 L90 8 L100 12";
-  const sparkline2 = "M0 10 L20 12 L40 8 L60 15 L80 10 L100 12";
-  const sparkline3 = "M0 20 L20 18 L40 22 L60 15 L80 18 L100 12";
-  const sparkline4 = "M0 25 L25 15 L50 20 L75 10 L100 15";
-  const sparkline5 = "M0 20 L100 20";
-  const sparkline6 = "M0 30 L20 25 L40 20 L60 15 L80 10 L100 5";
-  const sparkline7 = "M0 30 L50 20 L100 10";
-  const sparkline8 = "M0 10 L50 15 L100 20";
+  const sparklines = liveStats?.sparklines || {};
+  const trends = liveStats?.trends || {};
+  const trendLabel = (key) => trends[key]?.label ?? "—";
+  const trendType = (key) => trends[key]?.type ?? "neutral";
 
-  // Filters search queries
-  const activeEmployeeList = liveEmployees.length > 0 ? liveEmployees : INITIAL_EMPLOYEES;
-  const filteredEmployees = activeEmployeeList.filter(
+  // Attendance bars: last 7 days, or 30 days in 5 buckets.
+  const attendanceBars = useMemo(() => {
+    const series =
+      selectedDuration === "Last 30 Days"
+        ? liveStats?.attendanceTrend?.last30
+        : liveStats?.attendanceTrend?.last7;
+    return (series || []).map((point, index, all) => ({
+      height: `${Math.max(point.rate, 2)}%`,
+      label: point.label,
+      value: `${point.rate}%`,
+      highlighted: index === all.length - 1,
+    }));
+  }, [liveStats, selectedDuration]);
+
+  // Employee growth lines (hires vs departures, this year).
+  const growth = useMemo(() => {
+    const hires = liveStats?.employeeGrowth?.hires || Array(12).fill(0);
+    const departures = liveStats?.employeeGrowth?.departures || Array(12).fill(0);
+    const max = Math.max(1, ...hires, ...departures);
+    const hiresLine = buildGrowthLine(hires, max);
+    return {
+      hiresLine,
+      hiresArea: `${hiresLine} L100 40 L0 40 Z`,
+      departuresLine: buildGrowthLine(departures, max),
+    };
+  }, [liveStats]);
+
+  // Department donut segments (circumference = 100 units).
+  const departmentSegments = useMemo(() => {
+    const items = liveStats?.departmentDistribution?.items || [];
+    return items.map((item, index) => ({
+      ...item,
+      color: DEPARTMENT_COLORS[index] || DEPARTMENT_COLORS[DEPARTMENT_COLORS.length - 1],
+      dashArray: `${item.percent} ${100 - item.percent}`,
+      // Each segment starts where the previous ones end (100 = top).
+      dashOffset: 100 - items.slice(0, index).reduce((sum, d) => sum + d.percent, 0),
+    }));
+  }, [liveStats]);
+
+  // Employee directory: search + client-side pagination.
+  const allEmployees = liveStats?.employees || [];
+  const query = employeeSearch.trim().toLowerCase();
+  const filteredEmployees = allEmployees.filter(
     (emp) =>
-      emp.name.toLowerCase().includes(employeeSearch.toLowerCase()) ||
-      emp.department.toLowerCase().includes(employeeSearch.toLowerCase()) ||
-      emp.designation.toLowerCase().includes(employeeSearch.toLowerCase()),
+      emp.name.toLowerCase().includes(query) ||
+      emp.department.toLowerCase().includes(query) ||
+      emp.designation.toLowerCase().includes(query),
   );
+  const totalPages = Math.max(1, Math.ceil(filteredEmployees.length / DIRECTORY_PAGE_SIZE));
+  const currentPage = Math.min(directoryPage, totalPages);
+  const pagedEmployees = filteredEmployees.slice(
+    (currentPage - 1) * DIRECTORY_PAGE_SIZE,
+    currentPage * DIRECTORY_PAGE_SIZE,
+  );
+
+  const recentActivities = liveStats?.recentActivities || [];
+  const upcomingEvents = liveStats?.upcomingEvents || [];
 
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans text-gray-700 antialiased selection:bg-blue-100 selection:text-blue-800">
@@ -291,74 +449,74 @@ export default function EnterpriseDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
               title="Total Employees"
-              value={liveStats?.totalEmployees !== undefined ? String(liveStats.totalEmployees) : "1,284"}
+              value={formatCount(liveStats?.totalEmployees)}
               icon={<Users className="w-5 h-5 text-blue-600" />}
-              trend="+12%"
-              trendType="up"
-              sparklineData={sparkline1}
+              trend={trendLabel("totalEmployees")}
+              trendType={trendType("totalEmployees")}
+              sparklineData={buildSparkline(sparklines.totalEmployees)}
               sparklineColor="#2563eb"
             />
             <StatCard
               title="Present Today"
-              value={liveStats?.presentToday !== undefined ? String(liveStats.presentToday) : "1,142"}
+              value={formatCount(liveStats?.presentToday)}
               icon={<UserCheck className="w-5 h-5 text-emerald-600" />}
-              trend="94%"
-              trendType="success"
-              sparklineData={sparkline2}
+              trend={trendLabel("presentToday")}
+              trendType={trendType("presentToday")}
+              sparklineData={buildSparkline(sparklines.presentToday)}
               sparklineColor="#10b981"
             />
             <StatCard
               title="Absent"
-              value={liveStats?.absentToday !== undefined ? String(liveStats.absentToday) : "42"}
+              value={formatCount(liveStats?.absentToday)}
               icon={<AlertCircle className="w-5 h-5 text-red-600" />}
-              trend="-2%"
-              trendType="down"
-              sparklineData={sparkline3}
+              trend={trendLabel("absentToday")}
+              trendType={trendType("absentToday")}
+              sparklineData={buildSparkline(sparklines.absentToday)}
               sparklineColor="#ef4444"
             />
             <StatCard
               title="Active Workforce"
-              value={liveStats?.activeEmployees !== undefined ? String(liveStats.activeEmployees) : "100"}
+              value={formatCount(liveStats?.activeEmployees)}
               icon={<Building2 className="w-5 h-5 text-indigo-600" />}
-              trend="+5%"
-              trendType="up"
-              sparklineData={sparkline4}
+              trend={trendLabel("activeEmployees")}
+              trendType={trendType("activeEmployees")}
+              sparklineData={buildSparkline(sparklines.activeEmployees)}
               sparklineColor="#4f46e5"
             />
             <StatCard
               title="Leaves Pending"
-              value={liveStats?.pendingLeaves !== undefined ? String(liveStats.pendingLeaves) : "18"}
+              value={formatCount(liveStats?.pendingLeaves)}
               icon={<Clock className="w-5 h-5 text-amber-600" />}
-              trend="Active"
-              trendType="neutral"
-              sparklineData={sparkline5}
+              trend={trendLabel("pendingLeaves")}
+              trendType={trendType("pendingLeaves")}
+              sparklineData={buildSparkline(sparklines.pendingLeaves)}
               sparklineColor="#f59e0b"
             />
             <StatCard
               title="Payroll Disbursed"
-              value={liveStats?.payrollThisMonth !== undefined ? (typeof liveStats.payrollThisMonth === 'number' ? `₹${liveStats.payrollThisMonth.toLocaleString()}` : String(liveStats.payrollThisMonth)) : "₹1.13M"}
+              value={formatCurrency(liveStats?.payrollThisMonth)}
               icon={<CreditCard className="w-5 h-5 text-teal-600" />}
-              trend="+2.4%"
-              trendType="success"
-              sparklineData={sparkline6}
+              trend={trendLabel("payrollThisMonth")}
+              trendType={trendType("payrollThisMonth")}
+              sparklineData={buildSparkline(sparklines.payrollThisMonth)}
               sparklineColor="#0d9488"
             />
             <StatCard
               title="New Hires"
-              value={liveStats?.newHires !== undefined ? String(liveStats.newHires) : "24"}
+              value={formatCount(liveStats?.newHires)}
               icon={<UserPlus className="w-5 h-5 text-violet-600" />}
-              trend="Recent"
-              trendType="up"
-              sparklineData={sparkline7}
+              trend={trendLabel("newHires")}
+              trendType={trendType("newHires")}
+              sparklineData={buildSparkline(sparklines.newHires)}
               sparklineColor="#7c3aed"
             />
             <StatCard
               title="Open Positions"
-              value={liveStats?.openPositions !== undefined ? String(liveStats.openPositions) : "14"}
+              value={formatCount(liveStats?.openPositions)}
               icon={<Briefcase className="w-5 h-5 text-rose-600" />}
-              trend="Active"
-              trendType="down"
-              sparklineData={sparkline8}
+              trend={trendLabel("openPositions")}
+              trendType={trendType("openPositions")}
+              sparklineData={buildSparkline(sparklines.openPositions)}
               sparklineColor="#e11d48"
             />
           </div>
@@ -392,20 +550,7 @@ export default function EnterpriseDashboard() {
 
                   {/* Dynamic Custom Bar Chart */}
                   <div className="h-44 flex items-end justify-between gap-3 px-2">
-                    {[
-                      { height: "85%", label: "Mon", value: "92%" },
-                      { height: "92%", label: "Tue", value: "94%" },
-                      { height: "70%", label: "Wed", value: "88%" },
-                      {
-                        height: "95%",
-                        label: "Thu",
-                        value: "96%",
-                        highlighted: true,
-                      },
-                      { height: "88%", label: "Fri", value: "91%" },
-                      { height: "40%", label: "Sat", value: "45%" },
-                      { height: "30%", label: "Sun", value: "35%" },
-                    ].map((bar, index) => (
+                    {attendanceBars.map((bar, index) => (
                       <div
                         key={index}
                         className="flex-1 flex flex-col items-center gap-2 group cursor-pointer h-full justify-end"
@@ -510,13 +655,13 @@ export default function EnterpriseDashboard() {
 
                       {/* Area Fill for Hires */}
                       <path
-                        d="M0 35 Q 25 30, 50 20 T 100 10 L 100 40 L 0 40 Z"
+                        d={growth.hiresArea}
                         fill="url(#hiresGradient)"
                       />
 
                       {/* Hires Line */}
                       <path
-                        d="M0 35 Q 25 30, 50 20 T 100 10"
+                        d={growth.hiresLine}
                         fill="none"
                         stroke="#2563eb"
                         strokeWidth="2"
@@ -525,7 +670,7 @@ export default function EnterpriseDashboard() {
 
                       {/* Departures Line */}
                       <path
-                        d="M0 38 Q 25 35, 50 34 T 100 32"
+                        d={growth.departuresLine}
                         fill="none"
                         stroke="#ef4444"
                         strokeWidth="1.5"
@@ -564,7 +709,10 @@ export default function EnterpriseDashboard() {
                         placeholder="Filter by name, design..."
                         type="text"
                         value={employeeSearch}
-                        onChange={(e) => setEmployeeSearch(e.target.value)}
+                        onChange={(e) => {
+                          setEmployeeSearch(e.target.value);
+                          setDirectoryPage(1);
+                        }}
                       />
                     </div>
                     <Button
@@ -589,24 +737,30 @@ export default function EnterpriseDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-sm">
-                      {filteredEmployees.map((emp) => (
+                      {pagedEmployees.map((emp) => (
                         <tr
                           key={emp.id}
                           className="hover:bg-gray-50/50 transition-colors"
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <img
-                                className="w-9 h-9 rounded-full object-cover border border-gray-100"
-                                alt={emp.name}
-                                src={emp.avatar}
-                              />
+                              {emp.profileImage ? (
+                                <img
+                                  className="w-9 h-9 rounded-full object-cover border border-gray-100"
+                                  alt={emp.name}
+                                  src={getUploadUrl(emp.profileImage)}
+                                />
+                              ) : (
+                                <div className="w-9 h-9 rounded-full border border-gray-100 bg-blue-50 text-blue-700 flex items-center justify-center text-xs font-bold">
+                                  {initialsOf(emp.name)}
+                                </div>
+                              )}
                               <div>
                                 <p className="font-semibold text-gray-900 leading-tight">
                                   {emp.name}
                                 </p>
                                 <p className="text-xs text-gray-500 mt-0.5">
-                                  {emp.email}
+                                  {emp.email || emp.employeeCode}
                                 </p>
                               </div>
                             </div>
@@ -633,7 +787,9 @@ export default function EnterpriseDashboard() {
                             colSpan={5}
                             className="text-center py-8 text-gray-400 text-sm"
                           >
-                            No employees match your search criteria.
+                            {allEmployees.length === 0
+                              ? "No employees found."
+                              : "No employees match your search criteria."}
                           </td>
                         </tr>
                       )}
@@ -644,25 +800,40 @@ export default function EnterpriseDashboard() {
                 {/* Table Pagination */}
                 <div className="px-6 py-4 border-t border-gray-200 flex justify-between items-center">
                   <p className="text-xs text-gray-500 font-medium">
-                    Showing 4 of 1,284 employees
+                    Showing {pagedEmployees.length} of{" "}
+                    {filteredEmployees.length.toLocaleString()} employees
                   </p>
                   <div className="flex items-center gap-1">
                     <button
-                      disabled
+                      disabled={currentPage <= 1}
+                      onClick={() => setDirectoryPage(currentPage - 1)}
                       className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <ChevronLeft className="w-4 h-4 text-gray-600" />
                     </button>
-                    <button className="px-3 py-1 border border-blue-200 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold transition-colors">
-                      1
-                    </button>
-                    <button className="px-3 py-1 border border-transparent hover:border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg text-xs font-medium transition-colors">
-                      2
-                    </button>
-                    <button className="px-3 py-1 border border-transparent hover:border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg text-xs font-medium transition-colors">
-                      3
-                    </button>
-                    <button className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    {(() => {
+                      // Up to 3 page numbers around the current page.
+                      const first = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
+                      const last = Math.min(totalPages, first + 2);
+                      return Array.from({ length: last - first + 1 }, (_, i) => first + i);
+                    })().map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setDirectoryPage(page)}
+                        className={
+                          page === currentPage
+                            ? "px-3 py-1 border border-blue-200 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold transition-colors"
+                            : "px-3 py-1 border border-transparent hover:border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg text-xs font-medium transition-colors"
+                        }
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setDirectoryPage(currentPage + 1)}
+                      className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
                       <ChevronRight className="w-4 h-4 text-gray-600" />
                     </button>
                   </div>
@@ -689,40 +860,23 @@ export default function EnterpriseDashboard() {
                         stroke="#f3f4f6"
                         strokeWidth="2.5"
                       />
-                      <circle
-                        cx="18"
-                        cy="18"
-                        r="15.915"
-                        fill="none"
-                        stroke="#2563eb"
-                        strokeWidth="2.5"
-                        strokeDasharray="42 58"
-                        strokeDashoffset="100"
-                      />
-                      <circle
-                        cx="18"
-                        cy="18"
-                        r="15.915"
-                        fill="none"
-                        stroke="#64748b"
-                        strokeWidth="2.5"
-                        strokeDasharray="28 72"
-                        strokeDashoffset="58"
-                      />
-                      <circle
-                        cx="18"
-                        cy="18"
-                        r="15.915"
-                        fill="none"
-                        stroke="#f59e0b"
-                        strokeWidth="2.5"
-                        strokeDasharray="15 85"
-                        strokeDashoffset="30"
-                      />
+                      {departmentSegments.map((seg) => (
+                        <circle
+                          key={seg.name}
+                          cx="18"
+                          cy="18"
+                          r="15.915"
+                          fill="none"
+                          stroke={seg.color.stroke}
+                          strokeWidth="2.5"
+                          strokeDasharray={seg.dashArray}
+                          strokeDashoffset={seg.dashOffset}
+                        />
+                      ))}
                     </svg>
                     <div className="absolute flex flex-col items-center text-center">
                       <span className="text-2xl font-bold text-gray-950">
-                        12
+                        {formatCount(liveStats?.departmentDistribution?.totalDepartments)}
                       </span>
                       <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
                         Depts
@@ -732,27 +886,18 @@ export default function EnterpriseDashboard() {
 
                   {/* Legends list */}
                   <div className="w-full mt-6 space-y-2.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 font-medium text-gray-600">
-                        <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
-                        <span>Engineering</span>
+                    {departmentSegments.map((seg) => (
+                      <div key={seg.name} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 font-medium text-gray-600">
+                          <span className={`w-2.5 h-2.5 rounded-full ${seg.color.dot}`} />
+                          <span>{seg.name}</span>
+                        </div>
+                        <span className="font-semibold text-gray-900">{seg.percent}%</span>
                       </div>
-                      <span className="font-semibold text-gray-900">42%</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 font-medium text-gray-600">
-                        <span className="w-2.5 h-2.5 rounded-full bg-slate-500" />
-                        <span>Sales</span>
-                      </div>
-                      <span className="font-semibold text-gray-900">28%</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 font-medium text-gray-600">
-                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                        <span>Marketing</span>
-                      </div>
-                      <span className="font-semibold text-gray-900">15%</span>
-                    </div>
+                    ))}
+                    {departmentSegments.length === 0 && (
+                      <p className="text-center text-xs text-gray-400">No employees yet.</p>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -763,7 +908,10 @@ export default function EnterpriseDashboard() {
                   <h3 className="font-semibold text-gray-900 text-sm">
                     Recent Activity
                   </h3>
-                  <button className="text-xs text-blue-600 font-bold hover:text-blue-700 transition-colors">
+                  <button
+                    onClick={() => setShowAllActivities(true)}
+                    className="text-xs text-blue-600 font-bold hover:text-blue-700 transition-colors"
+                  >
                     View All
                   </button>
                 </div>
@@ -771,56 +919,12 @@ export default function EnterpriseDashboard() {
                 <div className="space-y-6 relative">
                   <div className="absolute left-[13px] top-1.5 bottom-1.5 w-[1.5px] bg-gray-200" />
 
-                  {RECENT_ACTIVITIES.map((act) => {
-                    const getIconConfig = () => {
-                      switch (act.type) {
-                        case "join":
-                          return {
-                            element: (
-                              <UserPlus className="w-3.5 h-3.5 text-green-600" />
-                            ),
-                            bg: "bg-green-50 border-green-200",
-                          };
-                        case "payroll":
-                          return {
-                            element: (
-                              <CreditCard className="w-3.5 h-3.5 text-blue-600" />
-                            ),
-                            bg: "bg-blue-50 border-blue-200",
-                          };
-                        default:
-                          return {
-                            element: (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
-                            ),
-                            bg: "bg-amber-50 border-amber-200",
-                          };
-                      }
-                    };
-
-                    const cfg = getIconConfig();
-
-                    return (
-                      <div key={act.id} className="relative flex gap-4 pl-8">
-                        <div
-                          className={`absolute left-0 w-7 h-7 ${cfg.bg} border rounded-full flex items-center justify-center ring-4 ring-white z-10`}
-                        >
-                          {cfg.element}
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-gray-900 leading-none">
-                            {act.title}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1 font-medium leading-relaxed">
-                            {act.description}
-                          </p>
-                          <span className="inline-block text-[9px] text-gray-400 font-semibold tracking-wider mt-1 uppercase">
-                            {act.time}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {recentActivities.length === 0 && (
+                    <p className="pl-8 text-xs text-gray-400">No recent activity yet.</p>
+                  )}
+                  {recentActivities.map((act) => (
+                    <ActivityItem key={act.id} activity={act} />
+                  ))}
                 </div>
               </Card>
 
@@ -830,7 +934,10 @@ export default function EnterpriseDashboard() {
                   Upcoming Events
                 </h3>
                 <div className="space-y-3.5">
-                  {UPCOMING_EVENTS.map((event) => {
+                  {upcomingEvents.length === 0 && (
+                    <p className="text-xs text-gray-400">No events in the next 30 days.</p>
+                  )}
+                  {upcomingEvents.map((event) => {
                     const badgeStyles = {
                       danger: "bg-red-50 text-red-700 border-red-200/50",
                       secondary:
@@ -858,7 +965,7 @@ export default function EnterpriseDashboard() {
                             {event.title}
                           </p>
                           <p className="text-[11px] text-gray-500 mt-1 font-medium truncate">
-                            {event.time}
+                            {event.subtitle}
                           </p>
                         </div>
                       </div>
@@ -870,6 +977,13 @@ export default function EnterpriseDashboard() {
           </div>
         </div>
       </main>
+
+      {showAllActivities && (
+        <AllActivitiesModal
+          open={showAllActivities}
+          onClose={() => setShowAllActivities(false)}
+        />
+      )}
     </div>
   );
 }

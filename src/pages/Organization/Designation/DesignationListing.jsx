@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useLocation, useNavigate } from "react-router-dom";
 import useDesignationConfig from "./useDesignationConfig";
 import { api, apiEndpoints } from "@/api/api";
@@ -101,8 +102,15 @@ const DesignationListing = () => {
 
   useDocumentTitle("orvexa | Designation");
 
+  // Right-click menu: Edit and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+  });
+
   return (
     <HpGrid
+      contextData={contextData}
       id="designationListing"
       rowData={DesignationListingData}
       colDef={DesignationListingColDef}

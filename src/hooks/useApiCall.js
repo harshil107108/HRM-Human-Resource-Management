@@ -3,13 +3,15 @@
  * ------------------------------------------------------------------
  * Industry-grade React hook for handling API calls with:
  *  - Zero try/catch boilerplate at the call site
- *  - Built-in SweetAlert2 error popup (fully overridable)
+ *  - Built-in, user-friendly error dialog (fully overridable)
+ *  - "Try again" for transient failures (offline, timeout, 429, 502-504)
  *  - Per-id pending state (supports multiple simultaneous calls)
  *  - Auto-cancel of duplicate in-flight requests (same id)
  *  - Global config (set once in app entry) + per-call config override
  *  - Consistent { success, data, error } response shape
  *
- * Peer dependency: sweetalert2  ->  npm i sweetalert2
+ * Dialogs/toasts come from the shared feedback system
+ * (src/components/feedback), so they match every other popup.
  * ------------------------------------------------------------------
  *
  * USAGE
@@ -30,6 +32,8 @@
  *
  * if (res.success) console.log(res.data);
  * // On failure, popup is already shown automatically. No try/catch needed.
+ * // If the user chooses "Try again" on a transient failure, apiCall
+ * // re-sends the request and resolves with that attempt's result.
  *
  * // Granular loading state:
  * isPending('getUser')   -> boolean for that specific call
@@ -39,13 +43,17 @@
 
 import { useCallback, useRef, useState } from "react";
 import axios from "axios";
-import Swal from "sweetalert2";
+import { errorDialog, showToast } from "@/components/feedback";
+import { describeApiError } from "@/utils/apiErrors";
+import { beginActivity } from "@/utils/networkActivity";
 
 // ============================================================
 // GLOBAL CONFIG
 // Call configureApiCall() once (e.g. in App.js / index.js) to
 // customize behavior app-wide without touching this file again.
 // ============================================================
+const defaultGetErrorMessage = (error) => describeApiError(error).message;
+
 const defaultConfig = {
   // Base URL prepended to every "api" string you pass to apiCall().
   // e.g. baseURL: 'http://192.168.77.6:8001'  +  api: 'api/getuser'
@@ -59,19 +67,23 @@ const defaultConfig = {
   showErrorAlert: true,
   showSuccessAlert: false,
 
-  errorTitle: "Something went wrong",
-  successTitle: "Success",
+  // Offer "Try again" on network/timeout/429/5xx-gateway failures.
+  retryOnTransientError: true,
 
+  // null -> a title matching the failure ("Can't reach the server", ...)
+  errorTitle: null,
+  successTitle: "Saved successfully",
+  successMessage: "Your changes have been saved.",
+
+  // Extra options for the error dialog / success toast
+  // (e.g. { title, text } overrides). Names kept for compatibility.
   swalErrorOptions: {},
   swalSuccessOptions: {},
 
   // Customize how the error message is extracted from different
   // API/error shapes (axios, fetch, custom backend error format, etc.)
-  getErrorMessage: (error) =>
-    error?.response?.data?.message ||
-    error?.data?.message ||
-    error?.message ||
-    "Unexpected error occurred. Please try again.",
+  // The default hides stack traces / database internals.
+  getErrorMessage: defaultGetErrorMessage,
 
   // Global hooks, useful for logging/analytics/sentry etc.
   onError: null,
@@ -124,6 +136,11 @@ export function addApiInterceptor({
   };
 }
 
+const isAbortError = (error) =>
+  error?.name === "CanceledError" ||
+  error?.name === "AbortError" ||
+  axios.isCancel?.(error);
+
 // ============================================================
 // HOOK
 // ============================================================
@@ -162,6 +179,7 @@ export default function useApiCall() {
    * @param {object} [params]           Extra query params (merged in addition to payload for GET)
    * @param {object} [config]           Per-call override of global config
    * @param {boolean} [silent]          Shortcut to fully suppress the error popup for this call
+   * @param {boolean} [showSuccessAlert] Show a "saved" toast when the call succeeds
    * @returns {Promise<{success:boolean, data:any, error:any, aborted?:boolean}>}
    */
   const apiCall = useCallback(
@@ -191,72 +209,97 @@ export default function useApiCall() {
           : (config.showErrorAlert ?? globalConfig.showErrorAlert),
       };
 
-      // Cancel a previous in-flight call sharing the same id
-      controllersRef.current[callId]?.abort();
-      const controller = new AbortController();
-      controllersRef.current[callId] = controller;
-
       setPendingFor(callId, true);
 
+      const attempt = async () => {
+        // Cancel a previous in-flight call sharing the same id
+        controllersRef.current[callId]?.abort();
+        const controller = new AbortController();
+        controllersRef.current[callId] = controller;
+
+        try {
+          const httpMethod = (method || globalConfig.defaultMethod).toLowerCase();
+          const isBodyMethod = ["post", "put", "patch"].includes(httpMethod);
+
+          let data;
+
+          if (typeof api === "function") {
+            // Escape hatch: caller supplied a custom request function
+            data = await api(payload, { signal: controller.signal });
+          } else {
+            const response = await axiosInstance.request({
+              url: api, // e.g. 'api/getuser' -> resolved against configured baseURL
+              method: httpMethod,
+              data: isBodyMethod ? payload : undefined,
+              params: isBodyMethod ? params : { ...payload, ...params },
+              signal: controller.signal,
+            });
+            data = response.data;
+          }
+
+          if (showSuccessAlert || mergedConfig.showSuccessAlert) {
+            const { title, text, timer } = mergedConfig.swalSuccessOptions || {};
+            showToast({
+              type: "success",
+              title: title || mergedConfig.successTitle,
+              message: text ?? mergedConfig.successMessage,
+              duration: timer,
+            });
+          }
+
+          mergedConfig.onSuccess?.(data, { id: callId, payload });
+
+          return { success: true, data, error: null };
+        } catch (error) {
+          // Silently ignore aborted/canceled requests (not real errors)
+          if (isAbortError(error)) {
+            return { success: false, data: null, error, aborted: true };
+          }
+
+          mergedConfig.onError?.(error, { id: callId, payload });
+
+          if (mergedConfig.showErrorAlert) {
+            const described = describeApiError(error);
+            const message =
+              mergedConfig.getErrorMessage === defaultGetErrorMessage
+                ? described.message
+                : mergedConfig.getErrorMessage(error);
+            const retryable =
+              described.retryable && mergedConfig.retryOnTransientError !== false;
+
+            const dialog = errorDialog({
+              title: mergedConfig.errorTitle || described.title,
+              text: message,
+              details: described.details,
+              iconName: described.iconName,
+              retryable,
+              ...mergedConfig.swalErrorOptions,
+            });
+
+            // Only wait for the user when "Try again" is on offer; plain
+            // errors resolve immediately exactly as before.
+            if (retryable) {
+              const result = await dialog;
+              if (result?.isConfirmed) return attempt();
+            }
+          }
+
+          return { success: false, data: null, error };
+        } finally {
+          if (controllersRef.current[callId] === controller) {
+            delete controllersRef.current[callId];
+          }
+        }
+      };
+
+      // Reported app-wide so page loaders can wait for data to arrive.
+      const endActivity = beginActivity();
       try {
-        const httpMethod = (method || globalConfig.defaultMethod).toLowerCase();
-        const isBodyMethod = ["post", "put", "patch"].includes(httpMethod);
-
-        let data;
-
-        if (typeof api === "function") {
-          // Escape hatch: caller supplied a custom request function
-          data = await api(payload, { signal: controller.signal });
-        } else {
-          const response = await axiosInstance.request({
-            url: api, // e.g. 'api/getuser' -> resolved against configured baseURL
-            method: httpMethod,
-            data: isBodyMethod ? payload : undefined,
-            params: isBodyMethod ? params : { ...payload, ...params },
-            signal: controller.signal,
-          });
-          data = response.data;
-        }
-
-        if (showSuccessAlert || mergedConfig.showSuccessAlert) {
-          Swal.fire({
-            icon: "success",
-            title: mergedConfig.successTitle,
-            text: "Data saved successfully!",
-            timer: 1000,
-            showConfirmButton: false,
-            timerProgressBar: true,
-            ...mergedConfig.swalSuccessOptions,
-          });
-        }
-
-        mergedConfig.onSuccess?.(data, { id: callId, payload });
-
-        return { success: true, data, error: null };
-      } catch (error) {
-        // Silently ignore aborted/canceled requests (not real errors)
-        if (error?.name === "CanceledError" || error?.name === "AbortError") {
-          return { success: false, data: null, error, aborted: true };
-        }
-
-        const message = mergedConfig.getErrorMessage(error);
-
-        if (mergedConfig.showErrorAlert) {
-          Swal.fire({
-            icon: "error",
-            title: mergedConfig.errorTitle,
-            text: message,
-            confirmButtonText: "OK",
-            ...mergedConfig.swalErrorOptions,
-          });
-        }
-
-        mergedConfig.onError?.(error, { id: callId, payload });
-
-        return { success: false, data: null, error };
+        return await attempt();
       } finally {
-        setPendingFor(callId, false);
-        delete controllersRef.current[callId];
+        endActivity();
+        // Only clear pending if no newer call with the same id took over.
+        if (!controllersRef.current[callId]) setPendingFor(callId, false);
       }
     },
     [],

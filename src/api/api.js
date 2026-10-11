@@ -58,6 +58,7 @@ const apiEndpoints = {
             AssetDeleteByID: "/employee/asset/deleteAssetById",
             AssetGetByID: "/employee/asset/getAssetById",
             AssetHelp: "/employee/asset/getAssetHelp",
+            AssetsByEmployee: "/employee/asset/getAssetsByEmployee",
         },
         exit: {
             ExitAddEdit: "/employee/exit/addEditExit",
@@ -269,6 +270,7 @@ const apiEndpoints = {
             RoleDeleteByID: "/administration/role/deleteRoleById",
             RoleGetByID: "/administration/role/getRoleById",
             RoleHelp: "/administration/role/getRoleHelp",
+            RolePermissionsUpdate: "/administration/role/updateRolePermissions",
         },
         audit: {
             AuditGetData: "/administration/audit/getAuditLogs",
@@ -283,8 +285,22 @@ const apiEndpoints = {
         },
     },
 
+    auth: {
+        login: "/auth/login",
+        me: "/auth/me",
+    },
+
+    menu: {
+        MenuAddEdit: "/master/menu/addEditMenu",
+        MenuGetData: "/master/menu/getMenus",
+        MenuDeleteByID: "/master/menu/deleteMenuById",
+        MenuGetByID: "/master/menu/getMenuById",
+        MenuHelp: "/master/menu/getMenuHelp",
+    },
+
     dashboard: {
         stats: "/dashboard/getDashboardStats",
+        recentActivities: "/dashboard/getRecentActivities",
     },
 
     common: {
@@ -440,6 +456,11 @@ const apiEndpoints = {
         deleteRole: "/administration/role/deleteRoleById",
         getRoleById: "/administration/role/getRoleById",
         getRoleHelp: "/administration/role/getRoleHelp",
+        RoleGetData: "/administration/role/getRoles",
+        RoleAddEdit: "/administration/role/addEditRole",
+        RoleDeleteByID: "/administration/role/deleteRoleById",
+        RoleGetByID: "/administration/role/getRoleById",
+        RoleHelp: "/administration/role/getRoleHelp",
     },
     auditLog: {
         getAuditLog: "/administration/audit/getAuditLogs",
@@ -456,20 +477,28 @@ const apiEndpoints = {
         getHolidayById: "/master/holiday/getHolidayById",
         getHolidayHelp: "/master/holiday/getHolidayHelp",
     },
-    attendance: {
-        log: {
-            LogGetData: "/attendance/log/getAttendanceLogs",
-            LogGetByID: "/attendance/log/getAttendanceLogById",
-            LogAddEdit: "/attendance/log/addEditAttendanceLog",
-            LogDeleteByID: "/attendance/log/deleteAttendanceLogById",
-        }
+    auth: {
+        login: "/auth/login",
+        me: "/auth/me",
     },
-    attendanceLog: {
-        getAttendanceLog: "/attendance/log/getAttendanceLogs",
-        getAttendanceLogById: "/attendance/log/getAttendanceLogById",
-        addEditAttendanceLog: "/attendance/log/addEditAttendanceLog",
-        deleteAttendanceLog: "/attendance/log/deleteAttendanceLogById",
-    }
+    menu: {
+        MenuGetData: "/administration/menu/getMenus",
+        MenuGetByID: "/administration/menu/getMenuById",
+        MenuAddEdit: "/administration/menu/addEditMenu",
+        MenuDeleteByID: "/administration/menu/deleteMenuById",
+        MenuHelp: "/administration/menu/getMenuHelp",
+        MenuTree: "/administration/menu/getMenuTree",
+        MenuSeed: "/administration/menu/seedDefaults",
+    },
+    administration: {
+        role: {
+            RoleGetData: "/administration/role/getRoles",
+            RoleAddEdit: "/administration/role/addEditRole",
+            RoleDeleteByID: "/administration/role/deleteRoleById",
+            RoleGetByID: "/administration/role/getRoleById",
+            RoleHelp: "/administration/role/getRoleHelp",
+        },
+    },
 };
 
 export { api, apiEndpoints };

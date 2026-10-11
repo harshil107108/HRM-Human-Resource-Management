@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useEffect, useState } from "react";
 import useWeekendPolicyConfig from "./useWeekendPolicyConfig";
 import useModal from "@/hooks/useModal";
@@ -74,6 +75,12 @@ const WeekendPolicyListing = () => {
 
   useDocumentTitle("orvexa | Weekend Policies");
 
+  // Right-click menu: Edit and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+  });
+
   return (
     <>
       {isModalOpen && (
@@ -85,6 +92,7 @@ const WeekendPolicyListing = () => {
         />
       )}
       <HpGrid
+        contextData={contextData}
         id="weekendPolicyListing"
         rowData={policyData}
         colDef={weekendPolicyListingColDef}

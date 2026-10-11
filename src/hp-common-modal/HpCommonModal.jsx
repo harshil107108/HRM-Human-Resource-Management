@@ -7,14 +7,18 @@
  *
  * Responsibilities:
  *   - Portal rendering + backdrop
- *   - Open/close enter-exit animation
+ *   - Open/close enter-exit animation (CSS keyframes; exit also plays when
+ *     the parent unmounts the modal directly — see playExitGhost)
+ *   - Save handling: if `onSave` returns a promise the Save button shows a
+ *     "Saving…" state, the dialog can't be closed, and repeat clicks are
+ *     ignored until it settles
  *   - React Hook Form integration (FormProvider + handleSubmit wiring)
  *   - Composition of Header / Body / Footer via ModalContext
  *   - Delegates keyboard/focus/scroll-lock behavior to useModal()
  * ---------------------------------------------------------------------------
  */
 
-import { memo, useEffect, useMemo, useState, useCallback } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { FormProvider } from 'react-hook-form';
 import ModalPortal from './ModalPortal';
 import ModalHeader from './ModalHeader';
@@ -22,7 +26,7 @@ import ModalBody from './ModalBody';
 import ModalFooter from './ModalFooter';
 import { ModalContext } from './modalContext';
 import { useModal } from './useModal';
-import { cx, resolveModalWidth, generateModalId } from './modalUtils';
+import { cx, resolveModalWidth, generateModalId, prefersReducedMotion } from './modalUtils';
 import {
     ANIMATION_DURATION_MS,
     DEFAULT_Z_INDEX,
@@ -30,6 +34,8 @@ import {
     DEFAULT_PRIMARY_COLOR,
     DEFAULT_SECONDARY_COLOR,
 } from './modal.constants';
+import { Lock } from 'lucide-react';
+import { useRouteAccess, canSaveForm } from '@/context/RouteAccessContext';
 import './styles.css';
 
 function HpCommonModal({
@@ -46,6 +52,7 @@ function HpCommonModal({
     onClose,
     onClear,
     saveText = DEFAULT_TEXT.save,
+    savingText = DEFAULT_TEXT.saving,
     cancelText = DEFAULT_TEXT.cancel,
     clearText = DEFAULT_TEXT.clear,
     showHeader = true,
@@ -61,6 +68,7 @@ function HpCommonModal({
     preventCloseWhileLoading = true,
     preventOutsideClick = false,
     confirmBeforeClose = false,
+    isDirty: isDirtyProp,
     scrollable = true,
     stickyHeader = true,
     stickyFooter = true,
@@ -78,40 +86,48 @@ function HpCommonModal({
     successMessage,
     validationErrors,
 }) {
-    // Keep the dialog mounted for the duration of the exit animation, even
-    // after the consumer has already flipped `open` to false.
+    // Keep the dialog mounted for the duration of the exit animation when a
+    // consumer keeps the modal mounted and flips `open` to false.
     const [shouldRender, setShouldRender] = useState(open);
-    const [animationPhase, setAnimationPhase] = useState(open ? 'entered' : 'exited');
+    if (open && !shouldRender) {
+        setShouldRender(true);
+    }
+    const animationPhase = open ? 'entered' : 'exiting';
 
     useEffect(() => {
-        let timeoutId;
-        if (open) {
-            setShouldRender(true);
-            // Next tick so the browser registers the "enter from" state first.
-            timeoutId = window.setTimeout(() => setAnimationPhase('entered'), 10);
-        } else if (shouldRender) {
-            setAnimationPhase('exiting');
-            timeoutId = window.setTimeout(() => {
-                setShouldRender(false);
-                setAnimationPhase('exited');
-            }, ANIMATION_DURATION_MS);
-        }
+        if (open || !shouldRender) return undefined;
+        const timeoutId = window.setTimeout(
+            () => setShouldRender(false),
+            prefersReducedMotion() ? 0 : ANIMATION_DURATION_MS
+        );
         return () => window.clearTimeout(timeoutId);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open]);
+    }, [open, shouldRender]);
 
     // Stable ids for ARIA wiring between the dialog and its title/description.
     const titleId = useMemo(() => generateModalId('hp-modal-title'), []);
     const descriptionId = useMemo(() => generateModalId('hp-modal-desc'), []);
 
-    const isDirty = Boolean(formMethod?.formState?.isDirty);
+    // Track async saves so the UI reflects them even when the consumer
+    // doesn't pass `loading` (or passes a value that doesn't re-render).
+    const [saving, setSaving] = useState(false);
+    const savingRef = useRef(false);
+    const mountedRef = useRef(false);
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+        };
+    }, []);
 
-    const { dialogRef, requestClose } = useModal({
+    const busy = Boolean(loading) || saving;
+    const isDirty = Boolean(isDirtyProp ?? formMethod?.formState?.isDirty);
+
+    const { dialogRef, requestClose, markEdited, markClean } = useModal({
         open: open && active,
         onClose,
         closeOnEscape: closeOnEscape && active,
         preventCloseWhileLoading,
-        loading,
+        loading: busy,
         isDirty,
         confirmBeforeClose,
     });
@@ -119,22 +135,48 @@ function HpCommonModal({
     // If a formMethod (React Hook Form) instance is supplied, Save
     // automatically runs validation via handleSubmit before calling onSave.
     // Otherwise Save calls onSave directly — no extra wiring required either way.
-    const handleSave = useCallback(() => {
-        if (formMethod?.handleSubmit) {
-            formMethod.handleSubmit(onSave)();
-        } else {
-            onSave?.();
-        }
-    }, [formMethod, onSave]);
+    // Page rights: without Add (new record) / Edit (existing record) the
+    // modal opens view-only — fields and Save/Clear are disabled.
+    const access = useRouteAccess();
+    const readOnly = showSaveButton && typeof onSave === 'function' && !canSaveForm(access);
 
+    const handleSave = useCallback(async () => {
+        if (savingRef.current || readOnly) return;
+
+        const run = formMethod?.handleSubmit ? formMethod.handleSubmit(onSave) : onSave;
+        const result = run?.();
+        if (!result || typeof result.then !== 'function') return;
+
+        savingRef.current = true;
+        setSaving(true);
+        try {
+            await result;
+        } finally {
+            savingRef.current = false;
+            if (mountedRef.current) setSaving(false);
+        }
+    }, [formMethod, onSave, readOnly]);
+
+    const handleClear = useCallback(() => {
+        onClear?.();
+        markClean();
+    }, [onClear, markClean]);
+
+    // Close on backdrop only when the press both started and ended on it, so
+    // selecting text inside the form and releasing outside never closes it.
+    const pointerDownOnBackdrop = useRef(false);
+    const handleBackdropPointerDown = useCallback((event) => {
+        pointerDownOnBackdrop.current = event.target === event.currentTarget;
+    }, []);
     const handleBackdropClick = useCallback(
         (event) => {
-            if (preventOutsideClick) return;
-            if (event.target !== event.currentTarget) return;
-            if (!closeOnBackdrop) return;
+            const startedOnBackdrop = pointerDownOnBackdrop.current;
+            pointerDownOnBackdrop.current = false;
+            if (!startedOnBackdrop || event.target !== event.currentTarget) return;
+            if (preventOutsideClick || !closeOnBackdrop || !active) return;
             requestClose('backdrop');
         },
-        [preventOutsideClick, closeOnBackdrop, requestClose]
+        [preventOutsideClick, closeOnBackdrop, active, requestClose]
     );
 
     if (!shouldRender) return null;
@@ -152,16 +194,19 @@ function HpCommonModal({
         showCloseButton,
         showClearButton,
         showSaveButton,
-        disableSave,
-        disableClear,
+        disableSave: disableSave || readOnly,
+        disableClear: disableClear || readOnly,
+        readOnly,
         disableClose,
-        loading,
+        loading: busy,
+        saving,
         preventCloseWhileLoading,
         saveText,
+        savingText,
         cancelText,
         clearText,
         onSave: handleSave,
-        onClear,
+        onClear: handleClear,
         requestClose,
         headerClassName,
         footerClassName,
@@ -180,38 +225,57 @@ function HpCommonModal({
             className="hp-modal-backdrop"
             style={{ zIndex }}
             data-state={animationPhase}
-            onMouseDown={handleBackdropClick}
+            onPointerDown={handleBackdropPointerDown}
+            onClick={handleBackdropClick}
         >
             <div
                 ref={dialogRef}
                 role="dialog"
                 aria-modal="true"
-                aria-labelledby={titleId}
+                aria-labelledby={showHeader && !header ? titleId : undefined}
+                aria-label={showHeader && !header ? undefined : (typeof title === 'string' ? title : undefined)}
                 aria-describedby={descriptionId}
+                aria-busy={busy || undefined}
+                tabIndex={-1}
                 className={cx('hp-modal-dialog', className)}
                 data-state={animationPhase}
                 style={{
-                    width: resolveModalWidth(size),
+                    '--hp-modal-width': resolveModalWidth(size),
                     '--hp-modal-primary': primaryColor,
                     '--hp-modal-secondary': secondaryColor,
                 }}
-                onMouseDown={(event) => event.stopPropagation()}
+                onInputCapture={markEdited}
+                onChangeCapture={markEdited}
             >
-                {loading && (
-                    <div className="hp-modal-loading-overlay" aria-hidden="true">
-                        <div className="hp-modal-loading-spinner" />
-                    </div>
-                )}
-
                 <ModalContext.Provider value={contextValue}>
                     <ModalHeader />
 
                     {formMethod ? (
                         <FormProvider {...formMethod}>
-                            <ModalBody>{children}</ModalBody>
+                            <ModalBody>
+                {readOnly && (
+                    <div className="hp-modal-readonly" role="note">
+                        <Lock size={14} aria-hidden="true" />
+                        <span>View only — you don't have permission to {access.intent === 'add' ? 'add records' : 'make changes'} here.</span>
+                    </div>
+                )}
+                <fieldset className="hp-modal-fieldset" disabled={readOnly}>
+                    {children}
+                </fieldset>
+            </ModalBody>
                         </FormProvider>
                     ) : (
-                        <ModalBody>{children}</ModalBody>
+                        <ModalBody>
+                {readOnly && (
+                    <div className="hp-modal-readonly" role="note">
+                        <Lock size={14} aria-hidden="true" />
+                        <span>View only — you don't have permission to {access.intent === 'add' ? 'add records' : 'make changes'} here.</span>
+                    </div>
+                )}
+                <fieldset className="hp-modal-fieldset" disabled={readOnly}>
+                    {children}
+                </fieldset>
+            </ModalBody>
                     )}
 
                     <ModalFooter />

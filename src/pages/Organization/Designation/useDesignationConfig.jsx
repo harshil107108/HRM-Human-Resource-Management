@@ -230,7 +230,7 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
       placeHolder: "Select Business Unit",
       className: "col-span-4",
       prevFocusField: "designationId",
-      nextFocusField: "employmentType",
+      nextFocusField: "workingShift",
       options: [
         { label: "Information Technology", value: "IT" },
         { label: "Human Resources", value: "HR" },
@@ -341,7 +341,7 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
       type: "selectWrapper",
       label: "Working Shift",
       className: "col-span-4",
-      prevFocusField: "noticePeriod",
+      prevFocusField: "businessUnitId",
       nextFocusField: "holidayCalendar",
       options: [
         { label: "General Shift", value: "GENERAL" },

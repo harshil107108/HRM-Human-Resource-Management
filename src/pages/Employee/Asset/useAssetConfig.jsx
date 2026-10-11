@@ -1,5 +1,36 @@
 import { api, apiEndpoints } from "@/api/api";
 
+// Validator for an end date that must not fall before its start date.
+// Dates are ISO "YYYY-MM-DD" strings, so string comparison is safe.
+const notBeforeField = (startFieldId, message) => (value, allValues) => {
+  const start = allValues?.[startFieldId];
+  if (!value || !start) return undefined;
+  return value < start ? message : undefined;
+};
+
+// Re-checks an end date as soon as it (or its start date) changes, so the
+// error shows immediately instead of only on Save.
+const revalidate = (fieldId) => (form) => {
+  if (form.methods.getValue(fieldId)) form.methods.validateField(fieldId);
+};
+
+// Fields that only apply while the asset is ASSIGNED.
+export const ASSIGNMENT_FIELDS = [
+  "assignedEmployee",
+  "assignedDate",
+  "expectedReturnDate",
+];
+
+const todayIso = () => {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+// Required only while the asset is ASSIGNED.
+const requiredWhenAssigned = (message) => (value, allValues) =>
+  allValues?.assetStatus === "ASSIGNED" && !value ? message : undefined;
+
 const useAssetConfig = ({ handleDelete } = {}) => {
   const assetListingColDef = [
     {
@@ -268,6 +299,7 @@ const useAssetConfig = ({ handleDelete } = {}) => {
       nextFocusField: "warrantyEndDate",
       prevFocusField: "invoiceNumber",
       className: "col-span-4",
+      onChange: revalidate("warrantyEndDate"),
     },
     {
       id: "warrantyEndDate",
@@ -278,6 +310,11 @@ const useAssetConfig = ({ handleDelete } = {}) => {
       nextFocusField: "companyId",
       prevFocusField: "warrantyStartDate",
       className: "col-span-4",
+      onChange: revalidate("warrantyEndDate"),
+      validate: notBeforeField(
+        "warrantyStartDate",
+        "Warranty End Date can't be before Warranty Start Date",
+      ),
     },
   ];
 
@@ -354,6 +391,22 @@ const useAssetConfig = ({ handleDelete } = {}) => {
           value: "DISPOSED",
         },
       ],
+      // Assignment fields only apply while ASSIGNED: clear them for any
+      // other status, and default the date when switching to ASSIGNED.
+      onChange: (form) => {
+        if (form.methods.getValue("assetStatus") === "ASSIGNED") {
+          if (!form.methods.getValue("assignedDate")) {
+            form.methods.setValue("assignedDate", todayIso(), { triggerHooks: false });
+          }
+          return;
+        }
+        ASSIGNMENT_FIELDS.forEach((id) => {
+          if (form.methods.getValue(id)) {
+            form.methods.setValue(id, "", { triggerHooks: false });
+          }
+          form.methods.clearError(id);
+        });
+      },
     },
     {
       id: "assignedEmployee",
@@ -366,6 +419,7 @@ const useAssetConfig = ({ handleDelete } = {}) => {
       api: api + apiEndpoints.employee.employee.EmployeeHelp,
       labelKey: "employeeName",
       valueKey: "_id",
+      validate: requiredWhenAssigned("Assign to Employee is required"),
     },
     {
       id: "assignedDate",
@@ -376,6 +430,8 @@ const useAssetConfig = ({ handleDelete } = {}) => {
       prevFocusField: "assignedEmployeeId",
       nextFocusField: "expectedReturnDate",
       className: "col-span-4",
+      onChange: revalidate("expectedReturnDate"),
+      validate: requiredWhenAssigned("Assigned Date is required"),
     },
     {
       id: "expectedReturnDate",
@@ -384,8 +440,26 @@ const useAssetConfig = ({ handleDelete } = {}) => {
       placeHolder: "Select Return Date",
       required: false,
       prevFocusField: "assignedDate",
-      nextFocusField: "notes",
+      nextFocusField: "description",
       className: "col-span-4",
+      onChange: revalidate("expectedReturnDate"),
+      validate: notBeforeField(
+        "assignedDate",
+        "Expected Return Date can't be before Assigned Date",
+      ),
+    },
+  ];
+
+  const additionalInformationSchema = [
+    {
+      id: "description",
+      type: "textarea",
+      label: "Description",
+      placeHolder: "Briefly describe the asset...",
+      required: false,
+      rows: 4,
+      prevFocusField: "expectedReturnDate",
+      className: "col-span-12",
     },
   ];
 
@@ -455,6 +529,7 @@ const useAssetConfig = ({ handleDelete } = {}) => {
     purchaseInformationSchema,
     organizationInformationSchema,
     assignmentInformationSchema,
+    additionalInformationSchema,
     documentInformationSchema,
   };
 };

@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import useCityMasterConfig from "./useCityMasterConfig";
 import useModal from "@/hooks/useModal";
 import CityMasterModal from "./CityMasterModal";
@@ -83,6 +84,12 @@ const CityMasterListing = () => {
 
   useDocumentTitle("orvexa | City Master");
 
+  // Right-click menu: Edit and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+  });
+
   return (
     <>
       {isModalOpen && (
@@ -95,6 +102,7 @@ const CityMasterListing = () => {
       )}
 
       <HpGrid
+        contextData={contextData}
         id="cityListing"
         rowData={CityListingData}
         colDef={cityListingColDef}

@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { formMethod, FormRenderer } from "@/form-engine";
 import HpFooter from "@/hooks/HpFooter";
 import HpHeader from "@/hooks/HpHeader";
-import { User, X } from "lucide-react";
+import { User } from "lucide-react";
 import PermissionCard from "../../../components/layout/PermissionCard";
 import UploadCard from "../../../components/layout/UploadCard";
 import useEmployeeConfig from "./useEmployeeConfig";
@@ -12,11 +12,12 @@ import { api, apiEndpoints } from "@/api/api";
 import { formatDateForInput } from "@/utils/dateUtils";
 import useAlert from "@/hooks/useAlert";
 import { getUploadUrl, getUploadName } from "@/utils/fileUpload";
+import { HpImagePreview } from "@/components/feedback";
 
 const Employee = () => {
   const locationData = useLocation();
   const EmployeeId = locationData.state.employeeid;
-  const { successAlert } = useAlert();
+  const { successAlert, warningAlert } = useAlert();
 
   const [permissions, setPermissions] = useState({
     financialView: false,
@@ -70,13 +71,19 @@ const Employee = () => {
     ];
 
     if (!allowedTypes.includes(file.type)) {
-      alert("Only PDF, DOC and DOCX files are allowed.");
+      warningAlert({
+        title: "Invalid File Type",
+        text: "Only PDF, DOC and DOCX files are allowed.",
+      });
       return;
     }
 
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
-      alert("File size must be less than 5 MB.");
+      warningAlert({
+        title: "File Too Large",
+        text: "File size must be less than 5 MB.",
+      });
       return;
     }
 
@@ -108,7 +115,10 @@ const Employee = () => {
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
     if (!allowedTypes.includes(file.type)) {
-      alert("Please upload a JPG, JPEG, PNG or WEBP image.");
+      warningAlert({
+        title: "Invalid Image Type",
+        text: "Please upload a JPG, JPEG, PNG or WEBP image.",
+      });
       e.target.value = "";
       return;
     }
@@ -116,7 +126,10 @@ const Employee = () => {
     const maxSize = 2 * 1024 * 1024;
 
     if (file.size > maxSize) {
-      alert("Image size must be less than 2 MB.");
+      warningAlert({
+        title: "Image Too Large",
+        text: "Image size must be less than 2 MB.",
+      });
       e.target.value = "";
       return;
     }
@@ -686,29 +699,13 @@ const Employee = () => {
       </div>
 
       {showImageModal && preview && (
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-6"
-          onClick={() => setShowImageModal(false)}
-        >
-          <button
-            type="button"
-            onClick={() => setShowImageModal(false)}
-            className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
-          >
-            <X className="h-6 w-6" />
-          </button>
-
-          <div
-            className="flex h-[min(70vw,500px)] w-[min(70vw,500px)] items-center justify-center overflow-hidden rounded-full border-4 border-white bg-slate-100 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img
-              src={preview}
-              alt="Employee Profile"
-              className="h-full w-full object-cover"
-            />
-          </div>
-        </div>
+        <HpImagePreview
+          open
+          src={preview}
+          alt="Employee Profile"
+          shape="circle"
+          onClose={() => setShowImageModal(false)}
+        />
       )}
     </>
   );

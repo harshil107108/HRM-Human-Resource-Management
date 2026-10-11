@@ -35,6 +35,9 @@ export class FormStore {
       refs: {},
       listeners: new Set(),
       fieldListeners: new Map(),
+      // Errors a field widget detects while the user is typing, before it can
+      // commit a value (e.g. a date that's out of range or impossible).
+      inputErrors: {},
       _snapshot: null,
     };
 
@@ -234,7 +237,21 @@ export class FormStore {
         this.values = { ...this.initialValue };
         this.errors = {};
         this.touched = {};
+        this._private.inputErrors = {};
         this.emit();
+      },
+      /**
+       * Lets a field widget report an error in what the user has typed but
+       * the widget hasn't committed as a value. validate() treats it like any
+       * other field error, so Save is blocked and the field is focused.
+       * Pass a falsy message to clear it.
+       */
+      setInputError: (id, message) => {
+        if (message) {
+          this._private.inputErrors[id] = String(message);
+        } else {
+          delete this._private.inputErrors[id];
+        }
       },
       resetField: (id) => {
         this.values = { ...this.values, [id]: this.initialValue[id] };
@@ -291,6 +308,10 @@ export class FormStore {
           if (Object.keys(fieldErrors).length > 0) {
             Object.assign(errors, fieldErrors);
           }
+
+          // An uncommitted input error wins: the stored value is stale.
+          const inputError = this._private.inputErrors[field.id];
+          if (inputError) errors[field.id] = inputError;
         });
 
         this.errors = normalizeErrorState(errors);
@@ -307,7 +328,7 @@ export class FormStore {
         const fieldErrors = {};
         runFieldValidation.call(this, field, value, this.values, fieldErrors);
 
-        const error = fieldErrors[id];
+        const error = this._private.inputErrors[id] || fieldErrors[id];
         if (error) {
           this.errors = { ...this.errors, [id]: error };
         } else {

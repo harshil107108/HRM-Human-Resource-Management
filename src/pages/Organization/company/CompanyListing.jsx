@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useNavigate } from "react-router-dom";
 import useCompanyConfig from "./useCompanyConfig";
 import { api, apiEndpoints } from "@/api/api";
@@ -93,9 +94,16 @@ const CompanyListing = () => {
 
   useDocumentTitle("orvexa | Company");
 
+  // Right-click menu: Edit and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+  });
+
   return (
     <>
       <HpGrid
+        contextData={contextData}
         id="companyListing"
         rowData={CompanyListingData}
         colDef={companyListingColDef}

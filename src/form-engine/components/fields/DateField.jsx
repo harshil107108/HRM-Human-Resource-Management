@@ -8,6 +8,7 @@ import React, {
 import { createPortal } from "react-dom";
 import { useFormStore } from "../../hooks/useFormStore";
 import { inputClass, labelClass, wrapperClass } from "../../styles/formtheme";
+import FieldErrorTooltip from "./FieldErrorTooltip";
 
 /* ============================================================
    DateField — segmented DD/MM/YYYY input + calendar dropdown
@@ -272,10 +273,18 @@ export default function DateField({ field, form, ...standaloneProps }) {
       setDay(p.day);
       setMonth(p.month);
       setYear(p.year);
+      setError("");
       lastEmitted.current = value;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
+
+  // Report typed-but-uncommitted errors (out of range, impossible date) to
+  // the form so Save is blocked and this field gets the error tooltip.
+  useEffect(() => {
+    form?.methods.setInputError?.(id, error);
+  }, [form, id, error]);
+  useEffect(() => () => form?.methods.setInputError?.(id, null), [form, id]);
 
   // close calendar on outside click
   useEffect(() => {
@@ -587,10 +596,7 @@ export default function DateField({ field, form, ...standaloneProps }) {
   return (
     <div className={`${wrapperClass} relative`} ref={wrapperRef}>
       {displayError && isFocused && (
-        <div className="pointer-events-none absolute -top-9 left-0 z-20 max-w-[220px] rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold leading-4 text-red-700 shadow-lg">
-          <span className="absolute -bottom-1.5 left-3 h-2.5 w-2.5 rotate-45 border-b border-r border-red-200 bg-red-50" />
-          {displayError}
-        </div>
+        <FieldErrorTooltip message={displayError} />
       )}
 
       {label && (

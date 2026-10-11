@@ -5,22 +5,37 @@ import {
   CheckCircle2,
   Globe,
   Lock,
-  Mail,
+  User,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Loader2,
   Shield,
   Users,
 } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
-  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  // On success the session is set and the route guard redirects into the app.
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate("/dashboard");
+    if (submitting) return;
+    setError("");
+    setSubmitting(true);
+    const result = await login(username.trim(), password);
+    if (!result.success) {
+      setError(result.message);
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -253,7 +268,7 @@ export default function Login() {
             </h2>
 
             <p className="text-[12px] text-slate-400 font-medium mt-1">
-              Sign in with your email and password
+              Sign in with your username and password
             </p>
           </div>
 
@@ -263,26 +278,38 @@ export default function Login() {
             onSubmit={handleSubmit}
           >
 
-            {/* Email */}
+            {error && (
+              <div
+                role="alert"
+                className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-semibold text-rose-700"
+              >
+                <AlertCircle className="mt-px h-4 w-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Username */}
             <div className="space-y-1.5">
               <label
                 className="text-[10px] font-bold uppercase tracking-widest text-slate-400"
-                htmlFor="email"
+                htmlFor="username"
               >
-                Corporate Email Address
+                Username
               </label>
 
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
 
                 <input
-                  id="email"
+                  id="username"
                   required
+                  autoFocus
+                  autoComplete="username"
                   className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-9.5 pr-3 py-2.5 text-xs text-slate-950 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-semibold"
-                  placeholder="name@enterprise.hrm"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your.username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
             </div>
@@ -303,22 +330,32 @@ export default function Login() {
                 <input
                   id="password"
                   required
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-9.5 pr-3 py-2.5 text-xs text-slate-950 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-semibold"
+                  autoComplete="current-password"
+                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-9.5 pr-9 py-2.5 text-xs text-slate-950 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-semibold"
                   placeholder="••••••••••••"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
             <button
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-rose-500 hover:from-indigo-500 hover:via-purple-500 hover:to-rose-450 text-white text-xs font-bold rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all cursor-pointer"
               type="submit"
+              disabled={submitting}
             >
-              <span>Sign In to Workspace</span>
+              <span>{submitting ? "Signing in…" : "Sign In to Workspace"}</span>
 
-              <ArrowRight className="w-3.5 h-3.5" />
+              {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
             </button>
 
           </form>

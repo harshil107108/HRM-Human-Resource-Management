@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useLocation, useNavigate } from "react-router-dom";
 import useAssetConfig from "./useAssetConfig";
 import useAlert from "@/hooks/useAlert";
@@ -44,7 +45,7 @@ const AssetListing = () => {
       onClick: async () => {
         const res = await apiCall({
           id: "deleteAsset",
-          api: api + apiEndpoints.employee,
+          api: api + apiEndpoints.employee.asset.AssetDeleteByID,
           payload: {
             _id: id,
           },
@@ -445,6 +446,15 @@ const AssetListing = () => {
     );
   };
 
+  // Right-click menu: Edit, status changes and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+    statusCards: assetSummary,
+    statusField: "assetStatus",
+    onStatusChange: handleRequestStatusChange,
+  });
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
       {/* 6 Modern Status Cards */}
@@ -487,6 +497,7 @@ const AssetListing = () => {
       {/* Grid listing */}
       <div className="min-h-0 flex-1">
         <HpGrid
+          contextData={contextData}
           id="assetListing"
           title="Asset"
           rowData={AssetListingData}

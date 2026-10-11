@@ -5,6 +5,7 @@ import {
   textareaClass,
   wrapperClass,
 } from "../../styles/formtheme";
+import FieldErrorTooltip from "./FieldErrorTooltip";
 
 export default function TextareaField({ field, form }) {
   const { id, label, placeHolder, disabled, maxLength, rows } = field;
@@ -46,10 +47,7 @@ export default function TextareaField({ field, form }) {
   return (
     <div className={`${wrapperClass} relative`}>
       {error && isFocused && (
-        <div className="pointer-events-none absolute -top-9 left-0 z-20 max-w-[220px] rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold leading-4 text-red-700 shadow-lg">
-          <span className="absolute -bottom-1.5 left-3 h-2.5 w-2.5 rotate-45 border-b border-r border-red-200 bg-red-50" />
-          {error}
-        </div>
+        <FieldErrorTooltip message={error} />
       )}
 
       {label && (

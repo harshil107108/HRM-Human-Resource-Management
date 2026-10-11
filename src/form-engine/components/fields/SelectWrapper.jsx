@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Select from "react-select";
 import { useFormStore } from "../../hooks/useFormStore";
 import { labelClass, wrapperClass } from "../../styles/formtheme";
+import { beginActivity } from "../../../utils/networkActivity";
+import FieldErrorTooltip from "./FieldErrorTooltip";
 
 export function shouldHandleSelectKeyDown(event, { form, id }) {
   if (event.key === "Tab" && event.shiftKey) {
@@ -70,6 +72,9 @@ export default function SelectWrapper({ field, form }) {
         return;
       }
 
+      // Lets page loaders wait until dropdown options have arrived.
+      const endActivity = beginActivity();
+
       try {
         setLoading(true);
         setApiError("");
@@ -110,6 +115,7 @@ export default function SelectWrapper({ field, form }) {
           setApiError(error?.message || "Failed to load options");
         }
       } finally {
+        endActivity();
         if (isMounted) {
           setLoading(false);
         }
@@ -422,10 +428,7 @@ export default function SelectWrapper({ field, form }) {
   return (
     <div className={`${wrapperClass} relative`}>
       {displayError && isFocused && (
-        <div className="pointer-events-none absolute -top-9 left-0 z-20 max-w-[220px] rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold leading-4 text-red-700 shadow-lg">
-          <span className="absolute -bottom-1.5 left-3 h-2.5 w-2.5 rotate-45 border-b border-r border-red-200 bg-red-50" />
-          {displayError}
-        </div>
+        <FieldErrorTooltip message={displayError} />
       )}
 
       {label && (

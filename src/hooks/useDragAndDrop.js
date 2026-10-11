@@ -279,8 +279,11 @@ export const useDragAndDrop = (options = {}) => {
       setActiveDropMeta(null);
 
       if (droppedData) {
-        dropOptions.onDrop?.(droppedData, targetId, meta, event);
-        globalOnDrop?.(droppedData, targetId, meta, event);
+        if (typeof dropOptions.onDrop === "function") {
+          dropOptions.onDrop(droppedData, targetId, meta, event);
+        } else if (typeof globalOnDrop === "function") {
+          globalOnDrop(droppedData, targetId, meta, event);
+        }
       }
 
       cancelDrag();

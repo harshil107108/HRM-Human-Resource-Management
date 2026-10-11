@@ -196,8 +196,9 @@ registerCellType("actions", {
         <button
           type="button"
           className="hp-grid-action-btn hp-grid-action-btn--delete"
-          title={colDef.actionLabel || "Delete"}
-          onClick={() => colDef.onClick(row, rowIndex)}
+          title={colDef.deleteDisabled ? "You don't have permission" : colDef.actionLabel || "Delete"}
+          disabled={colDef.deleteDisabled}
+          onClick={() => !colDef.deleteDisabled && colDef.onClick(row, rowIndex)}
         >
           <TrashIcon />
         </button>
@@ -206,8 +207,9 @@ registerCellType("actions", {
         <button
           type="button"
           className="hp-grid-action-btn hp-grid-action-btn--edit"
-          title="Edit"
-          onClick={() => colDef.onEdit(row, rowIndex)}
+          title={colDef.editDisabled ? "You don't have permission" : "Edit"}
+          disabled={colDef.editDisabled}
+          onClick={() => !colDef.editDisabled && colDef.onEdit(row, rowIndex)}
         >
           <PencilIcon />
         </button>
@@ -216,8 +218,9 @@ registerCellType("actions", {
         <button
           type="button"
           className="hp-grid-action-btn hp-grid-action-btn--delete"
-          title="Delete"
-          onClick={() => colDef.onDelete(row, rowIndex)}
+          title={colDef.deleteDisabled ? "You don't have permission" : "Delete"}
+          disabled={colDef.deleteDisabled}
+          onClick={() => !colDef.deleteDisabled && colDef.onDelete(row, rowIndex)}
         >
           <TrashIcon />
         </button>

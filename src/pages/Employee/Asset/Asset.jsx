@@ -1,10 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { formMethod, FormRenderer } from "@/form-engine";
-import { Image, Upload, X } from "lucide-react";
+import { Image, Upload } from "lucide-react";
 
 import HpFooter from "@/hooks/HpFooter";
 import HpHeader from "@/hooks/HpHeader";
-import useAssetConfig from "./useAssetConfig";
+import useAssetConfig, { ASSIGNMENT_FIELDS } from "./useAssetConfig";
 
 import { useLocation, useNavigate } from "react-router-dom";
 import useApiCall from "@/hooks/useApiCall";
@@ -13,6 +13,7 @@ import { formatDateForInput } from "@/utils/dateUtils";
 import useAlert from "@/hooks/useAlert";
 import UploadCard from "@/components/layout/UploadCard";
 import { getUploadUrl, getUploadName } from "@/utils/fileUpload";
+import { HpImagePreview } from "@/components/feedback";
 
 const Asset = () => {
   const locationData = useLocation();
@@ -20,7 +21,7 @@ const Asset = () => {
 
   const navigate = useNavigate();
   const { apiCall } = useApiCall();
-  const { successAlert } = useAlert();
+  const { successAlert, warningAlert } = useAlert();
 
   const [assetImage, setAssetImage] = useState(null);
   const [assetImagePreview, setAssetImagePreview] = useState(null);
@@ -52,6 +53,7 @@ const Asset = () => {
     purchaseInformationSchema,
     organizationInformationSchema,
     assignmentInformationSchema,
+    additionalInformationSchema,
   } = useAssetConfig();
 
   const generateEmployeeId = () => {
@@ -70,10 +72,44 @@ const Asset = () => {
         ...purchaseInformationSchema,
         ...organizationInformationSchema,
         ...assignmentInformationSchema,
+        ...additionalInformationSchema,
       ],
       initialValue,
     });
   }, []);
+
+  // End dates can't be earlier than their start dates: pass the start date
+  // as the date picker's `min` so earlier days are disabled.
+  const assignedDate = formmethod.methods.watch("assignedDate");
+  const warrantyStartDate = formmethod.methods.watch("warrantyStartDate");
+
+  const withMinDate = (schema, fieldId, min) =>
+    schema.map((field) =>
+      field.id === fieldId ? { ...field, min: min || undefined } : field,
+    );
+
+  const purchaseSchemaWithLimits = withMinDate(
+    purchaseInformationSchema,
+    "warrantyEndDate",
+    warrantyStartDate,
+  );
+  // Employee / dates are only editable (and the first two required) while
+  // the asset is ASSIGNED. The status field's onChange clears them otherwise.
+  const isAssigned = formmethod.methods.watch("assetStatus") === "ASSIGNED";
+
+  const assignmentSchemaWithLimits = withMinDate(
+    assignmentInformationSchema,
+    "expectedReturnDate",
+    assignedDate,
+  ).map((field) =>
+    ASSIGNMENT_FIELDS.includes(field.id)
+      ? {
+          ...field,
+          disabled: !isAssigned,
+          required: isAssigned && field.id !== "expectedReturnDate",
+        }
+      : field,
+  );
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -83,7 +119,10 @@ const Asset = () => {
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
     if (!allowedTypes.includes(file.type)) {
-      alert("Please upload a JPG, JPEG, PNG or WEBP image.");
+      warningAlert({
+        title: "Invalid Image Type",
+        text: "Please upload a JPG, JPEG, PNG or WEBP image.",
+      });
       e.target.value = "";
       return;
     }
@@ -91,7 +130,10 @@ const Asset = () => {
     const maxSize = 2 * 1024 * 1024;
 
     if (file.size > maxSize) {
-      alert("Image size must be less than 2 MB.");
+      warningAlert({
+        title: "Image Too Large",
+        text: "Image size must be less than 2 MB.",
+      });
       e.target.value = "";
       return;
     }
@@ -138,16 +180,20 @@ const Asset = () => {
     ];
 
     if (!allowedTypes.includes(file.type)) {
-      alert(
-        "Only PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG or WEBP files are allowed.",
-      );
+      warningAlert({
+        title: "Invalid File Type",
+        text: "Only PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG or WEBP files are allowed.",
+      });
       return;
     }
 
     const maxSize = 10 * 1024 * 1024;
 
     if (file.size > maxSize) {
-      alert("File size must be less than 10 MB.");
+      warningAlert({
+        title: "File Too Large",
+        text: "File size must be less than 10 MB.",
+      });
       return;
     }
 
@@ -457,7 +503,7 @@ const Asset = () => {
               <div className="p-4">
                 <FormRenderer
                   formMethod={formmethod}
-                  formSchema={purchaseInformationSchema}
+                  formSchema={purchaseSchemaWithLimits}
                 />
               </div>
             </div>
@@ -493,7 +539,7 @@ const Asset = () => {
               <div className="p-4">
                 <FormRenderer
                   formMethod={formmethod}
-                  formSchema={assignmentInformationSchema}
+                  formSchema={assignmentSchemaWithLimits}
                 />
               </div>
             </div>
@@ -556,26 +602,10 @@ const Asset = () => {
               </div>
 
               <div className="p-4">
-                <label
-                  htmlFor="assetDescription"
-                  className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500"
-                >
-                  Description
-                </label>
-
-                <div className="w-full">
-                  <textarea
-                    id="assetDescription"
-                    name="assetDescription"
-                    rows={4}
-                    value={formmethod.methods.watch("description") || ""}
-                    onChange={(e) =>
-                      formmethod.methods.setValue("description", e.target.value)
-                    }
-                    placeholder="Briefly describe the asset..."
-                    className="w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
+                <FormRenderer
+                  formMethod={formmethod}
+                  formSchema={additionalInformationSchema}
+                />
               </div>
             </div>
           </div>
@@ -588,29 +618,12 @@ const Asset = () => {
         </div>
       </div>
       {showImageModal && assetImagePreview && (
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-6"
-          onClick={() => setShowImageModal(false)}
-        >
-          <button
-            type="button"
-            onClick={() => setShowImageModal(false)}
-            className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
-          >
-            <X className="h-6 w-6" />
-          </button>
-
-          <div
-            className="flex max-h-[80vh] max-w-[80vw] items-center justify-center overflow-hidden rounded-lg border-4 border-white bg-slate-100 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img
-              src={assetImagePreview}
-              alt="Asset"
-              className="max-h-[75vh] max-w-[75vw] object-contain"
-            />
-          </div>
-        </div>
+        <HpImagePreview
+          open
+          src={assetImagePreview}
+          alt="Asset"
+          onClose={() => setShowImageModal(false)}
+        />
       )}
     </>
   );

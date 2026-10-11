@@ -80,6 +80,12 @@ const LeaveBalanceModal = ({
             schema: activeSchema,
             initialValue: formattedData,
         });
+    }, []);
+
+    // Keep a single form instance so values loaded by getById survive
+    // when dropdown options arrive; only push the new options in.
+    useEffect(() => {
+        formInstance.methods.setSchema(activeSchema);
     }, [activeSchema]);
 
     const getBalanceById = async () => {

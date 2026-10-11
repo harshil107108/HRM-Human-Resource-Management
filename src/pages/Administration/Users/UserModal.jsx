@@ -67,8 +67,8 @@ const UserModal = ({
                     api: api + apiEndpoints.administration.user.UserGetByID,
                     payload: { _id: userId }
                 });
-                if (res?.success && res.data) {
-                    setEditData(res.data);
+                if (res?.success && res.data?.data) {
+                    setEditData(res.data.data);
                 }
             } catch (err) {
                 console.error("Failed to fetch user", err);
@@ -145,7 +145,8 @@ const UserModal = ({
             });
             onSaved?.();
             closeModal?.();
-        } else {
+        } else if (!res?.error) {
+            // useApiCall already reported request failures; only cover other cases.
             errorAlert({
                 title: "Error",
                 text: res?.message || "Failed to save user account"

@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useEffect, useState } from "react";
 import useLeaveTypeConfig from "./useLeaveTypeConfig";
 import useModal from "@/hooks/useModal";
@@ -77,6 +78,12 @@ const LeaveTypeListing = () => {
 
   useDocumentTitle("orvexa | Leave Types");
 
+  // Right-click menu: Edit and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+  });
+
   return (
     <>
       {isModalOpen && (
@@ -88,6 +95,7 @@ const LeaveTypeListing = () => {
         />
       )}
       <HpGrid
+        contextData={contextData}
         id="leaveTypeListing"
         rowData={leaveTypeData}
         colDef={leaveTypeListingColDef}

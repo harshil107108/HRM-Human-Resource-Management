@@ -18,7 +18,7 @@ const SalaryStructureModal = ({ onModalClose, onSaved, open, extraParams }) => {
       schema: [...salaryStructureSchema],
       initialValue,
     });
-  }, [salaryStructureSchema]);
+  }, []);
 
   const handleSave = async () => {
     const result = await formmethod.methods.handleFormSave(

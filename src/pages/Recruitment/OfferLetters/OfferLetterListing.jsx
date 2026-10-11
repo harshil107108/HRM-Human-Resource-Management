@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import useOfferLetterConfig from "./useOfferLetterConfig";
 import useModal from "@/hooks/useModal";
@@ -21,7 +22,7 @@ import {
 
 const OfferLetterListing = () => {
   const { apiCall, isPending } = useApiCall();
-  const { deleteAlert, successAlert } = useAlert();
+  const { deleteAlert, successAlert, warningAlert } = useAlert();
 
   const [offerListingData, setOfferListingData] = useState([]);
   const [selectedFilterStatus, setSelectedFilterStatus] = useState("");
@@ -84,7 +85,7 @@ const OfferLetterListing = () => {
       const jobOpeningId = offer.jobOpening?._id || offer.jobOpening;
 
       if (targetStatus === "Accepted") {
-        // 1. Update offer status to Accepted
+        // Update offer status to Accepted (backend automatically updates candidate stage to Hired and creates Onboarding record)
         await apiCall({
           id: "updateOfferStatus",
           api: api + apiEndpoints.recruitment.offer.OfferAddEdit,
@@ -93,38 +94,6 @@ const OfferLetterListing = () => {
             status: "Accepted",
           },
         });
-
-        // 2. Update candidate stage to Hired
-        if (candidateId) {
-          await apiCall({
-            id: "updateCandidateStageHired",
-            api: api + apiEndpoints.recruitment.candidate.CandidateAddEdit,
-            payload: {
-              _id: candidateId,
-              stage: "Hired",
-            },
-          });
-        }
-
-        // 3. Move profile to Onboarding module (create Onboarding record)
-        try {
-          await apiCall({
-            id: "createOnboardingForAccepted",
-            api: api + apiEndpoints.recruitment.onboarding.OnboardingAddEdit,
-            payload: {
-              candidate: candidateId,
-              jobOpening: jobOpeningId,
-              orientationDate:
-                offer.joiningDate ||
-                new Date(Date.now() + 7 * 86400000).toISOString(),
-              status: "In Progress",
-              progressPercentage: 20,
-              notes: "Offer letter accepted by candidate. Automatically moved to Onboarding.",
-            },
-          });
-        } catch (onboardingErr) {
-          console.warn("Onboarding auto-create notice:", onboardingErr);
-        }
 
         successAlert({
           title: "Offer Accepted!",
@@ -167,10 +136,21 @@ const OfferLetterListing = () => {
         return;
       }
 
+      // Requirement: Offer letter must be "Sent" before it can be Accepted or Declined
+      if (
+        (targetStatus === "Accepted" || targetStatus === "Declined") &&
+        offer.status !== "Sent"
+      ) {
+        warningAlert({
+          title: "Offer Must Be Sent First",
+          text: `Offer letter for "${offer.candidateName || "Candidate"}" is currently in "${offer.status || "Draft"}". You must send the offer letter to the candidate before it can be marked as ${statusTitle || targetStatus}.`,
+        });
+        return;
+      }
+
       executeStatusUpdate(offer, targetStatus, statusTitle);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [executeStatusUpdate],
+    [executeStatusUpdate, successAlert, warningAlert],
   );
 
   // Drag and Drop Hook
@@ -307,42 +287,59 @@ const OfferLetterListing = () => {
 
   useDocumentTitle("orvexa | Offer Letters");
 
+  // Right-click menu: Edit, status changes and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+    statusCards: offerSummary,
+    statusField: "status",
+    onStatusChange: handleRequestStatusChange,
+  });
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
       {/* 6 Modern Status Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mt-3 mr-2">
-        {offerSummary.map((item) => (
-          <div key={item.id}>
-            <StatusCard
-              {...item}
-              isSelectedFilter={
-                item.status
-                  ? selectedFilterStatus === item.status
-                  : selectedFilterStatus === ""
-              }
-              isDraggingAny={isDragging}
-              isDropTarget={isDropTarget(item.status)}
-              onDragOver={(e) =>
-                handleDragOver(e, item.status, {
-                  disabled: item.isDisabled,
-                  acceptTypes: ["OFFER_CARD"],
-                  meta: item,
-                })
-              }
-              onDragLeave={(e) => handleDragLeave(e, item.status)}
-              onDrop={(e) =>
-                handleDrop(e, item.status, {
-                  disabled: item.isDisabled,
-                  acceptTypes: ["OFFER_CARD"],
-                  meta: item,
-                  onDrop: (offer) =>
-                    handleRequestStatusChange(offer, item.status, item.title),
-                })
-              }
-              onClick={() => handleStatusCardClick(item.status)}
-            />
-          </div>
-        ))}
+        {offerSummary.map((item) => {
+          const isDropDisabled =
+            item.isDisabled ||
+            (isDragging &&
+              (item.status === "Accepted" || item.status === "Declined") &&
+              draggingOffer?.status !== "Sent");
+
+          return (
+            <div key={item.id}>
+              <StatusCard
+                {...item}
+                isSelectedFilter={
+                  item.status
+                    ? selectedFilterStatus === item.status
+                    : selectedFilterStatus === ""
+                }
+                isDraggingAny={isDragging}
+                isDropTarget={!isDropDisabled && isDropTarget(item.status)}
+                onDragOver={(e) =>
+                  handleDragOver(e, item.status, {
+                    disabled: isDropDisabled,
+                    acceptTypes: ["OFFER_CARD"],
+                    meta: item,
+                  })
+                }
+                onDragLeave={(e) => handleDragLeave(e, item.status)}
+                onDrop={(e) =>
+                  handleDrop(e, item.status, {
+                    disabled: isDropDisabled,
+                    acceptTypes: ["OFFER_CARD"],
+                    meta: item,
+                    onDrop: (offer) =>
+                      handleRequestStatusChange(offer, item.status, item.title),
+                  })
+                }
+                onClick={() => handleStatusCardClick(item.status)}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {isModalOpen && (
@@ -357,6 +354,7 @@ const OfferLetterListing = () => {
       {/* Grid listing with both List and Cards view */}
       <div className="min-h-0 flex-1">
         <HpGrid
+          contextData={contextData}
           id="offerLetterListing"
           rowData={displayedOffers}
           colDef={offerListingColDef}
@@ -366,6 +364,7 @@ const OfferLetterListing = () => {
           onAddClick={handleAdd}
           title="Offer Letters"
           toggle
+          defaultView="card"
           cardTitleField="candidateName"
           cardSubtitleField="jobTitle"
           cardStatusField="status"

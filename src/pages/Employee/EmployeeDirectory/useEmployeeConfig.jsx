@@ -701,24 +701,10 @@ const useEmployeeConfig = ({ handleDelete } = {}) => {
       className: "col-span-4",
       prevFocusField: "password",
       nextFocusField: "userGroup",
-      options: [
-        {
-          label: "Standard Employee",
-          value: "EMPLOYEE",
-        },
-        {
-          label: "Manager",
-          value: "MANAGER",
-        },
-        {
-          label: "HR",
-          value: "HR",
-        },
-        {
-          label: "Administrator",
-          value: "ADMIN",
-        },
-      ],
+      // Roles come from the Role master; employees store the role code.
+      api: api + apiEndpoints.administration.role.RoleHelp,
+      labelKey: "roleName",
+      valueKey: "roleCode",
     },
     {
       id: "userGroup",

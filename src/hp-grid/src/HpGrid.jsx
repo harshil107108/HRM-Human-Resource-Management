@@ -11,7 +11,9 @@ import { registerGrid, unregisterGrid } from "./GridRegistry";
 import GridRow from "./GridRow";
 import GridContextMenu from "./GridContextMenu";
 import { PlusIcon, SearchIcon } from "./icons";
-import { LayoutGrid, List, ChevronRight } from "lucide-react";
+import { LayoutGrid, List, ChevronRight, ChevronDown, ChevronsUpDown, ChevronsDownUp, Folder, FolderOpen, CornerDownRight, Eye, Lock } from "lucide-react";
+import { useRouteAccess } from "@/context/RouteAccessContext";
+import NoPermission from "@/components/common/NoPermission";
 import { generateUUID, ensureRowIds, getColumnStyle } from "./utils";
 import { Lottie } from "lottie-react";
 import loadingAnimation from "../../assets/images/Animation.json";
@@ -163,7 +165,7 @@ function getCardStatusTone(status) {
   return "hp-grid-card-status--neutral";
 }
 
-function HpGrid(props) {
+function HpGridBase(props) {
   const {
     id,
     rowData: initialRowData = [],
@@ -193,7 +195,10 @@ function HpGrid(props) {
     onSearchChange, // (term) => void -- optional external listener
     addButtonLabel = "Add New", // e.g. "+ Add Database" / "+ Add Group"
     onAddClick, // if provided, the "+ Add" button is shown
+    addDisabled = false, // shows the Add button disabled (no Add permission)
+    addDisabledReason = "You don't have permission to add",
     toggle = false,
+    defaultView = "list", // "list" | "card"
     cardTitleField,
     cardSubtitleField,
     cardFields,
@@ -219,6 +224,13 @@ function HpGrid(props) {
     columnFilterable = true, // set false to hide the whole filter row
     filterPlaceholder = "Filter...", // default placeholder for text/number/date filter inputs
     onColumnFiltersChange, // (filters) => void -- optional external listener, fires with the full { field: value } map
+
+    // ---- tree expand / collapse support ----
+    expand = false,
+    defaultExpanded = false,
+    treeField,
+    childrenField = "children",
+    parentIdField = "parentMenu",
 
     // ---- keyboard behaviour ----
     // 'right' (default): Enter commits the value and moves focus to the
@@ -252,13 +264,144 @@ function HpGrid(props) {
     colIndex: null,
   });
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("list");
+  const [viewMode, setViewMode] = useState(defaultView);
   const [columnResize, setColumnResize] = useState(null);
   // Context menu state for right click on row
   const [contextMenu, setContextMenu] = useState(null);
   // Per-column filters: { [field]: filterValue }. Only fields with a
   // non-empty value are considered "active" - see displayRows below.
   const [columnFilters, setColumnFiltersState] = useState({});
+
+  // Tree expand/collapse state
+  const [expandedRowKeys, setExpandedRowKeys] = useState(() => new Set());
+  const [hasInitializedExpanded, setHasInitializedExpanded] = useState(false);
+
+  // Group rows if expand is true
+  const treeModel = useMemo(() => {
+    if (!expand || !Array.isArray(rowData) || !rowData.length) return null;
+
+    const getId = (r) => String(r._id || r.id || r.menuCode || "");
+    const getParentVal = (r) => {
+      const p = r[parentIdField] ?? r.parentId ?? r.parent;
+      if (!p) return null;
+      if (typeof p === "object") return String(p._id || p.id || p.menuCode || "");
+      return String(p);
+    };
+
+    const hasPreNested = rowData.some((r) => Array.isArray(r[childrenField]) && r[childrenField].length > 0);
+    if (hasPreNested) {
+      const parentKeys = new Set();
+      const roots = rowData.map((r, idx) => {
+        const key = getId(r) || `row_${idx}`;
+        const kids = (r[childrenField] || []).map((k, kIdx) => ({
+          ...k,
+          _rowKey: getId(k) || `${key}_k_${kIdx}`,
+          _isChild: true,
+          _level: 1,
+          _parentId: key,
+          _parentName: r.menuName || r.displayName || r.name || "",
+        }));
+        if (kids.length > 0) parentKeys.add(key);
+        return {
+          ...r,
+          _rowKey: key,
+          _isParent: kids.length > 0,
+          _hasChildren: kids.length > 0,
+          _childrenCount: kids.length,
+          _children: kids,
+          _level: 0,
+        };
+      });
+      return { roots, parentKeys };
+    }
+
+    const roots = [];
+    const childrenMap = new Map();
+    const parentKeys = new Set();
+
+    rowData.forEach((r, idx) => {
+      const pid = getParentVal(r);
+      const key = getId(r) || `row_${idx}`;
+      if (!pid) {
+        roots.push({ ...r, _rowKey: key, _level: 0 });
+      } else {
+        if (!childrenMap.has(pid)) childrenMap.set(pid, []);
+        childrenMap.get(pid).push({
+          ...r,
+          _rowKey: key,
+          _isChild: true,
+          _level: 1,
+          _parentId: pid,
+        });
+      }
+    });
+
+    const assembledRoots = roots.map((root) => {
+      const key = root._rowKey;
+      const kids = (childrenMap.get(key) || []).map((k) => ({
+        ...k,
+        _parentName: root.menuName || root.displayName || root.name || "",
+      }));
+      childrenMap.delete(key);
+      if (kids.length > 0) parentKeys.add(key);
+      return {
+        ...root,
+        _isParent: kids.length > 0,
+        _hasChildren: kids.length > 0,
+        _childrenCount: kids.length,
+        _children: kids,
+      };
+    });
+
+    childrenMap.forEach((orphanKids) => {
+      orphanKids.forEach((k) => {
+        assembledRoots.push({ ...k, _isChild: false, _hasChildren: false, _children: [] });
+      });
+    });
+
+    return { roots: assembledRoots, parentKeys };
+  }, [expand, rowData, childrenField, parentIdField]);
+
+  useEffect(() => {
+    if (expand && treeModel?.parentKeys && !hasInitializedExpanded) {
+      if (defaultExpanded) {
+        setExpandedRowKeys(new Set(treeModel.parentKeys));
+      } else {
+        setExpandedRowKeys(new Set());
+      }
+      setHasInitializedExpanded(true);
+    }
+  }, [expand, treeModel, defaultExpanded, hasInitializedExpanded]);
+
+  const toggleRowExpanded = useCallback((rowKey) => {
+    setExpandedRowKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(rowKey)) {
+        next.delete(rowKey);
+      } else {
+        next.add(rowKey);
+      }
+      return next;
+    });
+  }, []);
+
+  const expandAll = useCallback(() => {
+    if (treeModel?.parentKeys) {
+      setExpandedRowKeys(new Set(treeModel.parentKeys));
+    }
+  }, [treeModel]);
+
+  const collapseAll = useCallback(() => {
+    setExpandedRowKeys(new Set());
+  }, []);
+
+  const areAllExpanded = useMemo(() => {
+    if (!treeModel?.parentKeys?.size) return false;
+    for (const key of treeModel.parentKeys) {
+      if (!expandedRowKeys.has(key)) return false;
+    }
+    return true;
+  }, [treeModel, expandedRowKeys]);
 
   useEffect(() => {
     setRowDataState(ensureRowIds(initialRowData));
@@ -890,7 +1033,181 @@ function HpGrid(props) {
     [columnFilters],
   );
 
+  const effectiveColDef = useMemo(() => {
+    if (!expand) return colDef;
+
+    const targetField =
+      treeField ||
+      colDef.find((c) => c.type !== "actions" && c.type !== "checkbox" && c.type !== "status")?.field ||
+      colDef[0]?.field;
+
+    return colDef.map((col) => {
+      if (col.field !== targetField) return col;
+
+      const userRender = col.render;
+
+      return {
+        ...col,
+        render: (value, row, rowIndex) => {
+          const rawContent = userRender
+            ? userRender(value, row, rowIndex)
+            : col.type === "status"
+              ? value
+              : value ?? "-";
+
+          const hasKids = Boolean(row._hasChildren);
+          const isKid = Boolean(row._isChild || (row._level > 0));
+          const isExp = Boolean(row._isExpanded);
+
+          return (
+            <div
+              className={`hp-grid-tree-cell ${isKid ? "hp-grid-tree-cell--child" : "hp-grid-tree-cell--parent"}`}
+              style={isKid ? { paddingLeft: `${(row._level || 1) * 26}px` } : undefined}
+              onClick={
+                hasKids
+                  ? (e) => {
+                      e.stopPropagation();
+                      toggleRowExpanded(row._rowKey);
+                    }
+                  : undefined
+              }
+            >
+              {hasKids ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleRowExpanded(row._rowKey);
+                    }}
+                    className={`hp-grid-tree-btn ${isExp ? "hp-grid-tree-btn--expanded" : ""}`}
+                    title={isExp ? "Collapse group" : "Expand group"}
+                    aria-expanded={isExp}
+                  >
+                    {isExp ? (
+                      <ChevronDown size={13} className="hp-grid-tree-chevron" />
+                    ) : (
+                      <ChevronRight size={13} className="hp-grid-tree-chevron" />
+                    )}
+                  </button>
+                  <span className="hp-grid-tree-folder-wrap" aria-hidden="true">
+                    {isExp ? (
+                      <FolderOpen size={16} className="hp-grid-tree-folder text-blue-600 fill-blue-100" />
+                    ) : (
+                      <Folder size={16} className="hp-grid-tree-folder text-slate-500 fill-slate-100" />
+                    )}
+                  </span>
+                </>
+              ) : isKid ? (
+                <div className="hp-grid-tree-branch-wrap" aria-hidden="true">
+                  <CornerDownRight size={13} className="hp-grid-tree-corner-icon text-slate-400 stroke-[2.2]" />
+                  <span className="hp-grid-tree-child-dot" />
+                </div>
+              ) : (
+                <span className="hp-grid-tree-empty-spacer" />
+              )}
+
+              <div className="hp-grid-tree-text truncate flex-1 font-medium">
+                {rawContent}
+              </div>
+
+              {hasKids && (
+                <span
+                  className="hp-grid-tree-badge"
+                  title={`${row._childrenCount} sub-items under ${row.menuName || "this module"}`}
+                >
+                  <span className="hp-grid-tree-badge-count">{row._childrenCount}</span>
+                  <span className="hp-grid-tree-badge-label">routes</span>
+                </span>
+              )}
+            </div>
+          );
+        },
+      };
+    });
+  }, [colDef, expand, treeField, toggleRowExpanded]);
+
+  const resolvedRowClassName = useCallback(
+    (row, rowIndex) => {
+      const userClass =
+        typeof rowClassName === "function"
+          ? rowClassName(row, rowIndex)
+          : rowClassName || "";
+      if (!expand) return userClass;
+
+      const treeClass = row._hasChildren
+        ? "hp-grid-row--parent font-semibold"
+        : row._isChild
+          ? "hp-grid-row--child"
+          : "";
+      return [userClass, treeClass].filter(Boolean).join(" ");
+    },
+    [rowClassName, expand]
+  );
+
   const displayRows = useMemo(() => {
+    if (expand && treeModel) {
+      const { roots } = treeModel;
+      const flattened = [];
+      const term = searchable && searchTerm.trim() ? searchTerm.trim().toLowerCase() : "";
+      const hasColumnFilters = columnFilterable && activeColumnFilterFields.length > 0;
+
+      const rowMatchesFilters = (r) => {
+        if (!hasColumnFilters) return true;
+        return activeColumnFilterFields.every((field) => {
+          const col = colDef.find((c) => c.field === field);
+          if (!col) return true;
+          const filterType = getColumnFilterType(col);
+          return matchesColumnFilter(
+            r[field],
+            columnFilters[field],
+            filterType,
+            col,
+          );
+        });
+      };
+
+      const rowMatchesSearch = (r) => {
+        if (!term) return true;
+        return colDef.some((col) =>
+          String(r[col.field] ?? "").toLowerCase().includes(term)
+        );
+      };
+
+      const isFiltering = Boolean(term || hasColumnFilters);
+
+      roots.forEach((root) => {
+        const isExp = expandedRowKeys.has(root._rowKey);
+        const kids = root._children || [];
+
+        if (isFiltering) {
+          const rootMatches = rowMatchesSearch(root) && rowMatchesFilters(root);
+          const matchingKids = kids.filter(
+            (kid) => rowMatchesSearch(kid) && rowMatchesFilters(kid)
+          );
+
+          if (rootMatches || matchingKids.length > 0) {
+            flattened.push({
+              ...root,
+              _isExpanded: true,
+            });
+            const toShow = rootMatches ? kids : matchingKids;
+            toShow.forEach((k) => flattened.push(k));
+          }
+        } else {
+          flattened.push({
+            ...root,
+            _isExpanded: isExp,
+          });
+          if (isExp) {
+            kids.forEach((k) => flattened.push(k));
+          }
+        }
+      });
+
+      return flattened.map((row, rowIndex) => ({ row, rowIndex }));
+    }
+
     let indexed = safeRowData.map((row, rowIndex) => ({ row, rowIndex }));
 
     if (searchable && searchTerm.trim()) {
@@ -922,6 +1239,9 @@ function HpGrid(props) {
 
     return indexed;
   }, [
+    expand,
+    treeModel,
+    expandedRowKeys,
     rowData,
     colDef,
     searchable,
@@ -1058,7 +1378,14 @@ function HpGrid(props) {
     );
   };
 
-  const showToolbar = Boolean(title || icon || searchable || onAddClick || toggle);
+  const showToolbar = Boolean(
+    title ||
+      icon ||
+      searchable ||
+      onAddClick ||
+      toggle ||
+      (expand && treeModel?.parentKeys?.size > 0),
+  );
   const isCardView = toggle && viewMode === "card";
   const cardTitleColumn =
     colDef.find((col) => col.field === cardTitleField) ||
@@ -1073,13 +1400,13 @@ function HpGrid(props) {
     const fields = Array.isArray(cardFields)
       ? cardFields
       : colDef
-          .filter(
-            (col) =>
-              col.type !== "actions" &&
-              col.field !== cardTitleColumn?.field &&
-              col.field !== cardStatusColumn?.field,
-          )
-          .slice(0, 4);
+        .filter(
+          (col) =>
+            col.type !== "actions" &&
+            col.field !== cardTitleColumn?.field &&
+            col.field !== cardStatusColumn?.field,
+        )
+        .slice(0, 4);
 
     return fields
       .map((item) => (typeof item === "string" ? { field: item } : item))
@@ -1120,6 +1447,21 @@ function HpGrid(props) {
             {title && <span>{title}</span>}
           </div>
           <div className="hp-grid-toolbar-actions">
+            {expand && treeModel?.parentKeys?.size > 0 && (
+              <button
+                type="button"
+                onClick={areAllExpanded ? collapseAll : expandAll}
+                className="hp-grid-tree-expand-all"
+                title={areAllExpanded ? "Collapse All Groups" : "Expand All Groups"}
+              >
+                {areAllExpanded ? (
+                  <ChevronsDownUp size={14} />
+                ) : (
+                  <ChevronsUpDown size={14} />
+                )}
+                <span>{areAllExpanded ? "Collapse All" : "Expand All"}</span>
+              </button>
+            )}
             {searchable && (
               <div className="hp-grid-search">
                 <SearchIcon className="hp-grid-search-icon" />
@@ -1173,9 +1515,12 @@ function HpGrid(props) {
               <button
                 type="button"
                 className="hp-grid-add-btn"
-                onClick={onAddClick}
+                onClick={addDisabled ? undefined : onAddClick}
+                disabled={addDisabled}
+                aria-disabled={addDisabled || undefined}
+                title={addDisabled ? addDisabledReason : undefined}
               >
-                <PlusIcon />
+                {addDisabled ? <Lock size={14} /> : <PlusIcon />}
                 {addButtonLabel}
               </button>
             )}
@@ -1190,37 +1535,37 @@ function HpGrid(props) {
           >
             {!isCardView && (
               <div className="hp-grid-header" style={{ height: headerHeight }}>
-              {selectable && (
-                <div className="hp-grid-cell hp-grid-cell--select-col hp-grid-header-cell">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={() =>
-                      allSelected ? clearSelection() : selectAll()
-                    }
-                  />
-                </div>
-              )}
-              {colDef.map((col, index) => (
-                <div
-                  key={col.id || col.field}
-                  className="hp-grid-header-cell"
-                  style={getColumnStyle(col)}
-                >
-                  <span className="hp-grid-header-label">
-                    {col.headerName ?? col.field}
-                  </span>
-                  <span
-                    className="hp-grid-column-resizer"
-                    onMouseDown={(event) =>
-                      handleColumnResizeStart(event, index)
-                    }
-                    aria-label={`Resize ${col.headerName ?? col.field} column`}
-                    role="separator"
-                    tabIndex={-1}
-                  />
-                </div>
-              ))}
+                {selectable && (
+                  <div className="hp-grid-cell hp-grid-cell--select-col hp-grid-header-cell">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={() =>
+                        allSelected ? clearSelection() : selectAll()
+                      }
+                    />
+                  </div>
+                )}
+                {colDef.map((col, index) => (
+                  <div
+                    key={col.id || col.field}
+                    className="hp-grid-header-cell"
+                    style={getColumnStyle(col)}
+                  >
+                    <span className="hp-grid-header-label">
+                      {col.headerName ?? col.field}
+                    </span>
+                    <span
+                      className="hp-grid-column-resizer"
+                      onMouseDown={(event) =>
+                        handleColumnResizeStart(event, index)
+                      }
+                      aria-label={`Resize ${col.headerName ?? col.field} column`}
+                      role="separator"
+                      tabIndex={-1}
+                    />
+                  </div>
+                ))}
               </div>
             )}
 
@@ -1278,11 +1623,11 @@ function HpGrid(props) {
                   style={
                     !isCardView && scrollAreaWidth > 0
                       ? {
-                          position: "sticky",
-                          left: 0,
-                          width: `${scrollAreaWidth}px`,
-                          maxWidth: `${scrollAreaWidth}px`,
-                        }
+                        position: "sticky",
+                        left: 0,
+                        width: `${scrollAreaWidth}px`,
+                        maxWidth: `${scrollAreaWidth}px`,
+                      }
                       : undefined
                   }
                 >
@@ -1291,220 +1636,220 @@ function HpGrid(props) {
               )}
               {isCardView
                 ? displayRows.map(({ row, rowIndex }) => {
-                    const statusValue = cardStatusColumn
-                      ? row[cardStatusColumn.field]
-                      : undefined;
-                    const status =
-                      typeof statusValue === "string" ||
+                  const statusValue = cardStatusColumn
+                    ? row[cardStatusColumn.field]
+                    : undefined;
+                  const status =
+                    typeof statusValue === "string" ||
                       typeof statusValue === "number"
-                        ? String(statusValue)
-                        : "";
-                    const titleValue = cardTitleColumn
-                      ? row[cardTitleColumn.field]
-                      : undefined;
-                    const subtitleValue = cardSubtitleColumn
-                      ? row[cardSubtitleColumn.field]
-                      : undefined;
-                    const titleText =
-                      titleValue === null ||
+                      ? String(statusValue)
+                      : "";
+                  const titleValue = cardTitleColumn
+                    ? row[cardTitleColumn.field]
+                    : undefined;
+                  const subtitleValue = cardSubtitleColumn
+                    ? row[cardSubtitleColumn.field]
+                    : undefined;
+                  const titleText =
+                    titleValue === null ||
                       titleValue === undefined ||
                       titleValue === ""
-                        ? "Untitled record"
-                        : String(titleValue);
-                    const subtitleText =
-                      subtitleValue !== null &&
+                      ? "Untitled record"
+                      : String(titleValue);
+                  const subtitleText =
+                    subtitleValue !== null &&
                       subtitleValue !== undefined &&
                       subtitleValue !== "" &&
                       typeof subtitleValue !== "object"
-                        ? String(subtitleValue)
-                        : "";
-                    const avatarLetter = (
-                      titleText !== "Untitled record"
-                        ? titleText
-                        : subtitleText || "R"
-                    )
-                      .trim()
-                      .charAt(0)
-                      .toUpperCase() || "R";
+                      ? String(subtitleValue)
+                      : "";
+                  const avatarLetter = (
+                    titleText !== "Untitled record"
+                      ? titleText
+                      : subtitleText || "R"
+                  )
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase() || "R";
 
-                    const details = visibleCardFields
-                      .map(({ field, label }) => {
-                        const value = row[field];
-                        if (
-                          value === null ||
-                          value === undefined ||
-                          value === "" ||
-                          typeof value === "object"
-                        ) {
-                          return null;
-                        }
-                        return (
-                          <div className="hp-grid-card-detail" key={field}>
-                            <span className="hp-grid-card-detail-label">
-                              {label}
-                            </span>
-                            <span
-                              className="hp-grid-card-detail-value"
-                              title={String(value)}
-                            >
-                              {typeof value === "boolean"
-                                ? value
-                                  ? "Yes"
-                                  : "No"
-                                : String(value)}
-                            </span>
-                          </div>
-                        );
-                      })
-                      .filter(Boolean);
-
-                    const cardContent = (
-                      <>
-                        <div
-                          className="hp-grid-card-top-accent"
-                          aria-hidden="true"
-                        />
-                        <div className="hp-grid-card-heading">
-                          <div className="hp-grid-card-top-row">
-                            <div
-                              className="hp-grid-card-avatar"
-                              aria-hidden="true"
-                            >
-                              {avatarLetter}
-                            </div>
-                            {status && (
-                              <span
-                                className={`hp-grid-card-status ${getCardStatusTone(status)}`}
-                              >
-                                <span
-                                  className="hp-grid-card-status-dot"
-                                  aria-hidden="true"
-                                />
-                                <span className="hp-grid-card-status-text">
-                                  {status}
-                                </span>
-                              </span>
-                            )}
-                          </div>
-                          <div className="hp-grid-card-title-wrap">
-                            <span
-                              className="hp-grid-card-title"
-                              title={titleText}
-                            >
-                              {titleText}
-                            </span>
-                            {subtitleText && (
-                              <span
-                                className="hp-grid-card-subtitle"
-                                title={subtitleText}
-                              >
-                                {subtitleText}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        {details.length > 0 && (
-                          <div className="hp-grid-card-details">{details}</div>
-                        )}
-                        <div className="hp-grid-card-footer">
-                          <span className="hp-grid-card-meta">
-                            #{rowIndex + 1}
+                  const details = visibleCardFields
+                    .map(({ field, label }) => {
+                      const value = row[field];
+                      if (
+                        value === null ||
+                        value === undefined ||
+                        value === "" ||
+                        typeof value === "object"
+                      ) {
+                        return null;
+                      }
+                      return (
+                        <div className="hp-grid-card-detail" key={field}>
+                          <span className="hp-grid-card-detail-label">
+                            {label}
                           </span>
-                          {cardClickHandler && (
-                            <span className="hp-grid-card-action">
-                              <span>View details</span>
-                              <ChevronRight
-                                size={12}
-                                className="hp-grid-card-action-icon"
+                          <span
+                            className="hp-grid-card-detail-value"
+                            title={String(value)}
+                          >
+                            {typeof value === "boolean"
+                              ? value
+                                ? "Yes"
+                                : "No"
+                              : String(value)}
+                          </span>
+                        </div>
+                      );
+                    })
+                    .filter(Boolean);
+
+                  const cardContent = (
+                    <>
+                      <div
+                        className="hp-grid-card-top-accent"
+                        aria-hidden="true"
+                      />
+                      <div className="hp-grid-card-heading">
+                        <div className="hp-grid-card-top-row">
+                          <div
+                            className="hp-grid-card-avatar"
+                            aria-hidden="true"
+                          >
+                            {avatarLetter}
+                          </div>
+                          {status && (
+                            <span
+                              className={`hp-grid-card-status ${getCardStatusTone(status)}`}
+                            >
+                              <span
+                                className="hp-grid-card-status-dot"
                                 aria-hidden="true"
                               />
+                              <span className="hp-grid-card-status-text">
+                                {status}
+                              </span>
                             </span>
                           )}
                         </div>
-                      </>
-                    );
-                    const customCardClass =
-                      typeof getCardClassName === "function"
-                        ? getCardClassName({ row, rowIndex })
-                        : "";
-                    const cardClassName = [
-                      "hp-grid-card",
-                      cardClickHandler && "hp-grid-card--interactive",
-                      cardDraggable && "hp-grid-card--draggable",
-                      customCardClass,
-                    ]
-                      .filter(Boolean)
-                      .join(" ");
+                        <div className="hp-grid-card-title-wrap">
+                          <span
+                            className="hp-grid-card-title"
+                            title={titleText}
+                          >
+                            {titleText}
+                          </span>
+                          {subtitleText && (
+                            <span
+                              className="hp-grid-card-subtitle"
+                              title={subtitleText}
+                            >
+                              {subtitleText}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {details.length > 0 && (
+                        <div className="hp-grid-card-details">{details}</div>
+                      )}
+                      <div className="hp-grid-card-footer">
+                        <span className="hp-grid-card-meta">
+                          #{rowIndex + 1}
+                        </span>
+                        {cardClickHandler && (
+                          <span className="hp-grid-card-action">
+                            <span>View details</span>
+                            <ChevronRight
+                              size={12}
+                              className="hp-grid-card-action-icon"
+                              aria-hidden="true"
+                            />
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  );
+                  const customCardClass =
+                    typeof getCardClassName === "function"
+                      ? getCardClassName({ row, rowIndex })
+                      : "";
+                  const cardClassName = [
+                    "hp-grid-card",
+                    cardClickHandler && "hp-grid-card--interactive",
+                    cardDraggable && "hp-grid-card--draggable",
+                    customCardClass,
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
 
-                    const dragProps = {
-                      draggable: cardDraggable,
-                      onDragStart: cardDraggable
-                        ? (e) => onCardDragStart?.({ event: e, row, rowIndex })
-                        : undefined,
-                      onDragEnd: cardDraggable
-                        ? (e) => onCardDragEnd?.({ event: e, row, rowIndex })
-                        : undefined,
-                      onDragOver: (e) =>
-                        onCardDragOver?.({ event: e, row, rowIndex }),
-                      onDragLeave: (e) =>
-                        onCardDragLeave?.({ event: e, row, rowIndex }),
-                      onDrop: (e) => onCardDrop?.({ event: e, row, rowIndex }),
-                    };
+                  const dragProps = {
+                    draggable: cardDraggable,
+                    onDragStart: cardDraggable
+                      ? (e) => onCardDragStart?.({ event: e, row, rowIndex })
+                      : undefined,
+                    onDragEnd: cardDraggable
+                      ? (e) => onCardDragEnd?.({ event: e, row, rowIndex })
+                      : undefined,
+                    onDragOver: (e) =>
+                      onCardDragOver?.({ event: e, row, rowIndex }),
+                    onDragLeave: (e) =>
+                      onCardDragLeave?.({ event: e, row, rowIndex }),
+                    onDrop: (e) => onCardDrop?.({ event: e, row, rowIndex }),
+                  };
 
-                    return cardClickHandler ? (
-                      <button
-                        type="button"
-                        key={row.id ?? rowIndex}
-                        className={cardClassName}
-                        onClick={() =>
-                          cardClickHandler({ data: row, rowIndex })
-                        }
-                        {...dragProps}
-                      >
-                        {cardContent}
-                      </button>
-                    ) : (
-                      <article
-                        key={row.id ?? rowIndex}
-                        className={cardClassName}
-                        {...dragProps}
-                      >
-                        {cardContent}
-                      </article>
-                    );
-                  })
+                  return cardClickHandler ? (
+                    <button
+                      type="button"
+                      key={row.id ?? rowIndex}
+                      className={cardClassName}
+                      onClick={() =>
+                        cardClickHandler({ data: row, rowIndex })
+                      }
+                      {...dragProps}
+                    >
+                      {cardContent}
+                    </button>
+                  ) : (
+                    <article
+                      key={row.id ?? rowIndex}
+                      className={cardClassName}
+                      {...dragProps}
+                    >
+                      {cardContent}
+                    </article>
+                  );
+                })
                 : displayRows.map(({ row, rowIndex }) => (
-                <GridRow
-                  key={row.id ?? rowIndex}
-                  row={row}
-                  rowIndex={rowIndex}
-                  colDef={colDef}
-                  selectable={selectable}
-                  isSelected={selectedIndices.has(rowIndex)}
-                  onToggleSelect={toggleRowSelection}
-                  isRowFocused={focusedCell.rowIndex === rowIndex}
-                  focusedColIndex={
-                    focusedCell.rowIndex === rowIndex
-                      ? focusedCell.colIndex
-                      : -1
-                  }
-                  registerCellRef={registerCellRef}
-                  onCellCommit={handleCellCommit}
-                  onCellBlur={handleCellBlur}
-                  onCellFocus={handleCellFocus}
-                  onCellKeyDown={handleCellKeyDown}
-                  onDoubleClick={onDoubleClick}
-                  onContextMenu={handleRowContextMenu}
-                  isContextActive={contextMenu?.rowIndex === rowIndex}
-                  rowHeight={rowHeight}
-                  rowClassName={rowClassName}
-                  rowDraggable={rowDraggable}
-                  onRowDragStart={onRowDragStart}
-                  onRowDragEnd={onRowDragEnd}
-                  onRowDragOver={onRowDragOver}
-                  onRowDragLeave={onRowDragLeave}
-                  onRowDrop={onRowDrop}
-                />
+                  <GridRow
+                    key={row._rowKey ?? row.id ?? rowIndex}
+                    row={row}
+                    rowIndex={rowIndex}
+                    colDef={effectiveColDef}
+                    selectable={selectable}
+                    isSelected={selectedIndices.has(rowIndex)}
+                    onToggleSelect={toggleRowSelection}
+                    isRowFocused={focusedCell.rowIndex === rowIndex}
+                    focusedColIndex={
+                      focusedCell.rowIndex === rowIndex
+                        ? focusedCell.colIndex
+                        : -1
+                    }
+                    registerCellRef={registerCellRef}
+                    onCellCommit={handleCellCommit}
+                    onCellBlur={handleCellBlur}
+                    onCellFocus={handleCellFocus}
+                    onCellKeyDown={handleCellKeyDown}
+                    onDoubleClick={onDoubleClick}
+                    onContextMenu={handleRowContextMenu}
+                    isContextActive={contextMenu?.rowIndex === rowIndex}
+                    rowHeight={rowHeight}
+                    rowClassName={resolvedRowClassName}
+                    rowDraggable={rowDraggable}
+                    onRowDragStart={onRowDragStart}
+                    onRowDragEnd={onRowDragEnd}
+                    onRowDragOver={onRowDragOver}
+                    onRowDragLeave={onRowDragLeave}
+                    onRowDrop={onRowDrop}
+                  />
                 ))}
             </div>
           </div>
@@ -1525,4 +1870,137 @@ function HpGrid(props) {
   );
 }
 
+// =================================================================
+// Permission-aware wrapper
+// -----------------------------------------------------------------
+// Applies the current page's rights (RouteAccessContext) to the grid:
+//   no view   -> "no permission" panel instead of the grid
+//   no add    -> Add button disabled
+//   no edit   -> row/card dragging off, cells read-only, context-menu
+//                "Edit" becomes "View", status moves hidden
+//   no delete -> delete actions disabled
+// It also records the add/edit intent so the form that opens knows which
+// right applies. Outside a permission-checked page everything is allowed.
+// =================================================================
+
+// Remove hidden items, then leading/trailing/double dividers.
+const tidyMenuItems = (items, row, rowIndex) => {
+  const visible = (items || []).filter((item) => {
+    if (!item) return false;
+    if (item.divider) return true;
+    return typeof item.hidden === "function" ? !item.hidden(row, rowIndex) : !item.hidden;
+  });
+  const result = [];
+  visible.forEach((item) => {
+    if (item.divider && (!result.length || result[result.length - 1].divider)) return;
+    result.push(item);
+  });
+  while (result.length && result[result.length - 1].divider) result.pop();
+  return result;
+};
+
+function HpGrid(props) {
+  const { canView, canAdd, canEdit, canDelete, setIntent } = useRouteAccess();
+  const {
+    colDef,
+    onAddClick,
+    onDoubleClick,
+    onCardClick,
+    contextData,
+    rowDraggable,
+    cardDraggable,
+  } = props;
+
+  const gridColDef = useMemo(() => {
+    if (canEdit && canDelete) return colDef;
+    return (colDef || []).map((col) => {
+      if (!col) return col;
+      if (col.type === "actions") {
+        return { ...col, deleteDisabled: !canDelete, editDisabled: !canEdit };
+      }
+      return canEdit ? col : { ...col, editable: false };
+    });
+  }, [colDef, canEdit, canDelete]);
+
+  const handleAddClick = useCallback(
+    (...args) => {
+      setIntent("add");
+      return onAddClick?.(...args);
+    },
+    [onAddClick, setIntent],
+  );
+
+  const handleDoubleClick = useCallback(
+    (...args) => {
+      setIntent("edit");
+      return onDoubleClick?.(...args);
+    },
+    [onDoubleClick, setIntent],
+  );
+
+  const handleCardClick = useCallback(
+    (...args) => {
+      setIntent("edit");
+      return onCardClick?.(...args);
+    },
+    [onCardClick, setIntent],
+  );
+
+  const gridContextData = useMemo(() => {
+    if (!contextData) return contextData;
+    return (params) => {
+      const items = typeof contextData === "function" ? contextData(params) : contextData;
+      const adjusted = (items || []).map((item) => {
+        if (!item || item.divider) return item;
+        switch (item.permission) {
+          case "status":
+            return canEdit ? item : { ...item, hidden: true };
+          case "delete":
+            return canDelete ? item : { ...item, disabled: true };
+          case "add":
+            return canAdd ? item : { ...item, disabled: true };
+          case "edit":
+            return {
+              ...item,
+              ...(canEdit ? {} : { text: "View", icon: <Eye size={14} /> }),
+              onClick: (row, ctx) => {
+                setIntent("edit");
+                return item.onClick?.(row, ctx);
+              },
+            };
+          default:
+            return item;
+        }
+      });
+      return tidyMenuItems(adjusted, params?.row, params?.rowIndex);
+    };
+  }, [contextData, canAdd, canEdit, canDelete, setIntent]);
+
+  if (!canView) {
+    return (
+      <div className={`hp-grid ${props.className || ""}`} style={props.style}>
+        <NoPermission
+          compact
+          message="Your role doesn't include viewing this list. Ask your administrator if you need access."
+        />
+      </div>
+    );
+  }
+
+  return (
+    <HpGridBase
+      {...props}
+      colDef={gridColDef}
+      onAddClick={typeof onAddClick === "function" ? handleAddClick : undefined}
+      addDisabled={!canAdd}
+      onDoubleClick={typeof onDoubleClick === "function" ? handleDoubleClick : undefined}
+      onCardClick={typeof onCardClick === "function" ? handleCardClick : undefined}
+      contextData={gridContextData}
+      rowDraggable={canEdit ? rowDraggable : false}
+      cardDraggable={canEdit ? cardDraggable : false}
+    />
+  );
+}
+
+export { HpGridBase };
 export default HpGrid;

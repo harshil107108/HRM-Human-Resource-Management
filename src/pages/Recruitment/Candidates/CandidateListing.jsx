@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import useCandidateConfig from "./useCandidateConfig";
 import useModal from "@/hooks/useModal";
@@ -67,10 +68,17 @@ const CandidateListing = () => {
 
     if (res?.success) {
       const data = res.data?.data || [];
-      const formatted = data.map((item) => ({
-        ...item,
-        jobTitle: item.jobOpening?.jobTitle || "Unassigned",
-      }));
+      const formatted = data.map((item) => {
+        const fullName =
+          item.firstName || item.lastName
+            ? [item.firstName, item.middleName, item.lastName].filter(Boolean).join(" ")
+            : item.candidateName || "Candidate";
+        return {
+          ...item,
+          candidateName: fullName,
+          jobTitle: item.jobOpening?.jobTitle || "Unassigned",
+        };
+      });
       setCandidateListingData(formatted);
     }
   }, [apiCall]);
@@ -158,7 +166,7 @@ const CandidateListing = () => {
     return [
       {
         id: "totalCandidates",
-        title: "Total Candidates",
+        title: "Total Pool",
         value: candidateListingData.length.toLocaleString(),
         icon: <Users size={18} className="stroke-[2.2]" />,
         type: "blue",
@@ -194,7 +202,7 @@ const CandidateListing = () => {
       },
       {
         id: "rejected",
-        title: "Rejected",
+        title: "Talent Pool",
         value: getStageCount("Rejected").toLocaleString(),
         icon: <XCircle size={18} className="stroke-[2.2]" />,
         type: "red",
@@ -255,10 +263,20 @@ const CandidateListing = () => {
 
   useDocumentTitle("orvexa | Candidates");
 
+  // Right-click menu: Edit, status changes and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+    statusCards: candidateSummary,
+    statusField: "stage",
+    onStatusChange: handleRequestStageChange,
+    statusLabel: "Move to",
+  });
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
-      {/* 5 Modern Status Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 mt-3 mr-2">
+      {/* Modern Status Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2.5 mt-3 mr-2">
         {candidateSummary.map((item) => (
           <div key={item.id}>
             <StatusCard
@@ -311,13 +329,6 @@ const CandidateListing = () => {
             setScheduleModalState({ open: false, candidate: null })
           }
           onSaved={async () => {
-            if (scheduleModalState.candidate) {
-              await executeStageUpdate(
-                scheduleModalState.candidate,
-                "Interview",
-                "Interview",
-              );
-            }
             setScheduleModalState({ open: false, candidate: null });
             await getCandidateListing();
           }}
@@ -339,6 +350,7 @@ const CandidateListing = () => {
       {/* Grid listing with both List and Cards view */}
       <div className="min-h-0 flex-1">
         <HpGrid
+          contextData={contextData}
           id="candidateListing"
           rowData={displayedCandidates}
           colDef={candidateListingColDef}
@@ -348,6 +360,7 @@ const CandidateListing = () => {
           onAddClick={handleAdd}
           title="Candidate Pool"
           toggle
+          defaultView="card"
           cardTitleField="candidateName"
           cardSubtitleField="jobTitle"
           cardStatusField="stage"

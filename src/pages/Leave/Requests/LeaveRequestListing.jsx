@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useEffect, useState } from "react";
 import useLeaveRequestConfig from "./useLeaveRequestConfig";
 import useModal from "@/hooks/useModal";
@@ -80,6 +81,12 @@ const LeaveRequestListing = () => {
 
   useDocumentTitle("orvexa | Leave Requests");
 
+  // Right-click menu: Edit and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+  });
+
   return (
     <>
       {isModalOpen && (
@@ -91,6 +98,7 @@ const LeaveRequestListing = () => {
         />
       )}
       <HpGrid
+        contextData={contextData}
         id="leaveRequestListing"
         rowData={requestData}
         colDef={leaveRequestListingColDef}

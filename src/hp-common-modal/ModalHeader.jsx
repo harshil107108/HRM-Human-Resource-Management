@@ -7,7 +7,7 @@
  * ---------------------------------------------------------------------------
  */
 
-import { X } from 'lucide-react';
+import { X, Lock } from 'lucide-react';
 import { useModalContext } from './modalContext';
 import { cx } from './modalUtils';
 
@@ -26,6 +26,7 @@ export default function ModalHeader() {
         requestClose,
         headerClassName,
         stickyHeader,
+        readOnly,
     } = useModalContext();
 
     if (!showHeader) return null;
@@ -56,11 +57,22 @@ export default function ModalHeader() {
             )}
         >
             <div className="hp-modal-header__main">
-                {icon && <span className="hp-modal-header__icon">{icon}</span>}
+                {icon && (
+                    <span className="hp-modal-header__icon" aria-hidden="true">
+                        {icon}
+                    </span>
+                )}
                 <div className="hp-modal-header__text">
-                    <h2 id={titleId} className="hp-modal-header__title">
-                        {title}
-                    </h2>
+                    <div className="flex items-center gap-2">
+                        <h2 id={titleId} className="hp-modal-header__title">
+                            {title}
+                        </h2>
+                        {readOnly && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200" title="You have read-only access to this module">
+                                <Lock size={11} className="stroke-[2.5]" /> View Only
+                            </span>
+                        )}
+                    </div>
                     {subTitle && <p className="hp-modal-header__subtitle">{subTitle}</p>}
                 </div>
             </div>
@@ -70,10 +82,11 @@ export default function ModalHeader() {
                     type="button"
                     className="hp-modal-header__close"
                     aria-label="Close dialog"
+                    title="Close"
                     disabled={closeDisabled}
                     onClick={() => requestClose('close-button')}
                 >
-                    <X size={20} strokeWidth={2} />
+                    <X size={18} strokeWidth={2} aria-hidden="true" />
                 </button>
             )}
         </div>

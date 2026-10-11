@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import useApiCall from "@/hooks/useApiCall";
 import useAlert from "@/hooks/useAlert";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
-import { Edit, Trash2 } from "lucide-react";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 
 const BankMasterListing = () => {
   const { deleteAlert, successAlert } = useAlert();
@@ -59,26 +59,11 @@ const BankMasterListing = () => {
     });
   };
 
-  const contextData = [
-    {
-      icon: <Edit size={14} />,
-      text: "Edit",
-      onClick: (row) => {
-        onModalOpen({
-          mode: "edit",
-          id: row._id,
-        });
-      },
-    },
-    {
-      icon: <Trash2 size={14} />,
-      text: "Delete",
-      danger: true,
-      onClick: (row) => {
-        handleDelete(row._id);
-      },
-    },
-  ];
+  // Right-click menu: Edit and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+  });
 
   const getBankListing = async () => {
     const res = await apiCall({

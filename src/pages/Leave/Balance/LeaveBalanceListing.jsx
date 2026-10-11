@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useEffect, useState } from "react";
 import useLeaveBalanceConfig from "./useLeaveBalanceConfig";
 import useModal from "@/hooks/useModal";
@@ -77,6 +78,12 @@ const LeaveBalanceListing = () => {
 
   useDocumentTitle("orvexa | Leave Balances");
 
+  // Right-click menu: Edit and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+  });
+
   return (
     <>
       {isModalOpen && (
@@ -88,6 +95,7 @@ const LeaveBalanceListing = () => {
         />
       )}
       <HpGrid
+        contextData={contextData}
         id="leaveBalanceListing"
         rowData={balanceData}
         colDef={leaveBalanceListingColDef}

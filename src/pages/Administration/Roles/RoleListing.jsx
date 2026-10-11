@@ -1,14 +1,17 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import useRoleConfig from "./useRoleConfig";
-import useModal from "@/hooks/useModal";
-import RoleModal from "./RoleModal";
 import useApiCall from "@/hooks/useApiCall";
 import { api, apiEndpoints } from "@/api/api";
 import useAlert from "@/hooks/useAlert";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
 
 const RoleListing = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+
     const { apiCall, isPending } = useApiCall();
     const { deleteAlert, successAlert, errorAlert } = useAlert();
 
@@ -45,7 +48,6 @@ const RoleListing = () => {
     };
 
     const { roleListingColDef } = useRoleConfig({ handleDelete });
-    const { isModalOpen, extraParams, onModalOpen, onModalClose } = useModal();
     const [roleData, setRoleData] = useState([]);
 
     const getRoleListing = async () => {
@@ -67,40 +69,45 @@ const RoleListing = () => {
     }, []);
 
     const handleAdd = () => {
-        onModalOpen({ mode: "add" });
+        navigate(`${location.pathname}/addedit`, {
+            state: { roleid: null },
+        });
     };
 
     const handleDoubleClick = (data) => {
         const id = data?.data?._id || data?._id;
         if (id) {
-            onModalOpen({ mode: "edit", id });
+            navigate(`${location.pathname}/addedit`, {
+                state: { roleid: id },
+            });
         }
     };
 
-    useDocumentTitle("orvexa | Roles & Permissions");
+    useDocumentTitle("orvexa | Roles & Access Control");
+
+    // Right-click menu: Edit and Delete.
+    const contextData = createRowContextMenu({
+      onEdit: (row) => handleDoubleClick({ data: row }),
+      onDelete: (row) => handleDelete(row._id, row.isSystemDefault),
+      // Built-in roles can't be deleted.
+      canDelete: (row) => !row.isSystemDefault,
+    });
 
     return (
-        <>
-            {isModalOpen && (
-                <RoleModal
-                    open={isModalOpen}
-                    onModalClose={onModalClose}
-                    onSaved={getRoleListing}
-                    extraParams={extraParams}
-                />
-            )}
-            <HpGrid
-                id="roleListing"
-                rowData={roleData}
-                colDef={roleListingColDef}
-                style={{ height: "100%" }}
-                onDoubleClick={handleDoubleClick}
-                onAddClick={handleAdd}
-                title="Roles & Access Control"
-                columnFilterable={true}
-                panding={isPending("deleteRole") || isPending("getRoleListing")}
-            />
-        </>
+        <HpGrid
+            contextData={contextData}
+            id="roleListing"
+            rowData={roleData}
+            colDef={roleListingColDef}
+            style={{ height: "100%" }}
+            onDoubleClick={handleDoubleClick}
+            onAddClick={handleAdd}
+            title="Roles & Access Control"
+            searchable={true}
+            searchPlaceholder="Search roles..."
+            columnFilterable={true}
+            panding={isPending("deleteRole") || isPending("getRoleListing")}
+        />
     );
 };
 

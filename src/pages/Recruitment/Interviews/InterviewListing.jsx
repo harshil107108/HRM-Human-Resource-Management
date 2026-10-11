@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import useInterviewConfig from "./useInterviewConfig";
 import useModal from "@/hooks/useModal";
@@ -107,7 +108,7 @@ const InterviewListing = () => {
       const jobOpeningId = interview.jobOpening?._id || interview.jobOpening;
 
       if (targetRound === "Hired") {
-        // 1. Mark interview as completed and recommended for Hire
+        // Mark interview as completed and recommended for Hire (backend automatically updates candidate stage and creates offer letter)
         await apiCall({
           id: "updateInterviewHired",
           api: api + apiEndpoints.recruitment.interview.InterviewAddEdit,
@@ -118,48 +119,6 @@ const InterviewListing = () => {
           },
         });
 
-        // 2. Update candidate stage to "Offered"
-        if (candidateId) {
-          await apiCall({
-            id: "updateCandidateStageOffered",
-            api: api + apiEndpoints.recruitment.candidate.CandidateAddEdit,
-            payload: {
-              _id: candidateId,
-              stage: "Offered",
-            },
-          });
-        }
-
-        // 3. Move profile to Offer Letter module (create draft offer letter if not existing)
-        try {
-          const deptId =
-            interview.jobOpening?.department?._id ||
-            interview.jobOpening?.department ||
-            "6a9ab2d0f4695ead1908e2e7";
-          const desigId =
-            interview.jobOpening?.designation?._id ||
-            interview.jobOpening?.designation ||
-            "6a9ab35af4695ead1908e2e8";
-
-          await apiCall({
-            id: "createOfferLetterForHired",
-            api: api + apiEndpoints.recruitment.offer.OfferAddEdit,
-            payload: {
-              candidate: candidateId,
-              jobOpening: jobOpeningId,
-              offeredDepartment: deptId,
-              offeredDesignation: desigId,
-              offeredCtc: Number(interview.candidate?.expectedSalary) || 600000,
-              joiningDate: new Date(Date.now() + 15 * 86400000).toISOString(),
-              validUntil: new Date(Date.now() + 7 * 86400000).toISOString(),
-              status: "Draft",
-              remarks: "Candidate selected from interview process.",
-            },
-          });
-        } catch (offerErr) {
-          console.warn("Offer auto-create notice:", offerErr);
-        }
-
         successAlert({
           title: "Candidate Hired!",
           text: `Candidate "${interview.candidateName}" has been hired. Profile moved to Offer Letter module.`,
@@ -169,7 +128,7 @@ const InterviewListing = () => {
       }
 
       if (targetRound === "Rejected") {
-        // Mark interview as completed with Reject
+        // Mark interview as completed with Reject (backend automatically updates candidate stage)
         await apiCall({
           id: "updateInterviewRejected",
           api: api + apiEndpoints.recruitment.interview.InterviewAddEdit,
@@ -179,18 +138,6 @@ const InterviewListing = () => {
             recommendation: "Reject",
           },
         });
-
-        // Update candidate stage to Rejected
-        if (candidateId) {
-          await apiCall({
-            id: "updateCandidateStageRejected",
-            api: api + apiEndpoints.recruitment.candidate.CandidateAddEdit,
-            payload: {
-              _id: candidateId,
-              stage: "Rejected",
-            },
-          });
-        }
 
         successAlert({
           title: "Candidate Rejected",
@@ -421,6 +368,16 @@ const InterviewListing = () => {
 
   useDocumentTitle("orvexa | Interview Scheduler");
 
+  // Right-click menu: Edit, status changes and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+    statusCards: interviewSummary,
+    statusField: "roundName",
+    onStatusChange: handleRequestRoundChange,
+    statusLabel: "Move to",
+  });
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
       {/* 8 Round Status Cards */}
@@ -471,6 +428,7 @@ const InterviewListing = () => {
       {/* Grid listing with both List and Cards view */}
       <div className="min-h-0 flex-1">
         <HpGrid
+          contextData={contextData}
           id="interviewListing"
           rowData={displayedInterviews}
           colDef={interviewListingColDef}
@@ -480,6 +438,7 @@ const InterviewListing = () => {
           onAddClick={handleAdd}
           title="Interviews"
           toggle
+          defaultView="card"
           cardTitleField="candidateName"
           cardSubtitleField="jobTitle"
           cardStatusField="roundName"

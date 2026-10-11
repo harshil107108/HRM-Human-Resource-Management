@@ -75,8 +75,8 @@ const AppraisalModal = ({
                     api: api + apiEndpoints.performance.appraisal.AppraisalGetByID,
                     payload: { _id: appraisalId }
                 });
-                if (res?.success && res.data) {
-                    setEditData(res.data);
+                if (res?.success && res.data?.data) {
+                    setEditData(res.data.data);
                 }
             } catch (err) {
                 console.error("Failed to fetch appraisal", err);
@@ -155,7 +155,8 @@ const AppraisalModal = ({
             });
             onSaved?.();
             closeModal?.();
-        } else {
+        } else if (!res?.error) {
+            // useApiCall already reported request failures; only cover other cases.
             errorAlert({
                 title: "Error",
                 text: res?.message || "Failed to save appraisal"

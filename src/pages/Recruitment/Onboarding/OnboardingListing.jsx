@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import useOnboardingConfig from "./useOnboardingConfig";
 import useModal from "@/hooks/useModal";
@@ -20,7 +21,7 @@ import {
 
 const OnboardingListing = () => {
   const { apiCall, isPending } = useApiCall();
-  const { deleteAlert, successAlert } = useAlert();
+  const { deleteAlert, successAlert, warningAlert } = useAlert();
 
   const [onboardingListingData, setOnboardingListingData] = useState([]);
   const [selectedFilterStatus, setSelectedFilterStatus] = useState("");
@@ -87,102 +88,30 @@ const OnboardingListing = () => {
         "New Employee";
 
       if (targetStatus === "Completed") {
-        // 1. Mark onboarding as 100% completed with all checklist items
-        await apiCall({
-          id: "updateOnboardingCompleted",
+        if ((onboarding.progressPercentage || 0) < 100) {
+          warningAlert({
+            title: "100% Progress Required",
+            text: `"${rawName}" has only reached ${onboarding.progressPercentage || 0}% progress. All onboarding data and checklist verifications must reach 100% before dropping to Complete.`,
+          });
+          return;
+        }
+
+        const res = await apiCall({
+          id: "completeOnboarding",
           api: api + apiEndpoints.recruitment.onboarding.OnboardingAddEdit,
           payload: {
             _id: onboarding._id,
             status: "Completed",
-            progressPercentage: 100,
-            documentsSubmitted: true,
-            backgroundCheckCompleted: true,
-            itAssetsAssigned: true,
-            bankDetailsVerified: true,
-            orientationCompleted: true,
           },
         });
 
-        // 2. Convert candidate into Employee in Employee module
-        try {
-          const names = rawName.trim().split(/\s+/);
-          const firstName = names[0] || "Employee";
-          const lastName = names.slice(1).join(" ") || "Member";
-          const empId = `EMP${Math.floor(100000 + Math.random() * 900000)}`;
-          const candidateEmail =
-            onboarding.candidate?.email ||
-            `emp_${empId.toLowerCase()}@example.com`;
-          const candidatePhone =
-            onboarding.candidate?.phone || "9876543210";
-
-          const deptId =
-            onboarding.jobOpening?.department?._id ||
-            onboarding.jobOpening?.department ||
-            "6a9ab2d0f4695ead1908e2e7";
-          const desigId =
-            onboarding.jobOpening?.designation?._id ||
-            onboarding.jobOpening?.designation ||
-            "6a9ab35af4695ead1908e2e8";
-          const compId =
-            onboarding.jobOpening?.company?._id ||
-            onboarding.jobOpening?.company ||
-            "6aca662a199e38a60b82f336";
-          const branchId =
-            onboarding.jobOpening?.branch?._id ||
-            onboarding.jobOpening?.branch ||
-            "6a9ab23ef4695ead1908e2e5";
-
-          await apiCall({
-            id: "convertOnboardingToEmployee",
-            api: api + apiEndpoints.employee.employee.EmployeeAddEdit,
-            payload: {
-              employeeId: empId,
-              firstName,
-              lastName,
-              gender: "male",
-              dateOfBirth: "1998-01-01",
-              companyId: compId,
-              branchId: branchId,
-              departmentId: deptId,
-              designationId: desigId,
-              employmentType: "FULL_TIME",
-              employeeStatus: "ACTIVE",
-              joiningDate:
-                onboarding.orientationDate ||
-                new Date().toISOString().split("T")[0],
-              officialEmail: candidateEmail,
-              personalEmail: candidateEmail,
-              mobileNumber: candidatePhone,
-              emergencyContactName: rawName,
-              emergencyContactNumber: candidatePhone,
-              countryId: "6a9ab06ef4695ead1908e2dc",
-              stateId: "6a9ab084f4695ead1908e2dd",
-              cityId: "6a9ab0adf4695ead1908e2df",
-              postalCode: "383235",
-              currentAddress: "Corporate Office Location",
-              aadhaarNumber: `${Math.floor(100000000000 + Math.random() * 900000000000)}`,
-              panNumber: `ABCDE${Math.floor(1000 + Math.random() * 9000)}F`,
-              username: `${firstName.toLowerCase()}${Math.floor(100 + Math.random() * 900)}`,
-              password: "Password@123",
-              primaryRole: "EMPLOYEE",
-              isActive: true,
-              permissions: JSON.stringify({
-                financialView: false,
-                leaveApproval: true,
-                orgChartAdmin: false,
-                directoryAccess: true,
-              }),
-            },
+        if (res?.success) {
+          successAlert({
+            title: "Onboarding Completed!",
+            text: `"${rawName}" has been successfully converted into an active Employee in the Employee Directory, and candidate records have been removed from all recruitment modules.`,
           });
-        } catch (empErr) {
-          console.warn("Convert to employee notice:", empErr);
+          await getOnboardingListing();
         }
-
-        successAlert({
-          title: "Onboarding Completed!",
-          text: `Onboarding completed! "${rawName}" has been successfully converted into an active Employee in Employee module.`,
-        });
-        await getOnboardingListing();
         return;
       }
 
@@ -211,6 +140,11 @@ const OnboardingListing = () => {
     (onboarding, targetStatus, statusTitle) => {
       if (!onboarding || !targetStatus) return;
 
+      const rawName =
+        onboarding.candidate?.candidateName ||
+        onboarding.candidateName ||
+        "New Employee";
+
       if (onboarding.status === targetStatus) {
         successAlert({
           title: "Already in status",
@@ -219,10 +153,18 @@ const OnboardingListing = () => {
         return;
       }
 
+      // Requirement: Onboarding must reach 100% progress before dropping or setting to Completed
+      if (targetStatus === "Completed" && (onboarding.progressPercentage || 0) < 100) {
+        warningAlert({
+          title: "100% Progress Required",
+          text: `"${rawName}" is currently at ${onboarding.progressPercentage || 0}% progress. Please fill all required data and complete all verification checklists (100%) before marking as Completed.`,
+        });
+        return;
+      }
+
       executeStatusUpdate(onboarding, targetStatus, statusTitle);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [executeStatusUpdate],
+    [executeStatusUpdate, successAlert, warningAlert],
   );
 
   // Drag and Drop Hook
@@ -350,42 +292,59 @@ const OnboardingListing = () => {
 
   useDocumentTitle("orvexa | Employee Onboarding");
 
+  // Right-click menu: Edit, status changes and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+    statusCards: onboardingSummary,
+    statusField: "status",
+    onStatusChange: handleRequestStatusChange,
+  });
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
       {/* 5 Modern Status Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 mt-3 mr-2">
-        {onboardingSummary.map((item) => (
-          <div key={item.id}>
-            <StatusCard
-              {...item}
-              isSelectedFilter={
-                item.status
-                  ? selectedFilterStatus === item.status
-                  : selectedFilterStatus === ""
-              }
-              isDraggingAny={isDragging}
-              isDropTarget={isDropTarget(item.status)}
-              onDragOver={(e) =>
-                handleDragOver(e, item.status, {
-                  disabled: item.isDisabled,
-                  acceptTypes: ["ONBOARDING_CARD"],
-                  meta: item,
-                })
-              }
-              onDragLeave={(e) => handleDragLeave(e, item.status)}
-              onDrop={(e) =>
-                handleDrop(e, item.status, {
-                  disabled: item.isDisabled,
-                  acceptTypes: ["ONBOARDING_CARD"],
-                  meta: item,
-                  onDrop: (onboarding) =>
-                    handleRequestStatusChange(onboarding, item.status, item.title),
-                })
-              }
-              onClick={() => handleStatusCardClick(item.status)}
-            />
-          </div>
-        ))}
+        {onboardingSummary.map((item) => {
+          const isDropDisabled =
+            item.isDisabled ||
+            (isDragging &&
+              item.status === "Completed" &&
+              (draggingOnboarding?.progressPercentage || 0) < 100);
+
+          return (
+            <div key={item.id}>
+              <StatusCard
+                {...item}
+                isSelectedFilter={
+                  item.status
+                    ? selectedFilterStatus === item.status
+                    : selectedFilterStatus === ""
+                }
+                isDraggingAny={isDragging}
+                isDropTarget={!isDropDisabled && isDropTarget(item.status)}
+                onDragOver={(e) =>
+                  handleDragOver(e, item.status, {
+                    disabled: isDropDisabled,
+                    acceptTypes: ["ONBOARDING_CARD"],
+                    meta: item,
+                  })
+                }
+                onDragLeave={(e) => handleDragLeave(e, item.status)}
+                onDrop={(e) =>
+                  handleDrop(e, item.status, {
+                    disabled: isDropDisabled,
+                    acceptTypes: ["ONBOARDING_CARD"],
+                    meta: item,
+                    onDrop: (onboarding) =>
+                      handleRequestStatusChange(onboarding, item.status, item.title),
+                  })
+                }
+                onClick={() => handleStatusCardClick(item.status)}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {isModalOpen && (
@@ -400,6 +359,7 @@ const OnboardingListing = () => {
       {/* Grid listing with both List and Cards view */}
       <div className="min-h-0 flex-1">
         <HpGrid
+          contextData={contextData}
           id="onboardingListing"
           rowData={displayedOnboarding}
           colDef={onboardingListingColDef}
@@ -409,6 +369,7 @@ const OnboardingListing = () => {
           onAddClick={handleAdd}
           title="Employee Onboarding"
           toggle
+          defaultView="card"
           cardTitleField="candidateName"
           cardSubtitleField="jobTitle"
           cardStatusField="status"

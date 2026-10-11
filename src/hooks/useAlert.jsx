@@ -1,281 +1,200 @@
-import Swal from "sweetalert2";
+import { useCallback, useMemo } from "react";
+import {
+    confirmDialog,
+    errorDialog,
+    showDialog,
+    showToast,
+} from "@/components/feedback";
 
+/**
+ * useAlert
+ * ---------------------------------------------------------------------------
+ * App-wide alert API. All signatures are backward compatible with the
+ * previous SweetAlert2-only implementation; visuals and behavior now come
+ * from the shared feedback system (src/components/feedback).
+ *
+ *  deleteAlert / confirmAlert — the dialog stays open with a loading state
+ *      while `onClick` runs, closes only when it succeeds, and shows the
+ *      failure inline (with the option to retry or cancel). Resolves `true`
+ *      once confirmed and completed, `false` otherwise.
+ *  successAlert — a non-blocking toast by default. Pass `toast: false` (or
+ *      `showConfirmButton: true`) when the user must acknowledge it.
+ *  errorAlert / warningAlert / infoAlert — dialogs.
+ *  toastAlert — toast of any type.
+ *  showAlert(message, type) — shorthand; "info"/"success" are toasts.
+ * ---------------------------------------------------------------------------
+ */
 
-const commonClasses = {
-    popup: `!w - [calc(100 % -24px)] sm: !w - [440px] !rounded - 2xl
-!bg - white
-!p - 0
-!shadow - 2xl
-overflow - hidden
-    `,
+const toToastResult = ({ closed }) =>
+    closed.then(({ reason }) => ({
+        isConfirmed: false,
+        isDenied: false,
+        isDismissed: true,
+        dismiss: reason,
+    }));
 
-    title: `
-!m - 0
-!mt - 4
-!px - 6
-!text - [20px]
-!font - semibold
-!leading - 7
-!text - gray - 900
-    `,
-
-    htmlContainer: `
-!m - 0
-!mt - 2
-!px - 6
-!text - [14px]
-!leading - 6
-!text - gray - 500
-    `,
-
-    actions: `
-!mt - 6
-!mb - 6
-!flex
-!w - full
-!flex - col - reverse
-sm: !flex - row
-!gap - 3
-!px - 6
-    `,
-
-    confirmButton: `
-!m - 0
-!w - full
-sm: !w - auto
-!min - w - [120px]
-!rounded - lg
-!bg - blue - 600
-!px - 5
-!py - 2.5
-!text - sm
-!font - medium
-!text - white
-!shadow - sm
-hover: !bg - blue - 700
-active: !scale - [0.98]
-transition - all
-duration - 150
-    `,
-
-    cancelButton: `
-!m - 0
-!w - full
-sm: !w - auto
-!min - w - [120px]
-!rounded - lg
-!border
-!border - gray - 200
-!bg - white
-!px - 5
-!py - 2.5
-!text - sm
-!font - medium
-!text - gray - 700
-!shadow - sm
-hover: !bg - gray - 50
-active: !scale - [0.98]
-transition - all
-duration - 150
-    `,
-};
-
+const DESTRUCTIVE_WORDS = /delete|remove|discard|archive/i;
 
 export default function useAlert() {
-
-    const deleteAlert = async ({
+    const deleteAlert = useCallback(async ({
         title = "Delete this item?",
         text = "This action cannot be undone.",
         confirmButtonText = "Delete",
         cancelButtonText = "Cancel",
+        loadingText,
         onClick,
+        icon,
         ...options
-    }) => {
-
-        const result = await Swal.fire({
+    } = {}) => {
+        const isDelete = DESTRUCTIVE_WORDS.test(`${title} ${confirmButtonText}`);
+        const result = await confirmDialog({
+            variant: "danger",
+            iconName: icon || (isDelete ? "delete" : "warning"),
             title,
             text,
-            icon: "warning",
-            showCancelButton: true,
             confirmButtonText,
             cancelButtonText,
-            confirmButtonColor: "#dc2626",
-            focusCancel: true,
-            allowOutsideClick: true,
-            allowEscapeKey: true,
-            reverseButtons: true,
-            customClass: {
-                popup: commonClasses.popup,
-                title: commonClasses.title,
-                htmlContainer: commonClasses.htmlContainer,
-                actions: commonClasses.actions,
-                confirmButton: commonClasses.confirmButton,
-                cancelButton: commonClasses.cancelButton,
-            },
-
-            buttonsStyling: true,
+            loadingText: loadingText || (isDelete ? "Deleting…" : "Processing…"),
+            onConfirm: onClick,
             ...options,
         });
-        if (result.isConfirmed) {
-            if (onClick) {
-                await onClick();
-            }
-            return true;
-        }
-        return false;
-    };
+        return Boolean(result.isConfirmed);
+    }, []);
 
-
-    /* ==========================================================
-       GENERIC CONFIRM
-       ========================================================== */
-
-    const confirmAlert = async ({
+    const confirmAlert = useCallback(async ({
         title = "Are you sure?",
         text = "",
         icon = "question",
         confirmButtonText = "Confirm",
         cancelButtonText = "Cancel",
+        loadingText = "Processing…",
         onClick,
         ...options
-    }) => {
-
-        const result = await Swal.fire({
+    } = {}) => {
+        const result = await confirmDialog({
+            variant: "primary",
+            iconName: icon,
             title,
             text,
-            icon,
-            showCancelButton: true,
             confirmButtonText,
             cancelButtonText,
-            focusCancel: true,
-            reverseButtons: true,
-            allowOutsideClick: true,
-            allowEscapeKey: true,
-            customClass: commonClasses,
+            loadingText,
+            onConfirm: onClick,
             ...options,
         });
+        return Boolean(result.isConfirmed);
+    }, []);
 
-        if (result.isConfirmed) {
-            if (onClick) { await onClick(); }
-            return true;
-        }
-        return false;
-    };
-
-
-    /* ==========================================================
-       SUCCESS TOAST
-       ========================================================== */
-
-    const successAlert = ({
+    const successAlert = useCallback(({
         title = "Success",
         text = "",
-        timer = 2500,
-
+        timer,
+        toast = true,
         ...options
-    }) => {
+    } = {}) => {
+        const needsAcknowledgement = toast === false || options.showConfirmButton === true;
 
-        return Swal.fire({
-            toast: true,
-            position: "top-end",
-            icon: "success",
+        if (needsAcknowledgement) {
+            return showDialog("success", {
+                title,
+                text,
+                confirmButtonText: "OK",
+                timer,
+                timerProgressBar: Boolean(timer),
+                ...options,
+            });
+        }
+
+        return toToastResult(showToast({
+            type: "success",
             title,
-            text,
-            timer,
-            timerProgressBar: true,
-            showConfirmButton: false,
-            showCloseButton: true,
-            ...options,
-        });
-    };
+            message: text,
+            duration: timer,
+        }));
+    }, []);
 
-
-    /* ==========================================================
-       ERROR
-       ========================================================== */
-
-    const errorAlert = ({
+    const errorAlert = useCallback(({
         title = "Something went wrong",
         text = "Please try again.",
         confirmButtonText = "OK",
         ...options
-    }) => {
+    } = {}) => errorDialog({
+        title,
+        text,
+        confirmButtonText,
+        ...options,
+    }), []);
 
-        return Swal.fire({
-            title,
-            text,
-            icon: "error",
-            confirmButtonText,
-            showCancelButton: false,
-            confirmButtonColor: "#dc2626",
-            customClass: {
-                popup: commonClasses.popup,
-                title: commonClasses.title,
-                htmlContainer: commonClasses.htmlContainer,
-                actions: commonClasses.actions,
-                confirmButton: `${commonClasses.confirmButton} !bg - red - 600 hover: !bg - red - 700 `,
-            },
-            ...options,
-        });
-    };
-
-    const warningAlert = ({
+    const warningAlert = useCallback(({
         title = "Warning",
         text = "",
         confirmButtonText = "OK",
         ...options
-    }) => {
+    } = {}) => showDialog("warning", {
+        title,
+        text,
+        confirmButtonText,
+        showCancelButton: false,
+        ...options,
+    }), []);
 
-        return Swal.fire({
-            title,
-            text,
-            icon: "warning",
-            confirmButtonText,
-            showCancelButton: false,
-            confirmButtonColor: "#d97706",
-            customClass: {
-                popup: commonClasses.popup,
-                title: commonClasses.title,
-                htmlContainer: commonClasses.htmlContainer,
-                actions: commonClasses.actions,
-                confirmButton: commonClasses.confirmButton,
-            },
-            ...options,
-        });
-    };
-
-    const infoAlert = ({
+    const infoAlert = useCallback(({
         title = "Information",
         text = "",
         confirmButtonText = "OK",
         ...options
-    }) => {
+    } = {}) => showDialog("info", {
+        title,
+        text,
+        confirmButtonText,
+        showCancelButton: false,
+        ...options,
+    }), []);
 
-        return Swal.fire({
-            title,
-            text,
-            icon: "info",
-            confirmButtonText,
-            showCancelButton: false,
-            confirmButtonColor: "#2563eb",
-            customClass: {
-                popup: commonClasses.popup,
-                title: commonClasses.title,
-                htmlContainer: commonClasses.htmlContainer,
-                actions: commonClasses.actions,
-                confirmButton: commonClasses.confirmButton,
-            },
-            ...options,
-        });
-    };
+    const toastAlert = useCallback(({
+        title = "",
+        text = "",
+        type = "success",
+        timer = 3000,
+        action,
+    } = {}) => toToastResult(showToast({
+        type,
+        title: title || text,
+        message: title ? text : "",
+        duration: timer,
+        action,
+    })), []);
 
+    const showAlert = useCallback((message, type = "info") => {
+        const options = typeof message === "string" ? { text: message } : message;
+        const isPlainMessage = typeof message === "string";
 
-    return {
+        switch (type?.toLowerCase()) {
+            case "success":
+                return successAlert(isPlainMessage ? { title: message } : options);
+            case "error":
+            case "danger":
+                return errorAlert(options);
+            case "warning":
+                return warningAlert(options);
+            case "info":
+            default:
+                // Plain informational strings are status updates — keep them
+                // non-blocking. Object options still get a full dialog.
+                return isPlainMessage
+                    ? toastAlert({ title: message, type: "info", timer: 4000 })
+                    : infoAlert(options);
+        }
+    }, [errorAlert, infoAlert, successAlert, toastAlert, warningAlert]);
+
+    return useMemo(() => ({
         deleteAlert,
         confirmAlert,
         successAlert,
         errorAlert,
         warningAlert,
         infoAlert,
-    };
+        toastAlert,
+        showAlert,
+    }), [confirmAlert, deleteAlert, errorAlert, infoAlert, showAlert, successAlert, toastAlert, warningAlert]);
 }

@@ -35,8 +35,9 @@ const useSalaryStructureConfig = ({ handleDelete } = {}) => {
       type: "number",
     },
     {
-      id: "status",
-      field: "status",
+      type: "status",
+      id: "isActive",
+      field: "isActive",
       headerName: "Status",
       width: 120,
     },
@@ -62,13 +63,9 @@ const useSalaryStructureConfig = ({ handleDelete } = {}) => {
       className: "col-span-6",
     },
     {
-      id: "status",
-      type: "selectWrapper",
-      label: "Status",
-      options: [
-        { label: "Active", value: "Active" },
-        { label: "Inactive", value: "Inactive" },
-      ],
+      id: "isActive",
+      type: "checkbox",
+      label: "Is Active",
       className: "col-span-6",
     },
     {
@@ -171,7 +168,7 @@ const useSalaryStructureConfig = ({ handleDelete } = {}) => {
     grossSalary: 52000,
     totalDeductions: 2000,
     netSalary: 50000,
-    status: "Active",
+    isActive: true,
     description: "",
   };
 

@@ -109,3 +109,37 @@ test('invalid email and phone stop focus on enter and keep the error on the curr
     assert.equal(emailValidation.isValid, false);
     assert.equal(form.methods.getErrors().workEmail, 'Email must be a valid @gmail.com address');
 });
+
+test('input errors reported by a field widget block validation until cleared', () => {
+    const form = formMethod.createForm({
+        schema: [{ id: 'returnDate', type: 'date', label: 'Return Date' }],
+        initialValue: { returnDate: '' },
+    });
+
+    form.methods.setInputError('returnDate', "Date can't be before 10/11/2026");
+    assert.equal(form.methods.validate(), false);
+    assert.equal(form.methods.getErrors().returnDate, "Date can't be before 10/11/2026");
+    assert.equal(form.methods.getFirstInvalidField(), 'returnDate');
+
+    form.methods.setInputError('returnDate', '');
+    assert.equal(form.methods.validate(), true);
+});
+
+test('custom validate compares an end date with its start date', () => {
+    const form = formMethod.createForm({
+        schema: [
+            { id: 'start', type: 'date' },
+            {
+                id: 'end',
+                type: 'date',
+                validate: (value, all) => (value && all.start && value < all.start ? 'End before start' : undefined),
+            },
+        ],
+        initialValue: { start: '2026-11-11', end: '2026-11-01' },
+    });
+
+    assert.equal(form.methods.validate(), false);
+    assert.equal(form.methods.getErrors().end, 'End before start');
+    form.methods.setValue('end', '2026-11-11');
+    assert.equal(form.methods.validate(), true);
+});

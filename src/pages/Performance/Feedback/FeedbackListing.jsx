@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useEffect, useState } from "react";
 import useFeedbackConfig from "./useFeedbackConfig";
 import useModal from "@/hooks/useModal";
@@ -92,6 +93,12 @@ const FeedbackListing = () => {
 
     useDocumentTitle("orvexa | Continuous Feedback");
 
+    // Right-click menu: Edit and Delete.
+    const contextData = createRowContextMenu({
+      onEdit: (row) => handleDoubleClick({ data: row }),
+      onDelete: (row) => handleDelete(row._id),
+    });
+
     return (
         <>
             {isModalOpen && (
@@ -103,6 +110,7 @@ const FeedbackListing = () => {
                 />
             )}
             <HpGrid
+                contextData={contextData}
                 id="feedbackListing"
                 rowData={feedbackData}
                 colDef={feedbackListingColDef}

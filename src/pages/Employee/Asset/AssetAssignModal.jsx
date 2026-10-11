@@ -44,6 +44,11 @@ const AssetAssignModal = ({
         placeHolder: "Optional return date",
         required: false,
         className: "col-span-6",
+        // ISO "YYYY-MM-DD" strings compare correctly as text.
+        validate: (value, all) =>
+          value && all.assignedDate && value < all.assignedDate
+            ? "Expected Return Date can't be before Assignment Date"
+            : undefined,
       },
       {
         id: "description",

@@ -56,7 +56,6 @@ const Designation = () => {
   const {
     basicInfoSchema,
     jobAssignmentSchema,
-    employmentSchema,
     reportingStructreSchema,
     workSchema,
     gradeSchema,
@@ -69,7 +68,6 @@ const Designation = () => {
       schema: [
         ...basicInfoSchema,
         ...jobAssignmentSchema,
-        ...employmentSchema,
         ...workSchema,
         ...reportingStructreSchema,
         ...gradeSchema,
@@ -257,7 +255,7 @@ const Designation = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4">
             <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
               {/* Card Header */}
               <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
@@ -277,26 +275,6 @@ const Designation = () => {
               </div>
             </div>
 
-            <div className="flex flex-col gap-4">
-              <div className="overflow-hidden rounded-lg border border-[#dce3e7] bg-white shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)]">
-                {/* Card Header */}
-                <div className="flex h-10 items-center border-b border-[#e2e8eb] bg-gradient-to-r from-[#f8fcfd] to-[#eef8fa] px-4">
-                  <span className="mr-2 h-4 w-1 rounded-full bg-[#2999a8]" />
-
-                  <h2 className="text-[12px] font-bold tracking-wide text-[#334155]">
-                    Employment Details
-                  </h2>
-                </div>
-
-                {/* Card Body */}
-                <div className="p-4">
-                  <FormRenderer
-                    formMethod={formmethod}
-                    formSchema={employmentSchema}
-                  />
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 mt-5">

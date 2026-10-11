@@ -23,12 +23,18 @@ const InterviewModal = ({ onModalClose, onSaved, open, extraParams }) => {
         ...(extraParams?.defaultValues || {}),
       },
     });
+  }, []);
+
+  // Keep a single form instance so values loaded by getById survive
+  // when dropdown options arrive; only push the new options in.
+  useEffect(() => {
+    formmethod.methods.setSchema([...schemaWithOptions]);
   }, [schemaWithOptions]);
 
   const loadDropdowns = async () => {
     const [candRes, jobRes, empRes] = await Promise.all([
       apiCall({ id: "candHelp", api: api + apiEndpoints.recruitment.candidate.CandidateGetData, payload: {} }),
-      apiCall({ id: "jobHelp", api: api + apiEndpoints.recruitment.jobOpening.JobOpeningGetData, payload: {} }),
+      apiCall({ id: "jobHelp", api: api + apiEndpoints.recruitment.jobOpening.JobOpeningHelp, payload: {} }),
       apiCall({ id: "empHelp", api: api + apiEndpoints.employee.employee.EmployeeGetData, payload: {} }),
     ]);
 
@@ -36,7 +42,10 @@ const InterviewModal = ({ onModalClose, onSaved, open, extraParams }) => {
       label: `${c.candidateName} (${c.email})`,
       value: c._id,
     }));
-    const jobOptions = (jobRes?.data?.data || []).map((j) => ({
+    const activeJobs = (jobRes?.data?.data || []).filter(
+      (j) => !j.jobStatus || j.jobStatus === "ACTIVE"
+    );
+    const jobOptions = activeJobs.map((j) => ({
       label: `${j.jobTitle} (${j.jobOpeningId})`,
       value: j._id,
     }));

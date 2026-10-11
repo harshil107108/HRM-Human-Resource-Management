@@ -42,7 +42,19 @@ const useJobOpeningConfig = ({ handleDelete } = {}) => {
       id: "numberOfPositions",
       field: "numberOfPositions",
       headerName: "Positions",
-      width: 100,
+      width: 140,
+      render: (positions, row) => {
+        const filled = row.filledPositions || 0;
+        const total = positions || 1;
+        const isFilled = filled >= total;
+        return (
+          <div className="flex items-center gap-1.5">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${isFilled ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>
+              {filled} / {total} {isFilled ? "(Filled)" : "Open"}
+            </span>
+          </div>
+        );
+      },
     },
     {
       id: "employmentType",
@@ -66,7 +78,23 @@ const useJobOpeningConfig = ({ handleDelete } = {}) => {
       id: "jobStatus",
       field: "jobStatus",
       headerName: "Job Status",
-      width: 100,
+      width: 120,
+      render: (status) => {
+        const val = status || "ACTIVE";
+        const map = {
+          ACTIVE: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          FILLED: "bg-purple-50 text-purple-700 border-purple-200",
+          CLOSED: "bg-slate-100 text-slate-700 border-slate-200",
+          DRAFT: "bg-blue-50 text-blue-700 border-blue-200",
+          ON_HOLD: "bg-amber-50 text-amber-700 border-amber-200",
+        };
+        const currentStyle = map[val] || "bg-slate-50 text-slate-700 border-slate-200";
+        return (
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${currentStyle}`}>
+            {val}
+          </span>
+        );
+      },
     },
     {
       id: "action",

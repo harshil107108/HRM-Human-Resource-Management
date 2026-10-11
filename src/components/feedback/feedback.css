@@ -1,0 +1,984 @@
+/**
+ * feedback.css
+ * ---------------------------------------------------------------------------
+ * Visual system for every transient overlay that is not an HpCommonModal:
+ *   1. SweetAlert2 dialogs (confirm / delete / error / warning / info)
+ *   2. Toast notifications (success + lightweight status messages)
+ *   3. Full-screen image preview
+ *
+ * Colors, radii, shadows and timings come from the tokens declared on :root
+ * in src/index.css. Only `transform` and `opacity` are animated.
+ *
+ * SweetAlert2 injects its own stylesheet at runtime (after ours), so dialog
+ * overrides need `!important` to win the cascade.
+ * ---------------------------------------------------------------------------
+ */
+
+/* ==========================================================================
+   1. SweetAlert2 dialogs
+   ========================================================================== */
+
+.swal2-container.hrm-alert-container {
+	z-index: var(--hrm-z-dialog) !important;
+	padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+		max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
+	overflow-x: hidden !important;
+}
+
+.swal2-container.hrm-alert-container.swal2-backdrop-show,
+.swal2-container.hrm-alert-container.swal2-noanimation {
+	background: var(--hrm-backdrop) !important;
+}
+
+.hrm-alert-popup {
+	--hrm-alert-accent: var(--hrm-primary);
+	--hrm-alert-accent-strong: var(--hrm-primary-hover);
+	--hrm-alert-accent-soft: var(--hrm-primary-soft);
+
+	position: relative !important;
+	box-sizing: border-box !important;
+	width: min(440px, 100%) !important;
+	max-width: 100% !important;
+	max-height: calc(100vh - 32px) !important;
+	max-height: calc(100dvh - 32px) !important;
+	margin: auto !important;
+	padding: 28px 24px 24px !important;
+	border: 1px solid var(--hrm-border) !important;
+	border-radius: var(--hrm-radius-lg) !important;
+	background: var(--hrm-surface) !important;
+	box-shadow: var(--hrm-shadow-overlay) !important;
+	color: var(--hrm-text) !important;
+	font-family: inherit !important;
+	text-align: center !important;
+	overflow-y: auto !important;
+	overscroll-behavior: contain;
+}
+
+.hrm-alert-popup--success {
+	--hrm-alert-accent: var(--hrm-success);
+	--hrm-alert-accent-strong: var(--hrm-success-strong);
+	--hrm-alert-accent-soft: var(--hrm-success-soft);
+}
+
+.hrm-alert-popup--danger,
+.hrm-alert-popup--error {
+	--hrm-alert-accent: var(--hrm-danger);
+	--hrm-alert-accent-strong: var(--hrm-danger-strong);
+	--hrm-alert-accent-soft: var(--hrm-danger-soft);
+}
+
+.hrm-alert-popup--warning {
+	--hrm-alert-accent: var(--hrm-warning);
+	--hrm-alert-accent-strong: var(--hrm-warning-strong);
+	--hrm-alert-accent-soft: var(--hrm-warning-soft);
+}
+
+.hrm-alert-popup--info {
+	--hrm-alert-accent: var(--hrm-info);
+	--hrm-alert-accent-strong: var(--hrm-info-strong);
+	--hrm-alert-accent-soft: var(--hrm-info-soft);
+}
+
+/* Icon badge — custom SVG via `iconHtml`; Swal's own drawn icons are replaced. */
+.hrm-alert-popup .swal2-icon {
+	box-sizing: border-box !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 56px !important;
+	height: 56px !important;
+	margin: 0 auto 16px !important;
+	border: 0 !important;
+	border-radius: 50% !important;
+	background: var(--hrm-alert-accent-soft) !important;
+	box-shadow: 0 0 0 6px color-mix(in srgb, var(--hrm-alert-accent-soft) 55%, transparent) !important;
+	color: var(--hrm-alert-accent) !important;
+	font-family: inherit !important;
+}
+
+.hrm-alert-popup .swal2-icon.swal2-icon-show {
+	animation: hrm-alert-icon-in 320ms var(--hrm-ease-out) 60ms both !important;
+}
+
+.hrm-alert-popup .swal2-icon .swal2-icon-content {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	font-size: inherit !important;
+	animation: none !important;
+}
+
+.hrm-alert-popup .swal2-icon svg {
+	width: 26px;
+	height: 26px;
+}
+
+.hrm-alert-title {
+	margin: 0 !important;
+	padding: 0 !important;
+	color: var(--hrm-text) !important;
+	font-size: 18px !important;
+	font-weight: 700 !important;
+	line-height: 1.35 !important;
+	letter-spacing: -0.01em !important;
+	text-align: center !important;
+	overflow-wrap: anywhere !important;
+}
+
+.hrm-alert-message {
+	margin: 8px 0 0 !important;
+	padding: 0 !important;
+	max-height: min(40vh, 320px) !important;
+	overflow-y: auto !important;
+	color: var(--hrm-text-muted) !important;
+	font-size: 14px !important;
+	font-weight: 500 !important;
+	line-height: 1.6 !important;
+	text-align: center !important;
+	white-space: pre-line !important;
+	overflow-wrap: anywhere !important;
+}
+
+/* Server-side validation details rendered as a list inside error dialogs. */
+.hrm-alert-details {
+	margin: 12px 0 0;
+	padding: 10px 12px 10px 28px;
+	border: 1px solid var(--hrm-border);
+	border-radius: var(--hrm-radius-sm);
+	background: var(--hrm-surface-muted);
+	color: var(--hrm-text-muted);
+	font-size: 13px;
+	line-height: 1.55;
+	text-align: left;
+	white-space: normal;
+}
+
+.hrm-alert-details li + li {
+	margin-top: 2px;
+}
+
+/* Inline error shown when an async confirm action fails — the dialog stays open. */
+.swal2-validation-message.hrm-alert-inline-error {
+	align-items: flex-start !important;
+	justify-content: flex-start !important;
+	gap: 8px !important;
+	margin: 16px 0 0 !important;
+	padding: 10px 12px !important;
+	border: 1px solid #fecaca !important;
+	border-radius: var(--hrm-radius-sm) !important;
+	background: var(--hrm-danger-soft) !important;
+	color: var(--hrm-danger-strong) !important;
+	font-size: 13px !important;
+	font-weight: 500 !important;
+	line-height: 1.5 !important;
+	text-align: left !important;
+	overflow-wrap: anywhere !important;
+}
+
+.swal2-validation-message.hrm-alert-inline-error::before {
+	flex: none !important;
+	width: 18px !important;
+	min-width: 18px !important;
+	height: 18px !important;
+	margin: 1px 0 0 !important;
+	border-radius: 50% !important;
+	background: var(--hrm-danger) !important;
+	color: #fff !important;
+	font-size: 12px !important;
+	line-height: 18px !important;
+}
+
+.hrm-alert-actions {
+	display: flex !important;
+	align-items: stretch !important;
+	justify-content: center !important;
+	gap: 10px !important;
+	width: 100% !important;
+	margin: 24px 0 0 !important;
+	padding: 0 !important;
+}
+
+.hrm-alert-button {
+	box-sizing: border-box !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	gap: 8px !important;
+	flex: 1 1 0% !important;
+	min-height: 42px !important;
+	margin: 0 !important;
+	padding: 0 16px !important;
+	border: 1px solid transparent !important;
+	border-radius: var(--hrm-radius-md) !important;
+	font-family: inherit !important;
+	font-size: 14px !important;
+	font-weight: 600 !important;
+	line-height: 1.2 !important;
+	cursor: pointer !important;
+	user-select: none !important;
+	transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease,
+		box-shadow 140ms ease, transform 140ms ease !important;
+}
+
+/* SweetAlert hides unused buttons with an inline `display: none`; the
+   `!important` above would otherwise resurrect them. */
+.hrm-alert-button[style*="display: none"],
+.hrm-alert-close[style*="display: none"] {
+	display: none !important;
+}
+
+.hrm-alert-button:focus-visible,
+.hrm-alert-close:focus-visible {
+	outline: 2px solid var(--hrm-alert-accent, var(--hrm-primary)) !important;
+	outline-offset: 2px !important;
+	box-shadow: none !important;
+}
+
+.hrm-alert-button:active:not(:disabled) {
+	transform: scale(0.98) !important;
+}
+
+.hrm-alert-button:disabled {
+	opacity: 0.6 !important;
+	cursor: not-allowed !important;
+}
+
+.hrm-alert-button[aria-busy="true"] {
+	opacity: 1 !important;
+	cursor: progress !important;
+}
+
+.hrm-alert-button--confirm {
+	background: var(--hrm-alert-accent) !important;
+	border-color: var(--hrm-alert-accent) !important;
+	color: #fff !important;
+	box-shadow: 0 1px 2px rgb(15 23 42 / 0.12) !important;
+}
+
+/* Non-destructive confirm inside a colored dialog (e.g. "Try again" on an error). */
+.hrm-alert-button--accent-primary {
+	--hrm-alert-accent: var(--hrm-primary);
+	--hrm-alert-accent-strong: var(--hrm-primary-hover);
+}
+
+/* Amber and sky need a darker fill for readable white text (WCAG AA). */
+.hrm-alert-popup--warning .hrm-alert-button--confirm,
+.hrm-alert-popup--info .hrm-alert-button--confirm,
+.hrm-alert-popup--success .hrm-alert-button--confirm {
+	background: var(--hrm-alert-accent-strong) !important;
+	border-color: var(--hrm-alert-accent-strong) !important;
+}
+
+.hrm-alert-button--cancel {
+	background: var(--hrm-surface) !important;
+	border-color: var(--hrm-border-strong) !important;
+	color: #334155 !important;
+	box-shadow: 0 1px 2px rgb(15 23 42 / 0.05) !important;
+}
+
+@media (hover: hover) {
+	.hrm-alert-button--confirm:hover:not(:disabled) {
+		background: var(--hrm-alert-accent-strong) !important;
+		border-color: var(--hrm-alert-accent-strong) !important;
+		box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--hrm-alert-accent) 45%, transparent) !important;
+	}
+
+	.hrm-alert-popup--warning .hrm-alert-button--confirm:hover:not(:disabled),
+	.hrm-alert-popup--info .hrm-alert-button--confirm:hover:not(:disabled),
+	.hrm-alert-popup--success .hrm-alert-button--confirm:hover:not(:disabled) {
+		filter: brightness(0.92);
+	}
+
+	.hrm-alert-button--cancel:hover:not(:disabled) {
+		background: var(--hrm-surface-muted) !important;
+		border-color: #94a3b8 !important;
+		color: var(--hrm-text) !important;
+	}
+}
+
+.hrm-alert-actions:has(> .hrm-alert-button:only-child) .hrm-alert-button,
+.hrm-alert-actions:has(> .hrm-alert-button[style*="display: none"]) .hrm-alert-button {
+	flex: 0 1 200px !important;
+}
+
+.hrm-btn-spinner {
+	width: 15px;
+	height: 15px;
+	flex: none;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	animation: hrm-spin 640ms linear infinite;
+}
+
+.hrm-alert-close {
+	position: absolute !important;
+	top: 12px !important;
+	right: 12px !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 32px !important;
+	height: 32px !important;
+	border: 0 !important;
+	border-radius: var(--hrm-radius-sm) !important;
+	background: transparent !important;
+	color: #94a3b8 !important;
+	font-size: 22px !important;
+	cursor: pointer !important;
+	transition: background-color 140ms ease, color 140ms ease !important;
+}
+
+.hrm-alert-close:hover {
+	background: #f1f5f9 !important;
+	color: var(--hrm-text) !important;
+}
+
+.hrm-alert-popup .swal2-timer-progress-bar-container {
+	position: absolute !important;
+	right: 0 !important;
+	bottom: 0 !important;
+	left: 0 !important;
+	height: 3px !important;
+	overflow: hidden !important;
+	background: rgb(15 23 42 / 0.06) !important;
+}
+
+.hrm-alert-popup .swal2-timer-progress-bar {
+	height: 100% !important;
+	background: var(--hrm-alert-accent) !important;
+}
+
+/* Animations ------------------------------------------------------------- */
+
+.hrm-alert-show {
+	animation: hrm-alert-enter var(--hrm-duration-enter) var(--hrm-ease-out) both !important;
+}
+
+.hrm-alert-hide {
+	animation: hrm-alert-exit var(--hrm-duration-exit) var(--hrm-ease-in) both !important;
+}
+
+.hrm-alert-backdrop-show {
+	animation: hrm-fade-in 180ms ease-out both !important;
+}
+
+.hrm-alert-backdrop-hide {
+	animation: hrm-fade-out var(--hrm-duration-exit) ease-in both !important;
+}
+
+@keyframes hrm-alert-enter {
+	from {
+		opacity: 0;
+		transform: translateY(8px) scale(0.97);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes hrm-alert-exit {
+	from {
+		opacity: 1;
+		transform: none;
+	}
+	to {
+		opacity: 0;
+		transform: translateY(4px) scale(0.98);
+	}
+}
+
+@keyframes hrm-alert-icon-in {
+	from {
+		opacity: 0;
+		transform: scale(0.6);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes hrm-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes hrm-fade-out {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes hrm-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (max-width: 480px) {
+	.hrm-alert-popup {
+		padding: 24px 18px 18px !important;
+	}
+
+	.hrm-alert-popup .swal2-icon {
+		width: 48px !important;
+		height: 48px !important;
+		margin-bottom: 14px !important;
+	}
+
+	.hrm-alert-popup .swal2-icon svg {
+		width: 22px;
+		height: 22px;
+	}
+
+	.hrm-alert-title {
+		font-size: 17px !important;
+	}
+
+	.hrm-alert-message {
+		font-size: 13.5px !important;
+	}
+
+	/* Stack: primary action on top, cancel underneath — easy thumb reach. */
+	.hrm-alert-actions {
+		flex-direction: column-reverse !important;
+		gap: 8px !important;
+		margin-top: 20px !important;
+	}
+
+	.hrm-alert-button,
+	.hrm-alert-actions:has(> .hrm-alert-button:only-child) .hrm-alert-button,
+	.hrm-alert-actions:has(> .hrm-alert-button[style*="display: none"]) .hrm-alert-button {
+		flex: none !important;
+		width: 100% !important;
+		min-height: 44px !important;
+	}
+}
+
+/* ==========================================================================
+   2. Toasts
+   ========================================================================== */
+
+/* Desktop: bottom-right, clear of the header and grid toolbar actions.
+   Newest toast is the first child, shown closest to the corner. */
+.hrm-toast-region {
+	position: fixed;
+	right: max(20px, env(safe-area-inset-right));
+	bottom: max(20px, env(safe-area-inset-bottom));
+	z-index: var(--hrm-z-toast);
+	display: flex;
+	flex-direction: column-reverse;
+	align-items: stretch;
+	width: min(380px, calc(100vw - 32px));
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	pointer-events: none;
+	transition: bottom 200ms var(--hrm-ease-out);
+}
+
+/* Lift above the fixed action bar on full-page forms (HpFooter). */
+body:has(.hp-footer:not(.hp-footer--hidden)) .hrm-toast-region {
+	bottom: calc(76px + env(safe-area-inset-bottom));
+}
+
+.hrm-toast-slot {
+	display: grid;
+	grid-template-rows: 1fr;
+	transition: grid-template-rows 180ms var(--hrm-ease-out), margin 180ms var(--hrm-ease-out);
+	margin-block: 5px;
+}
+
+.hrm-toast-slot.is-collapsed {
+	grid-template-rows: 0fr;
+	margin-block: 0;
+}
+
+.hrm-toast-slot > .hrm-toast {
+	min-height: 0;
+}
+
+.hrm-toast {
+	--hrm-toast-accent: var(--hrm-success);
+	--hrm-toast-soft: var(--hrm-success-soft);
+
+	position: relative;
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: start;
+	gap: 12px;
+	padding: 14px 12px 14px 14px;
+	overflow: hidden;
+	border: 1px solid var(--hrm-border);
+	border-radius: 12px;
+	background: var(--hrm-surface);
+	box-shadow: var(--hrm-shadow-toast);
+	color: var(--hrm-text);
+	font-family: inherit;
+	pointer-events: auto;
+	animation: hrm-toast-in 260ms var(--hrm-ease-out) both;
+}
+
+.hrm-toast::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: 3px;
+	background: var(--hrm-toast-accent);
+}
+
+.hrm-toast--error {
+	--hrm-toast-accent: var(--hrm-danger);
+	--hrm-toast-soft: var(--hrm-danger-soft);
+}
+
+.hrm-toast--warning {
+	--hrm-toast-accent: var(--hrm-warning);
+	--hrm-toast-soft: var(--hrm-warning-soft);
+}
+
+.hrm-toast--info {
+	--hrm-toast-accent: var(--hrm-info);
+	--hrm-toast-soft: var(--hrm-info-soft);
+}
+
+.hrm-toast.is-leaving {
+	animation: hrm-toast-out 160ms var(--hrm-ease-in) both;
+	pointer-events: none;
+}
+
+.hrm-toast.is-bumped {
+	animation: hrm-toast-bump 260ms var(--hrm-ease-out);
+}
+
+.hrm-toast__icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: var(--hrm-toast-soft);
+	color: var(--hrm-toast-accent);
+}
+
+.hrm-toast__icon svg {
+	width: 18px;
+	height: 18px;
+}
+
+.hrm-toast__body {
+	min-width: 0;
+	padding-top: 1px;
+}
+
+.hrm-toast__title {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1.4;
+	overflow-wrap: anywhere;
+}
+
+.hrm-toast__message {
+	margin: 2px 0 0;
+	color: var(--hrm-text-muted);
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1.5;
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+	display: -webkit-box;
+	-webkit-line-clamp: 6;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.hrm-toast__action {
+	margin-top: 8px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--hrm-primary);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.hrm-toast__action:hover {
+	text-decoration: underline;
+}
+
+.hrm-toast__close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	margin: -4px -2px 0 0;
+	border: 0;
+	border-radius: var(--hrm-radius-sm);
+	background: transparent;
+	color: #94a3b8;
+	cursor: pointer;
+	transition: background-color 140ms ease, color 140ms ease;
+}
+
+.hrm-toast__close:hover {
+	background: #f1f5f9;
+	color: var(--hrm-text);
+}
+
+.hrm-toast__close svg {
+	width: 16px;
+	height: 16px;
+}
+
+.hrm-toast__close:focus-visible,
+.hrm-toast__action:focus-visible {
+	outline: 2px solid var(--hrm-primary);
+	outline-offset: 2px;
+}
+
+.hrm-toast__progress {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	height: 3px;
+	background: var(--hrm-toast-accent);
+	opacity: 0.35;
+	transform-origin: left center;
+	animation: hrm-toast-progress var(--hrm-toast-duration, 4000ms) linear forwards;
+}
+
+.hrm-toast.is-paused .hrm-toast__progress {
+	animation-play-state: paused;
+}
+
+@keyframes hrm-toast-in {
+	from {
+		opacity: 0;
+		transform: translateX(16px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes hrm-toast-out {
+	from {
+		opacity: 1;
+		transform: none;
+	}
+	to {
+		opacity: 0;
+		transform: translateX(12px);
+	}
+}
+
+@keyframes hrm-toast-bump {
+	0% {
+		transform: none;
+	}
+	40% {
+		transform: scale(1.02);
+	}
+	100% {
+		transform: none;
+	}
+}
+
+@keyframes hrm-toast-progress {
+	from {
+		transform: scaleX(1);
+	}
+	to {
+		transform: scaleX(0);
+	}
+}
+
+@media (max-width: 640px) {
+	/* Phones: top, full width — never over a bottom-sheet's action buttons. */
+	.hrm-toast-region,
+	body:has(.hp-footer:not(.hp-footer--hidden)) .hrm-toast-region {
+		top: max(12px, env(safe-area-inset-top));
+		right: 12px;
+		bottom: auto;
+		left: 12px;
+		width: auto;
+		flex-direction: column;
+	}
+
+	@keyframes hrm-toast-in {
+		from {
+			opacity: 0;
+			transform: translateY(-10px);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+
+	@keyframes hrm-toast-out {
+		from {
+			opacity: 1;
+			transform: none;
+		}
+		to {
+			opacity: 0;
+			transform: translateY(-8px);
+		}
+	}
+}
+
+/* ==========================================================================
+   3. Image preview
+   ========================================================================== */
+
+.hrm-preview-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: var(--hrm-z-preview);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: max(56px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+	background: rgb(2 6 23 / 0.82);
+	outline: none;
+	animation: hrm-fade-in 180ms ease-out both;
+}
+
+.hrm-preview-backdrop[data-state="exiting"] {
+	animation: hrm-fade-out var(--hrm-duration-exit) ease-in both;
+}
+
+.hrm-preview-frame {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	max-width: min(1100px, 100%);
+	max-height: 100%;
+	overflow: hidden;
+	border: 4px solid #fff;
+	border-radius: var(--hrm-radius-md);
+	background: #f1f5f9;
+	box-shadow: 0 24px 64px -12px rgb(0 0 0 / 0.5);
+	animation: hrm-alert-enter var(--hrm-duration-enter) var(--hrm-ease-out) both;
+	outline: none;
+}
+
+.hrm-preview-frame img {
+	display: block;
+	max-width: 100%;
+	max-height: calc(100vh - 96px);
+	max-height: calc(100dvh - 96px);
+	object-fit: contain;
+}
+
+.hrm-preview-frame--circle {
+	width: min(70vw, 70dvh, 500px);
+	height: min(70vw, 70dvh, 500px);
+	border-radius: 50%;
+}
+
+.hrm-preview-frame--circle img {
+	width: 100%;
+	height: 100%;
+	max-height: none;
+	object-fit: cover;
+}
+
+.hrm-preview-close {
+	position: absolute;
+	top: max(14px, env(safe-area-inset-top));
+	right: max(14px, env(safe-area-inset-right));
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	border: 0;
+	border-radius: 50%;
+	background: rgb(255 255 255 / 0.12);
+	color: #fff;
+	cursor: pointer;
+	transition: background-color 140ms ease;
+}
+
+.hrm-preview-close:hover {
+	background: rgb(255 255 255 / 0.22);
+}
+
+.hrm-preview-close:focus-visible {
+	outline: 2px solid #fff;
+	outline-offset: 2px;
+}
+
+/* ==========================================================================
+   4. Page loader + route transition
+   ========================================================================== */
+
+/* Every route fades in. Opacity only: a transform here would turn fixed
+   children (e.g. the HpFooter action bar) into absolutely positioned ones. */
+.hp-route-view {
+	height: 100%; /* pages (e.g. grids at height:100%) size against <main> as before */
+	animation: hrm-fade-in 220ms ease-out both;
+}
+
+.hrm-page-loader {
+	position: fixed;
+	z-index: 45; /* above page content + HpFooter (40), below modals (1000) */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #f8fafc;
+	cursor: progress;
+}
+
+.hrm-page-loader[data-state="leaving"] {
+	animation: hrm-fade-out 240ms ease-in both;
+	pointer-events: none;
+}
+
+.hrm-page-loader__content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	/* Only shown when loading takes noticeable time — fast loads never flash. */
+	animation: hrm-page-loader-in 260ms var(--hrm-ease-out) 300ms both;
+}
+
+/* If the page becomes ready while the logo is still appearing, freeze it so
+   it never brightens during the exit fade. */
+.hrm-page-loader[data-state="leaving"] .hrm-page-loader__content {
+	animation-play-state: paused;
+}
+
+.hrm-page-loader__mark {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: 84px;
+	height: 84px;
+}
+
+.hrm-page-loader__ring {
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	background: conic-gradient(from 0deg, transparent 0deg 70deg, #2563eb 220deg, #10b981 360deg);
+	-webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+	mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+	animation: hrm-spin 900ms linear infinite;
+}
+
+.hrm-page-loader__badge {
+	display: grid;
+	place-items: center;
+	width: 66px;
+	height: 66px;
+	overflow: hidden;
+	border-radius: 50%;
+	background: #fff;
+	box-shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 8px 24px -8px rgb(37 99 235 / 0.35);
+	animation: hrm-page-loader-breathe 1600ms ease-in-out infinite;
+}
+
+.hrm-page-loader__badge img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transform: scale(1.18); /* trim the image's white margin */
+	user-select: none;
+}
+
+.hrm-page-loader__label {
+	margin: 0;
+	color: var(--hrm-text-subtle);
+	font-size: 13px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+
+@keyframes hrm-page-loader-in {
+	from {
+		opacity: 0;
+		transform: scale(0.94);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes hrm-page-loader-breathe {
+	0%,
+	100% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(0.95);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hp-route-view,
+	.hrm-page-loader[data-state="leaving"],
+	.hrm-page-loader__content {
+		animation-duration: 1ms;
+		animation-delay: 0ms;
+	}
+
+	.hrm-page-loader__ring,
+	.hrm-page-loader__badge {
+		animation: none;
+	}
+}
+
+/* ==========================================================================
+   Reduced motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+	.hrm-alert-show,
+	.hrm-alert-hide,
+	.hrm-alert-backdrop-show,
+	.hrm-alert-backdrop-hide,
+	.hrm-alert-popup .swal2-icon.swal2-icon-show {
+		animation-duration: 1ms !important;
+		animation-delay: 0ms !important;
+	}
+
+	.hrm-toast,
+	.hrm-toast.is-leaving,
+	.hrm-toast.is-bumped,
+	.hrm-preview-backdrop,
+	.hrm-preview-frame {
+		animation-duration: 1ms;
+	}
+
+	.hrm-toast-slot {
+		transition: none;
+	}
+
+	.hrm-alert-button,
+	.hrm-toast__close {
+		transition: none !important;
+	}
+}

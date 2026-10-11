@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useEffect, useState } from "react";
 import usePayrollProcessConfig from "./usePayrollProcessConfig";
 import useModal from "@/hooks/useModal";
@@ -74,6 +75,12 @@ const PayrollProcessListing = () => {
 
   useDocumentTitle("orvexa | Payroll Processing");
 
+  // Right-click menu: Edit and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+  });
+
   return (
     <>
       {isModalOpen && (
@@ -85,6 +92,7 @@ const PayrollProcessListing = () => {
         />
       )}
       <HpGrid
+        contextData={contextData}
         id="payrollProcessListing"
         rowData={processData}
         colDef={payrollProcessListingColDef}

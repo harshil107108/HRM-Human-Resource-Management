@@ -60,6 +60,31 @@ const formMethod = useForm();
 `formMethod` is supplied — no extra code required. Without `formMethod`,
 `onSave` is called directly.
 
+If `onSave` returns a promise, the modal tracks it: Save shows `Saving…`,
+repeat clicks are ignored, and Close / Cancel / ESC / backdrop are blocked until
+it settles. Close the modal from your success handler; on failure it stays open
+with the user's input intact.
+
+## Behavior
+
+- **Animation** — 200ms fade/scale in, 150ms out (bottom sheet on phones ≤640px).
+  The exit animation also plays when a parent unmounts the modal directly
+  (`{isOpen && <MyModal open />}`). `prefers-reduced-motion` is respected.
+- **Keyboard** — ESC closes the topmost modal only, and is ignored while a
+  SweetAlert dialog is open or when a dropdown/date picker consumed the key.
+  Tab is trapped inside the dialog; focus returns to the trigger on close.
+- **Initial focus** — first field in the body (desktop). On touch devices the
+  dialog itself is focused so the virtual keyboard doesn't cover the form.
+- **Unsaved changes** — with `confirmBeforeClose`, closing after the user has
+  typed/changed anything asks “Discard unsaved changes?”. Edits are detected
+  from real user input events (or pass `isDirty` / an RHF `formMethod`).
+  `Clear` resets the flag.
+- **Layering** — modals `1000`, dropdown/date portals `9999`, image preview
+  `1500`, SweetAlert dialogs `100000`, toasts `100010`.
+- **Design tokens** — colors, radii, shadows and timings come from the
+  `--hrm-*` variables on `:root` in `src/index.css`. Alerts, toasts and image
+  previews live in `src/components/feedback` and share the same tokens.
+
 ## Props reference
 
 | Prop | Type | Default | Description |
@@ -70,10 +95,10 @@ const formMethod = useForm();
 | `children` | node | — | Body content |
 | `size` | `xs\|sm\|md\|lg\|xl\|2xl\|full` | `md` | Dialog width |
 | `formMethod` | RHF instance | — | Enables auto `handleSubmit` wiring |
-| `loading` | bool | `false` | Shows spinner, disables actions |
+| `loading` | bool | `false` | Shows a (delayed) loading veil over the body, disables actions |
 | `active` | bool | `true` | Whether this instance owns focus/ESC (for nested modals) |
 | `onSave` / `onClose` / `onClear` | fn | — | Action handlers |
-| `saveText` / `cancelText` / `clearText` | string | `Save` / `Cancel` / `Clear` | Button labels |
+| `saveText` / `savingText` / `cancelText` / `clearText` | string | `Save` / `Saving…` / `Cancel` / `Clear` | Button labels |
 | `showHeader` / `showFooter` | bool | `true` | Toggle sections |
 | `showCloseButton` / `showClearButton` / `showSaveButton` | bool | `true` / `false` / `true` | Toggle buttons |
 | `disableSave` / `disableClear` / `disableClose` | bool | `false` | Force-disable a button |
@@ -81,18 +106,19 @@ const formMethod = useForm();
 | `closeOnEscape` | bool | `true` | ESC to close |
 | `preventCloseWhileLoading` | bool | `true` | Blocks close actions while `loading` |
 | `preventOutsideClick` | bool | `false` | Hard-disables backdrop click regardless of `closeOnBackdrop` |
-| `confirmBeforeClose` | bool | `false` | Ask for confirmation if the RHF form is dirty |
+| `confirmBeforeClose` | bool | `false` | Ask before discarding unsaved edits |
+| `isDirty` | bool | — | Optional explicit dirty flag (overrides detection) |
 | `scrollable` | bool | `true` | Body scrolls independently of header/footer |
 | `stickyHeader` / `stickyFooter` | bool | `true` | Keep header/footer pinned during body scroll |
 | `bodyClassName` / `headerClassName` / `footerClassName` / `className` | string | — | Extra class hooks |
 | `header` / `footer` | node | — | Full custom override of that section |
 | `maxHeight` | string | — | Cap on body height |
 | `zIndex` | number | `1000` | Stacking context (raise for nested modals) |
-| `primaryColor` / `secondaryColor` | CSS color | `#0F766E` / `#115E59` | Icon accent + Save button fill / its hover shade (flat color, no gradient) |
+| `primaryColor` / `secondaryColor` | CSS color | `#0F766E` / `#115E59` | Header gradient start / end |
 | `errorMessage` / `successMessage` / `validationErrors` | string / string / string[] | — | Banners shown above body content |
 
 ## Nested modals
 
 Render a second `<HpCommonModal>` inside the first one's `children`, give it a
-higher `zIndex`, and set `active={false}` on the parent while the child is
-open so ESC/Tab trapping is owned by the topmost dialog only.
+higher `zIndex`. ESC/Tab handling automatically belongs to the topmost dialog;
+`active={false}` on the parent is still supported for explicit control.

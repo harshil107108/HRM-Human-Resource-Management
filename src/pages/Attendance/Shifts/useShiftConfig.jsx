@@ -47,8 +47,9 @@ export const useShiftConfig = ({ handleDelete } = {}) => {
             width: 130,
         },
         {
-            id: "status",
-            field: "status",
+            type: "status",
+            id: "isActive",
+            field: "isActive",
             headerName: "Status",
             width: 120,
         },
@@ -74,7 +75,7 @@ export const useShiftConfig = ({ handleDelete } = {}) => {
         halfDayHours: 4,
         fullDayHours: 8,
         isNightShift: false,
-        status: "Active",
+        isActive: true,
         description: ""
     }), []);
 
@@ -146,13 +147,9 @@ export const useShiftConfig = ({ handleDelete } = {}) => {
             className: "col-span-3"
         },
         {
-            id: "status",
-            type: "selectWrapper",
-            label: "Status",
-            options: [
-                { label: "Active", value: "Active" },
-                { label: "Inactive", value: "Inactive" }
-            ],
+            id: "isActive",
+            type: "checkbox",
+            label: "Is Active",
             className: "col-span-3"
         },
         {

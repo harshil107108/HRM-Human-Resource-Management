@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useLocation, useNavigate } from "react-router-dom";
 import useEmployeeConfig from "./useEmployeeConfig";
 import useAlert from "@/hooks/useAlert";
@@ -112,8 +113,15 @@ const EmployeeListing = () => {
     getEmployeeListing();
   }, []);
 
+  // Right-click menu: Edit and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+  });
+
   return (
     <HpGrid
+      contextData={contextData}
       id="employeeListing"
       title="Employee"
       rowData={EmployeeListingData}

@@ -4,7 +4,13 @@ const useCandidateConfig = ({ handleDelete } = {}) => {
       id: "candidateName",
       field: "candidateName",
       headerName: "Candidate Name",
-      width: 180,
+      width: 190,
+      render: (name, row) => {
+        if (row?.firstName || row?.lastName) {
+          return [row.firstName, row.middleName, row.lastName].filter(Boolean).join(" ");
+        }
+        return name || "-";
+      },
     },
     {
       id: "email",
@@ -35,14 +41,52 @@ const useCandidateConfig = ({ handleDelete } = {}) => {
       id: "stage",
       field: "stage",
       headerName: "Recruitment Stage",
-      width: 140,
+      width: 170,
+      render: (stage, row) => {
+        const val = stage || "Applied";
+        const isConverted = val === "Hired" && (row.convertedEmployeeId || row.isConverted);
+
+        const badgeStyles = {
+          Applied: "bg-blue-50 text-blue-700 border-blue-200",
+          Screening: "bg-purple-50 text-purple-700 border-purple-200",
+          Interview: "bg-amber-50 text-amber-700 border-amber-200",
+          Offered: "bg-indigo-50 text-indigo-700 border-indigo-200",
+          Hired: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          Rejected: "bg-rose-50 text-rose-700 border-rose-200",
+        };
+
+        const currentStyle = badgeStyles[val] || "bg-slate-50 text-slate-700 border-slate-200";
+
+        return (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${currentStyle}`}>
+              {val}
+            </span>
+            {isConverted && (
+              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800" title="Converted to Employee">
+                ✓ Converted
+              </span>
+            )}
+            {val === "Rejected" && (
+              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-100 text-slate-600" title="Archived in Talent Pool">
+                Talent Pool
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       id: "rating",
       field: "rating",
-      headerName: "Rating (1-5)",
-      width: 110,
+      headerName: "Rating",
+      width: 100,
       type: "number",
+      render: (rating) => (
+        <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
+          ★ {rating || 3}/5
+        </span>
+      ),
     },
     {
       id: "action",
@@ -58,12 +102,27 @@ const useCandidateConfig = ({ handleDelete } = {}) => {
 
   const candidateSchema = [
     {
-      id: "candidateName",
+      id: "firstName",
       type: "text",
-      label: "Candidate Full Name",
-      placeHolder: "Enter candidate full name",
+      label: "First Name",
+      placeHolder: "Enter first name",
       required: true,
-      className: "col-span-6",
+      className: "col-span-4",
+    },
+    {
+      id: "middleName",
+      type: "text",
+      label: "Middle Name",
+      placeHolder: "Enter middle name (optional)",
+      className: "col-span-4",
+    },
+    {
+      id: "lastName",
+      type: "text",
+      label: "Last Name",
+      placeHolder: "Enter last name",
+      required: true,
+      className: "col-span-4",
     },
     {
       id: "email",
@@ -137,7 +196,7 @@ const useCandidateConfig = ({ handleDelete } = {}) => {
         { label: "Interview", value: "Interview" },
         { label: "Offered", value: "Offered" },
         { label: "Hired", value: "Hired" },
-        { label: "Rejected", value: "Rejected" },
+        { label: "Rejected (Talent Pool)", value: "Rejected" },
       ],
     },
     {
@@ -154,6 +213,13 @@ const useCandidateConfig = ({ handleDelete } = {}) => {
       ],
     },
     {
+      id: "rejectionReason",
+      type: "text",
+      label: "Rejection Reason / Talent Pool Notes",
+      placeHolder: "Reason if rejected (e.g., Salary expectations, Tech mismatch, Keep for future roles)",
+      className: "col-span-12",
+    },
+    {
       id: "notes",
       type: "text",
       label: "Screening / Interview Notes",
@@ -163,6 +229,9 @@ const useCandidateConfig = ({ handleDelete } = {}) => {
   ];
 
   const initialValue = {
+    firstName: "",
+    middleName: "",
+    lastName: "",
     candidateName: "",
     email: "",
     phone: "",
@@ -174,6 +243,7 @@ const useCandidateConfig = ({ handleDelete } = {}) => {
     expectedSalary: 0,
     stage: "Applied",
     rating: 3,
+    rejectionReason: "",
     notes: "",
   };
 

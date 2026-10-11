@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useEffect, useState } from "react";
 import useReviewConfig from "./useReviewConfig";
 import useModal from "@/hooks/useModal";
@@ -87,6 +88,12 @@ const ReviewListing = () => {
 
     useDocumentTitle("orvexa | Performance Reviews");
 
+    // Right-click menu: Edit and Delete.
+    const contextData = createRowContextMenu({
+      onEdit: (row) => handleDoubleClick({ data: row }),
+      onDelete: (row) => handleDelete(row._id),
+    });
+
     return (
         <>
             {isModalOpen && (
@@ -98,6 +105,7 @@ const ReviewListing = () => {
                 />
             )}
             <HpGrid
+                contextData={contextData}
                 id="reviewListing"
                 rowData={reviewData}
                 colDef={reviewListingColDef}

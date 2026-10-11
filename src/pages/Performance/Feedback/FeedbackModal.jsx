@@ -66,8 +66,8 @@ const FeedbackModal = ({
                     api: api + apiEndpoints.performance.feedback.FeedbackGetByID,
                     payload: { _id: feedbackId }
                 });
-                if (res?.success && res.data) {
-                    setEditData(res.data);
+                if (res?.success && res.data?.data) {
+                    setEditData(res.data.data);
                 }
             } catch (err) {
                 console.error("Failed to fetch feedback", err);
@@ -142,7 +142,8 @@ const FeedbackModal = ({
             });
             onSaved?.();
             closeModal?.();
-        } else {
+        } else if (!res?.error) {
+            // useApiCall already reported request failures; only cover other cases.
             errorAlert({
                 title: "Error",
                 text: res?.message || "Failed to save feedback"

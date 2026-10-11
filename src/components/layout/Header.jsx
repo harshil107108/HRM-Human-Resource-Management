@@ -1,17 +1,23 @@
-import { Search, Bell, Mail, Globe, Menu, X, ArrowRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Search, Bell, Mail, Globe, Menu, X, ArrowRight, LogOut, ChevronDown, ShieldCheck } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { NAVIGATION_SCHEMA } from "@utils/Routes.js";
+import { useAuth } from "@/context/AuthContext";
+import { getUploadUrl } from "@/utils/fileUpload";
 
-const SEARCH_ITEMS = NAVIGATION_SCHEMA.flatMap((item) =>
-  item.children?.length
-    ? item.children.map((child) => ({
-      label: child.label,
-      category: item.label,
-      path: child.path,
-    }))
-    : [{ label: item.label, category: "", path: item.path }],
-);
+// Searchable pages = the menus this user can open.
+const toSearchItems = (menus = []) =>
+  menus.flatMap((group) =>
+    group.children?.length
+      ? group.children.map((child) => ({
+        label: child.menuName,
+        category: group.menuName,
+        path: child.path,
+      }))
+      : [{ label: group.menuName, category: "", path: group.path }],
+  );
+
+const initialsOf = (name = "") =>
+  name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join("") || "?";
 
 export const Header = ({
   searchQuery,
@@ -20,6 +26,25 @@ export const Header = ({
   setIsMobileSidebarOpen,
 }) => {
   const navigate = useNavigate();
+  const { user, menus, logout } = useAuth();
+  const SEARCH_ITEMS = useMemo(() => toSearchItems(menus), [menus]);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+
+  // Close the profile menu on outside click / Escape.
+  useEffect(() => {
+    if (!profileOpen) return undefined;
+    const onPointerDown = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) setProfileOpen(false);
+    };
+    const onKeyDown = (event) => event.key === "Escape" && setProfileOpen(false);
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [profileOpen]);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const suggestions = useMemo(() => {
     const term = searchQuery.trim().toLowerCase();
@@ -28,7 +53,7 @@ export const Header = ({
     return SEARCH_ITEMS.filter((item) =>
       `${item.label} ${item.category}`.toLowerCase().includes(term),
     ).slice(0, 6);
-  }, [searchQuery]);
+  }, [searchQuery, SEARCH_ITEMS]);
 
   const handleSearchChange = (value) => {
     setSearchQuery(value);
@@ -163,20 +188,63 @@ export const Header = ({
           </button>
         </div>
 
-        <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
-          <div className="text-right hidden md:block">
-            <p className="text-[12px] font-semibold text-slate-900 leading-none">
-              Harshil S.
-            </p>
-            <p className="text-[10px] text-slate-400 font-medium mt-0.5 leading-none">
-              Administrator
-            </p>
-          </div>
-          <img
-            className="w-7 h-7 rounded-full object-cover border border-slate-200"
-            alt="Profile picture"
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-          />
+        <div ref={profileRef} className="relative pl-3 border-l border-slate-200">
+          <button
+            type="button"
+            onClick={() => setProfileOpen((open) => !open)}
+            aria-haspopup="menu"
+            aria-expanded={profileOpen}
+            className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200"
+          >
+            <div className="text-right hidden md:block">
+              <p className="text-[12px] font-semibold text-slate-900 leading-none">
+                {user?.name || "User"}
+              </p>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5 leading-none">
+                {user?.roleName || ""}
+              </p>
+            </div>
+            {user?.profileImage ? (
+              <img
+                className="w-7 h-7 rounded-full object-cover border border-slate-200"
+                alt=""
+                src={getUploadUrl(user.profileImage)}
+              />
+            ) : (
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-[11px] font-bold text-blue-700">
+                {initialsOf(user?.name)}
+              </span>
+            )}
+            <ChevronDown className={`hidden md:block h-3.5 w-3.5 text-slate-400 transition-transform ${profileOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          {profileOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
+            >
+              <div className="border-b border-slate-100 bg-slate-50/60 px-4 py-3">
+                <p className="truncate text-sm font-semibold text-slate-800">{user?.name}</p>
+                <p className="truncate text-xs text-slate-500">@{user?.username}</p>
+                <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                  <ShieldCheck className="h-3 w-3" />
+                  {user?.roleName}
+                </span>
+              </div>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setProfileOpen(false);
+                  logout();
+                }}
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-rose-600 hover:bg-rose-50"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

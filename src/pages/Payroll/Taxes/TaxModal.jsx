@@ -19,6 +19,12 @@ const TaxModal = ({ onModalClose, onSaved, open, extraParams }) => {
       schema: [...schemaWithOptions],
       initialValue,
     });
+  }, []);
+
+  // Keep a single form instance so values loaded by getById survive
+  // when dropdown options arrive; only push the new options in.
+  useEffect(() => {
+    formmethod.methods.setSchema([...schemaWithOptions]);
   }, [schemaWithOptions]);
 
   const loadEmployeeHelp = async () => {

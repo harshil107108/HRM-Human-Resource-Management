@@ -40,6 +40,7 @@ export const useWeekendPolicyConfig = ({ handleDelete } = {}) => {
 
     const initialValue = useMemo(() => ({
         policyName: "",
+        policyCode: "",
         description: "",
         days: ["Sunday"],
         status: "Active"
@@ -51,7 +52,14 @@ export const useWeekendPolicyConfig = ({ handleDelete } = {}) => {
             label: "Policy Name",
             required: true,
             placeholder: "e.g. Standard Weekend Policy",
-            className: "col-span-8"
+            className: "col-span-5"
+        },
+        policyCode: {
+            type: "text",
+            label: "Policy Code",
+            required: true,
+            placeholder: "e.g. WP-STD",
+            className: "col-span-3"
         },
         status: {
             type: "selectWrapper",

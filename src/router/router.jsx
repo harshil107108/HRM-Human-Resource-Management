@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import MainLayout from "../components/layout/MainLayout";
+import { RequireAuth, PublicOnly, HomeRedirect } from "./RouteGuards";
+import MenuMasterListing from "@/pages/Master/MenuMaster/MenuMasterListing";
 
 import Dashboard from "../pages/Dashboard";
 import Login from "../pages/Login";
@@ -74,6 +76,7 @@ import RecruitmentReports from "@/pages/Reports/RecruitmentReports";
 // Administration Modules
 import UserListing from "@/pages/Administration/Users/UserListing";
 import RoleListing from "@/pages/Administration/Roles/RoleListing";
+import Role from "@/pages/Administration/Roles/Role";
 import PermissionMatrix from "@/pages/Administration/Permissions/PermissionMatrix";
 import AuditLogListing from "@/pages/Administration/AuditLogs/AuditLogListing";
 import ActivityLogFeed from "@/pages/Administration/ActivityLogs/ActivityLogFeed";
@@ -88,16 +91,24 @@ import SecuritySettings from "@/pages/Settings/SecuritySettings";
 const router = createBrowserRouter([
   {
     path: "/login",
-    element: <Login />,
+    element: (
+      <PublicOnly>
+        <Login />
+      </PublicOnly>
+    ),
   },
 
   {
     path: "/",
-    element: <MainLayout />,
+    element: (
+      <RequireAuth>
+        <MainLayout />
+      </RequireAuth>
+    ),
     children: [
       {
         index: true,
-        element: <Navigate to="/dashboard" replace />,
+        element: <HomeRedirect />,
       },
 
       // ============================================
@@ -113,6 +124,10 @@ const router = createBrowserRouter([
       // Master Setup
       // ============================================
 
+      {
+        path: "master",
+        element: <Navigate to="/master/countries" replace />,
+      },
       {
         path: "master/countries",
         element: <CountryMasterListing />,
@@ -130,6 +145,18 @@ const router = createBrowserRouter([
         element: <HolidayMasterListing />,
       },
       {
+        path: "master/menus",
+        element: <MenuMasterListing />,
+      },
+      {
+        path: "master/routes",
+        element: <MenuMasterListing />,
+      },
+      {
+        path: "master/banks",
+        element: <BankMasterListing />,
+      },
+      {
         path: "master/bank",
         element: <BankMasterListing />,
       },
@@ -139,6 +166,24 @@ const router = createBrowserRouter([
       // ============================================
 
       {
+        path: "organization",
+        element: <Navigate to="/organization/company" replace />,
+      },
+      {
+        path: "organization/company",
+        children: [
+          {
+            index: true,
+            element: <CompanyListing />,
+          },
+          {
+            path: "addedit",
+            handle: { pageLoader: true },
+            element: <Company />,
+          },
+        ],
+      },
+      {
         path: "organization/companies",
         children: [
           {
@@ -147,7 +192,22 @@ const router = createBrowserRouter([
           },
           {
             path: "addedit",
+            handle: { pageLoader: true },
             element: <Company />,
+          },
+        ],
+      },
+      {
+        path: "organization/branch",
+        children: [
+          {
+            index: true,
+            element: <BranchListing />,
+          },
+          {
+            path: "addedit",
+            handle: { pageLoader: true },
+            element: <Branch />,
           },
         ],
       },
@@ -160,7 +220,22 @@ const router = createBrowserRouter([
           },
           {
             path: "addedit",
+            handle: { pageLoader: true },
             element: <Branch />,
+          },
+        ],
+      },
+      {
+        path: "organization/department",
+        children: [
+          {
+            index: true,
+            element: <DepartmentListing />,
+          },
+          {
+            path: "addedit",
+            handle: { pageLoader: true },
+            element: <Department />,
           },
         ],
       },
@@ -173,7 +248,22 @@ const router = createBrowserRouter([
           },
           {
             path: "addedit",
+            handle: { pageLoader: true },
             element: <Department />,
+          },
+        ],
+      },
+      {
+        path: "organization/designation",
+        children: [
+          {
+            index: true,
+            element: <DesignationListing />,
+          },
+          {
+            path: "addedit",
+            handle: { pageLoader: true },
+            element: <Designation />,
           },
         ],
       },
@@ -186,6 +276,7 @@ const router = createBrowserRouter([
           },
           {
             path: "addedit",
+            handle: { pageLoader: true },
             element: <Designation />,
           },
         ],
@@ -196,6 +287,28 @@ const router = createBrowserRouter([
       // ============================================
 
       {
+        path: "employee",
+        element: <Navigate to="/employee/directory" replace />,
+      },
+      {
+        path: "employees",
+        element: <Navigate to="/employee/directory" replace />,
+      },
+      {
+        path: "employee/directory",
+        children: [
+          {
+            index: true,
+            element: <EmployeeListing />,
+          },
+          {
+            path: "addedit",
+            handle: { pageLoader: true },
+            element: <Employee />,
+          },
+        ],
+      },
+      {
         path: "employees/directory",
         children: [
           {
@@ -204,17 +317,40 @@ const router = createBrowserRouter([
           },
           {
             path: "addedit",
+            handle: { pageLoader: true },
             element: <Employee />,
           },
         ],
+      },
+      {
+        path: "employee/profiles",
+        element: <EmployeeProfiles />,
       },
       {
         path: "employees/profiles",
         element: <EmployeeProfiles />,
       },
       {
+        path: "employee/documents",
+        element: <EmployeeDocuments />,
+      },
+      {
         path: "employees/documents",
         element: <EmployeeDocuments />,
+      },
+      {
+        path: "employee/assets",
+        children: [
+          {
+            index: true,
+            element: <AssetListing />,
+          },
+          {
+            path: "addedit",
+            handle: { pageLoader: true },
+            element: <Asset />,
+          },
+        ],
       },
       {
         path: "employees/assets",
@@ -225,9 +361,14 @@ const router = createBrowserRouter([
           },
           {
             path: "addedit",
+            handle: { pageLoader: true },
             element: <Asset />,
           },
         ],
+      },
+      {
+        path: "employee/exit",
+        element: <ExitManagementListing />,
       },
       {
         path: "employees/exit",
@@ -239,6 +380,10 @@ const router = createBrowserRouter([
       // ============================================
 
       {
+        path: "attendance",
+        element: <Navigate to="/attendance/logs" replace />,
+      },
+      {
         path: "attendance/logs",
         element: <AttendanceLogListing />,
       },
@@ -249,6 +394,10 @@ const router = createBrowserRouter([
       {
         path: "attendance/holidays",
         element: <AttendanceHolidayCalendar />,
+      },
+      {
+        path: "attendance/weekend-policy",
+        element: <WeekendPolicyListing />,
       },
       {
         path: "attendance/weekends",
@@ -264,6 +413,10 @@ const router = createBrowserRouter([
       // ============================================
 
       {
+        path: "leave",
+        element: <Navigate to="/leave/requests" replace />,
+      },
+      {
         path: "leave/requests",
         element: <LeaveRequestListing />,
       },
@@ -276,6 +429,10 @@ const router = createBrowserRouter([
         element: <LeavePolicyListing />,
       },
       {
+        path: "leave/balances",
+        element: <LeaveBalanceListing />,
+      },
+      {
         path: "leave/balance",
         element: <LeaveBalanceListing />,
       },
@@ -284,6 +441,14 @@ const router = createBrowserRouter([
       // Payroll
       // ============================================
 
+      {
+        path: "payroll",
+        element: <Navigate to="/payroll/process" replace />,
+      },
+      {
+        path: "payroll/structures",
+        element: <SalaryStructureListing />,
+      },
       {
         path: "payroll/salary-structure",
         element: <SalaryStructureListing />,
@@ -305,6 +470,10 @@ const router = createBrowserRouter([
         element: <ReimbursementListing />,
       },
       {
+        path: "payroll/tax",
+        element: <TaxListing />,
+      },
+      {
         path: "payroll/taxes",
         element: <TaxListing />,
       },
@@ -314,6 +483,24 @@ const router = createBrowserRouter([
       // ============================================
 
       {
+        path: "recruitment",
+        element: <Navigate to="/recruitment/job-openings" replace />,
+      },
+      {
+        path: "recruitment/job-openings",
+        children: [
+          {
+            index: true,
+            element: <JobOpeningListing />,
+          },
+          {
+            path: "addedit",
+            handle: { pageLoader: true },
+            element: <JobOpening />,
+          },
+        ],
+      },
+      {
         path: "recruitment/jobs",
         children: [
           {
@@ -322,6 +509,7 @@ const router = createBrowserRouter([
           },
           {
             path: "addedit",
+            handle: { pageLoader: true },
             element: <JobOpening />,
           },
         ],
@@ -348,6 +536,10 @@ const router = createBrowserRouter([
       // ============================================
 
       {
+        path: "performance",
+        element: <Navigate to="/performance/goals" replace />,
+      },
+      {
         path: "performance/goals",
         element: <GoalListing />,
       },
@@ -368,6 +560,10 @@ const router = createBrowserRouter([
       // Reports
       // ============================================
 
+      {
+        path: "reports",
+        element: <Navigate to="/reports/employees" replace />,
+      },
       {
         path: "reports/employees",
         element: <EmployeeReports />,
@@ -394,12 +590,26 @@ const router = createBrowserRouter([
       // ============================================
 
       {
+        path: "administration",
+        element: <Navigate to="/administration/users" replace />,
+      },
+      {
         path: "administration/users",
         element: <UserListing />,
       },
       {
         path: "administration/roles",
-        element: <RoleListing />,
+        children: [
+          {
+            index: true,
+            element: <RoleListing />,
+          },
+          {
+            path: "addedit",
+            handle: { pageLoader: true },
+            element: <Role />,
+          },
+        ],
       },
       {
         path: "administration/permissions",
@@ -419,12 +629,20 @@ const router = createBrowserRouter([
       // ============================================
 
       {
+        path: "settings",
+        element: <Navigate to="/settings/general" replace />,
+      },
+      {
         path: "settings/general",
         element: <GeneralSettings />,
       },
       {
         path: "settings/notifications",
         element: <NotificationSettings />,
+      },
+      {
+        path: "settings/email-templates",
+        element: <EmailTemplates />,
       },
       {
         path: "settings/email",

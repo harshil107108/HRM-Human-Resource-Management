@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useState, useEffect } from "react";
 import useStateMasterConfig from "./useStateMasterConfig";
 import useModal from "@/hooks/useModal";
@@ -79,6 +80,12 @@ const StateMasterListing = () => {
 
   useDocumentTitle("orvexa | State Master");
 
+  // Right-click menu: Edit and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+  });
+
   return (
     <>
       {isModalOpen && (
@@ -91,6 +98,7 @@ const StateMasterListing = () => {
       )}
 
       <HpGrid
+        contextData={contextData}
         id="stateListing"
         rowData={stateListingData}
         colDef={stateListingColDef}

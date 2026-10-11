@@ -1,10 +1,22 @@
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import companyLogo from "@assets/images/companyLogo.png";
 import Logo from "@assets/images/Logo.png";
-import { NAVIGATION_SCHEMA } from "@utils/Routes.js";
+import { useAuth } from "@/context/AuthContext";
+import { getMenuIcon } from "@/utils/menuIcons";
+
+// Server menu tree (already filtered to what the user may view) -> nav items.
+const toNavigation = (menus = []) =>
+  menus.map((group) => ({
+    label: group.menuName,
+    icon: getMenuIcon(group.icon),
+    path: group.path,
+    children: group.children?.length
+      ? group.children.map((child) => ({ label: child.menuName, path: child.path }))
+      : undefined,
+  }));
 
 // ==========================================
 // SUB-COMPONENTS
@@ -100,6 +112,8 @@ export const Sidebar = ({
   setIsMobileOpen,
 }) => {
   const location = useLocation();
+  const { menus } = useAuth();
+  const NAVIGATION_SCHEMA = useMemo(() => toNavigation(menus), [menus]);
   const [expandedGroups, setExpandedGroups] = useState({});
   const navigationCollapsed = isCollapsed && !isMobileOpen;
 
@@ -115,7 +129,19 @@ export const Sidebar = ({
         [activeGroup.label]: true,
       }));
     }
-  }, [location.pathname]);
+  }, [location.pathname, NAVIGATION_SCHEMA]);
+
+  // Mobile drawer: Escape closes it (ignored while a modal/dialog is open).
+  useEffect(() => {
+    if (!isMobileOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (document.querySelector("[data-hp-common-modal-portal], .swal2-container")) return;
+      setIsMobileOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isMobileOpen, setIsMobileOpen]);
 
   const handleGroupToggle = (label) => {
     if (isCollapsed) {

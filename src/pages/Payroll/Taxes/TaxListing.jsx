@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useEffect, useState } from "react";
 import useTaxConfig from "./useTaxConfig";
 import useModal from "@/hooks/useModal";
@@ -76,6 +77,12 @@ const TaxListing = () => {
 
   useDocumentTitle("orvexa | Income Tax Declarations");
 
+  // Right-click menu: Edit and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+  });
+
   return (
     <>
       {isModalOpen && (
@@ -87,6 +94,7 @@ const TaxListing = () => {
         />
       )}
       <HpGrid
+        contextData={contextData}
         id="taxListing"
         rowData={taxData}
         colDef={taxListingColDef}

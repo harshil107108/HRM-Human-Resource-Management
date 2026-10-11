@@ -1,4 +1,5 @@
 import { HpGrid } from "@/hp-grid/src";
+import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useEffect, useState } from "react";
 import useReimbursementConfig from "./useReimbursementConfig";
 import useModal from "@/hooks/useModal";
@@ -78,6 +79,12 @@ const ReimbursementListing = () => {
 
   useDocumentTitle("orvexa | Employee Reimbursements");
 
+  // Right-click menu: Edit and Delete.
+  const contextData = createRowContextMenu({
+    onEdit: (row) => handleDoubleClick({ data: row }),
+    onDelete: (row) => handleDelete(row._id),
+  });
+
   return (
     <>
       {isModalOpen && (
@@ -89,6 +96,7 @@ const ReimbursementListing = () => {
         />
       )}
       <HpGrid
+        contextData={contextData}
         id="reimbursementListing"
         rowData={reimbursementData}
         colDef={reimbursementListingColDef}

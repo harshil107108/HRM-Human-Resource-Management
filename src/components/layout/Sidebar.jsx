@@ -14,7 +14,9 @@ const toNavigation = (menus = []) =>
     icon: getMenuIcon(group.icon),
     path: group.path,
     children: group.children?.length
-      ? group.children.map((child) => ({ label: child.menuName, path: child.path }))
+      ? group.children
+          .filter((child) => child.path !== "/administration/permissions")
+          .map((child) => ({ label: child.menuName, path: child.path }))
       : undefined,
   }));
 

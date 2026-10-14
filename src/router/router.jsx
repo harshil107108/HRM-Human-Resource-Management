@@ -32,6 +32,8 @@ import JobOpening from "@/pages/Recruitment/Job Opening/JobOpening";
 import EmployeeProfiles from "@/pages/Employee/EmployeeProfiles";
 import EmployeeDocuments from "@/pages/Employee/EmployeeDocuments";
 import ExitManagementListing from "@/pages/Employee/ExitManagement/ExitManagementListing";
+import TaskManagementListing from "@/pages/Employee/Tasks/TaskManagementListing";
+import TaskCreation from "@/pages/Employee/Tasks/TaskCreation";
 
 // Attendance Modules
 import AttendanceLogListing from "@/pages/Attendance/Logs/AttendanceLogListing";
@@ -373,6 +375,14 @@ const router = createBrowserRouter([
       {
         path: "employees/exit",
         element: <ExitManagementListing />,
+      },
+      {
+        path: "employees/task-management",
+        element: <TaskManagementListing />,
+      },
+      {
+        path: "employees/task-creation",
+        element: <TaskCreation />,
       },
 
       // ============================================

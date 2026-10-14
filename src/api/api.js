@@ -68,6 +68,17 @@ const apiEndpoints = {
         },
     },
 
+    tasks: {
+        getTasks: "/tasks/getTasks",
+        getAssignableEmployees: "/tasks/getAssignableEmployees",
+        createTask: "/tasks/createTask",
+        updateTaskStatus: "/tasks/updateTaskStatus",
+        getProjects: "/tasks/getProjects",
+        addEditProject: "/tasks/addEditProject",
+        deleteProject: "/tasks/deleteProject",
+        deleteTask: "/tasks/deleteTask",
+    },
+
     organization: {
         company: {
             CompanyAddEdit: "/organization/company/addEditCompany",

@@ -211,6 +211,7 @@ function HpGridBase(props) {
     onCardDragLeave,
     onCardDrop,
     getCardClassName,
+    renderCardProgress,
 
     // ---- row drag and drop support ----
     rowDraggable = false,
@@ -1416,13 +1417,14 @@ function HpGridBase(props) {
           typeof item.field === "string" &&
           item.field !== cardTitleColumn?.field &&
           item.field !== cardStatusColumn?.field &&
-          colDef.find((col) => col.field === item.field)?.type !== "actions",
+          item.field !== "deadlineProgress" &&
+          colDef.find((col) => col.field === item.field || col.id === item.field)?.type !== "actions",
       )
       .map((item) => ({
         field: item.field,
         label:
           item.label ||
-          colDef.find((col) => col.field === item.field)?.headerName ||
+          colDef.find((col) => col.field === item.field || col.id === item.field)?.headerName ||
           item.field,
       }));
   }, [cardFields, cardTitleColumn?.field, cardStatusColumn?.field, colDef]);
@@ -1674,6 +1676,34 @@ function HpGridBase(props) {
 
                   const details = visibleCardFields
                     .map(({ field, label }) => {
+                      const col = colDef.find(
+                        (c) => c.field === field || c.id === field,
+                      );
+                      const isFullWidth =
+                        field === "assignedToName" ||
+                        field === "description" ||
+                        field === "deadlineProgress" ||
+                        col?.fullWidth ||
+                        Boolean(col?.cardFullWidth);
+
+                      if (col && typeof col.render === "function") {
+                        const rendered = col.render(row[field], row, rowIndex);
+                        if (rendered != null && rendered !== "") {
+                          return (
+                            <div
+                              className={`hp-grid-card-detail ${isFullWidth ? "hp-grid-card-detail--full" : ""}`}
+                              key={field}
+                            >
+                              <span className="hp-grid-card-detail-label">
+                                {label}
+                              </span>
+                              <div className="hp-grid-card-detail-value hp-grid-card-detail-value--custom">
+                                {rendered}
+                              </div>
+                            </div>
+                          );
+                        }
+                      }
                       const value = row[field];
                       if (
                         value === null ||
@@ -1684,7 +1714,10 @@ function HpGridBase(props) {
                         return null;
                       }
                       return (
-                        <div className="hp-grid-card-detail" key={field}>
+                        <div
+                          className={`hp-grid-card-detail ${isFullWidth ? "hp-grid-card-detail--full" : ""}`}
+                          key={field}
+                        >
                           <span className="hp-grid-card-detail-label">
                             {label}
                           </span>
@@ -1748,6 +1781,26 @@ function HpGridBase(props) {
                           )}
                         </div>
                       </div>
+                      {(() => {
+                        const progressNode =
+                          typeof renderCardProgress === "function"
+                            ? renderCardProgress({ row, rowIndex })
+                            : (() => {
+                                const col = colDef.find(
+                                  (c) =>
+                                    c.field === "deadlineProgress" ||
+                                    c.id === "deadlineProgress",
+                                );
+                                return col && typeof col.render === "function"
+                                  ? col.render(row.deadlineProgress, row, rowIndex)
+                                  : null;
+                              })();
+                        return progressNode ? (
+                          <div className="hp-grid-card-progress-bar-wrap">
+                            {progressNode}
+                          </div>
+                        ) : null;
+                      })()}
                       {details.length > 0 && (
                         <div className="hp-grid-card-details">{details}</div>
                       )}

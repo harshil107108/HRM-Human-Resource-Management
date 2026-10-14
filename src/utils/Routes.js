@@ -101,6 +101,14 @@ export const NAVIGATION_SCHEMA = [
         label: "Exit Management",
         path: "/employees/exit",
       },
+      {
+        label: "Task Management",
+        path: "/employees/task-management",
+      },
+      {
+        label: "Task Creation",
+        path: "/employees/task-creation",
+      },
     ],
   },
 

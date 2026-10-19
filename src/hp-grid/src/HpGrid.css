@@ -1375,15 +1375,25 @@
 }
 
 .hp-grid-card--critical {
-  border-color: #fb7185 !important;
+  border-color: #ef4444 !important;
   background-color: #fff5f5 !important;
-  box-shadow: 0 0 0 1.5px rgba(244, 63, 94, 0.35), 0 4px 6px -1px rgba(244, 63, 94, 0.06) !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35), 0 4px 12px -2px rgba(239, 68, 68, 0.15) !important;
+  animation: hpCriticalPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 .hp-grid-card--critical .hp-grid-card-top-accent {
   opacity: 1 !important;
   transform: scaleX(1) !important;
-  background: #f43f5e !important;
-  height: 3px !important;
+  background: #ef4444 !important;
+  height: 3.5px !important;
+}
+
+@keyframes hpCriticalPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35), 0 4px 12px -2px rgba(239, 68, 68, 0.15) !important;
+  }
+  50% {
+    box-shadow: 0 0 0 3.5px rgba(239, 68, 68, 0.6), 0 6px 18px -2px rgba(239, 68, 68, 0.25) !important;
+  }
 }
 
 .hp-grid-card--warning {
@@ -1402,6 +1412,13 @@
   opacity: 0.9 !important;
   transform: scaleX(1) !important;
   background: #10b981 !important;
+  height: 2.5px !important;
+}
+
+.hp-grid-card--paused .hp-grid-card-top-accent {
+  opacity: 0.9 !important;
+  transform: scaleX(1) !important;
+  background: #f59e0b !important;
   height: 2.5px !important;
 }
 

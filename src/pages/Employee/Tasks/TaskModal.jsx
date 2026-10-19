@@ -57,7 +57,7 @@ const TaskModal = ({ open, project, defaultProjectId, onClose, onSaved }) => {
   }, [open, initialProjectId, form]);
 
   const availableProjects = useMemo(
-    () => projects.filter((p) => !["Completed", "Cancelled"].includes(p.status)),
+    () => projects.filter((p) => p.status === "Active"),
     [projects],
   );
 
@@ -70,7 +70,7 @@ const TaskModal = ({ open, project, defaultProjectId, onClose, onSaved }) => {
     () => [
       { label: "-- No Project (General Task) --", value: "" },
       ...availableProjects.map((p) => ({
-        label: `${p.projectName} — ${p.clientName}`,
+        label: `${p.projectName} — ${p.clientName} (Active)`,
         value: p._id,
       })),
     ],
@@ -105,7 +105,7 @@ const TaskModal = ({ open, project, defaultProjectId, onClose, onSaved }) => {
         id: "projectId",
         type: "selectWrapper",
         label: "Project (Optional)",
-        placeHolder: "Select a project or leave as General Task",
+        placeHolder: "Select an Active project or leave as General Task",
         options: projectOptions,
         className: "col-span-6",
       },
@@ -128,10 +128,10 @@ const TaskModal = ({ open, project, defaultProjectId, onClose, onSaved }) => {
         id: "estimatedHours",
         type: "number",
         label: "Assign Time (Hours)",
-        placeHolder: "e.g. 10 hr",
+        placeHolder: "e.g. 2 hr, 0.17 (10m), 0.5 (30m)",
         required: true,
-        min: 0.1,
-        precision: 1,
+        min: 0.01,
+        precision: 2,
         className: "col-span-4",
       },
       {
@@ -211,6 +211,13 @@ const TaskModal = ({ open, project, defaultProjectId, onClose, onSaved }) => {
   const handleSave = async () => {
     const values = form.methods.getValues();
     const assigneeCount = Array.isArray(values.assignedTo) ? values.assignedTo.length : 0;
+
+    if (values.projectId) {
+      const selectedProj = projects.find((p) => String(p._id) === String(values.projectId));
+      if (selectedProj && selectedProj.status !== "Active") {
+        throw new Error(`Tasks can only be created and assigned to Active projects. "${selectedProj.projectName}" is currently "${selectedProj.status}".`);
+      }
+    }
 
     await form.methods.handleFormSave(
       async (formData) => {

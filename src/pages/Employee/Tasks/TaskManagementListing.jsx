@@ -34,7 +34,9 @@ const formatTasks = (data) =>
       estimatedHoursLabel:
         task.estimatedHours === null || task.estimatedHours === undefined
           ? "Not set"
-          : `${Number(task.estimatedHours)} ${Number(task.estimatedHours) === 1 ? "hour" : "hours"}`,
+          : Number(task.estimatedHours) < 1
+            ? `${Math.max(1, Math.round(Number(task.estimatedHours) * 60))} mins`
+            : `${Number(task.estimatedHours)} ${Number(task.estimatedHours) === 1 ? "hour" : "hours"}`,
       deadlineBadge: info.timerText,
       dueDateDisplay: info.formattedDeadline,
       dueDateFormatted: task.dueDate
@@ -73,13 +75,19 @@ const TaskManagementListing = () => {
   const [now, setNow] = useState(() => new Date());
   const updateInProgress = useRef(false);
 
-  // Tick clock every 30 seconds so timers & color thresholds update dynamically
+  const hasRunningTasks = useMemo(
+    () => tasks.some((t) => t.status === "Running"),
+    [tasks],
+  );
+
+  // Tick clock every 1 second when tasks are Running so cards, rows & timers update in real time
   useEffect(() => {
+    const intervalMs = hasRunningTasks ? 1000 : 10000;
     const timer = setInterval(() => {
       setNow(new Date());
-    }, 30000);
+    }, intervalMs);
     return () => clearInterval(timer);
-  }, []);
+  }, [hasRunningTasks]);
 
   const getTasks = useCallback(async () => {
     const res = await apiCall({
@@ -245,8 +253,8 @@ const TaskManagementListing = () => {
       {
         id: "deadlineProgress",
         field: "deadlineProgress",
-        headerName: "Deadline Progress",
-        width: 150,
+        headerName: "Deadline & Progress",
+        width: 175,
         type: "custom",
         render: (_, row) => <TaskDeadlineTimer task={row} />,
       },

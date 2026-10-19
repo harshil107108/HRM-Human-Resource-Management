@@ -72,7 +72,9 @@ const formatTasks = (data) =>
       estimatedHoursLabel:
         task.estimatedHours === null || task.estimatedHours === undefined
           ? "Not set"
-          : `${Number(task.estimatedHours)} ${Number(task.estimatedHours) === 1 ? "hour" : "hours"}`,
+          : Number(task.estimatedHours) < 1
+            ? `${Math.max(1, Math.round(Number(task.estimatedHours) * 60))} mins`
+            : `${Number(task.estimatedHours)} ${Number(task.estimatedHours) === 1 ? "hour" : "hours"}`,
       dueDateDisplay: info.formattedDeadline,
       dueDateLabel: task.dueDate
         ? new Date(task.dueDate).toLocaleDateString(undefined, { timeZone: "UTC" })
@@ -121,11 +123,17 @@ const TaskCreation = () => {
   const [selectedTaskForDetails, setSelectedTaskForDetails] = useState(null);
   const [now, setNow] = useState(() => new Date());
 
-  // Tick clock every 30 seconds for live deadline updates
+  const hasRunningTasks = useMemo(
+    () => tasks.some((t) => t.status === "Running"),
+    [tasks],
+  );
+
+  // Tick clock every 1 second when tasks are Running for live real-time updates
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 30000);
+    const intervalMs = hasRunningTasks ? 1000 : 10000;
+    const timer = setInterval(() => setNow(new Date()), intervalMs);
     return () => clearInterval(timer);
-  }, []);
+  }, [hasRunningTasks]);
 
   // Fetch Projects
   const getProjects = useCallback(async () => {
@@ -196,6 +204,15 @@ const TaskCreation = () => {
 
   // Delete Task
   const handleDeleteTask = useCallback((task) => {
+    if (task?.status === "Running") {
+      deleteAlert({
+        title: "Cannot Delete Running Task",
+        text: `Task "${task.title}" is currently Running. Running tasks cannot be deleted while work is in progress.`,
+        confirmButtonText: "Understood",
+        cancelButtonText: null,
+      });
+      return;
+    }
     deleteAlert({
       title: "Delete Task?",
       text: `Are you sure you want to delete task "${task.title}"?`,
@@ -234,9 +251,17 @@ const TaskCreation = () => {
 
       if (!confirmed) return;
 
+      const toDateOnly = (val) => {
+        if (!val) return "";
+        if (typeof val === "string") return val.slice(0, 10);
+        if (val instanceof Date) return val.toISOString().slice(0, 10);
+        return "";
+      };
+
       const payload = {
-        ...project,
         _id: project._id,
+        projectName: project.projectName,
+        clientName: project.clientName,
         status: nextStatus,
         developers: Array.isArray(project.developers)
           ? project.developers.map((developer) => developer?._id || developer)
@@ -249,8 +274,8 @@ const TaskCreation = () => {
           project.estimatedHours === null || project.estimatedHours === undefined
             ? null
             : Number(project.estimatedHours),
-        startDate: project.startDate || "",
-        deadline: project.deadline || "",
+        startDate: toDateOnly(project.startDate),
+        deadline: toDateOnly(project.deadline),
         requiredTask: project.requiredTask || "",
         description: project.description || "",
       };
@@ -303,9 +328,18 @@ const TaskCreation = () => {
   }, [onProjectModalOpen]);
 
   const handleAssignTaskForProject = useCallback((project) => {
+    if (project && project.status !== "Active") {
+      deleteAlert({
+        title: "Project Not Active",
+        text: `Tasks can only be created and assigned to Active projects. "${project.projectName}" is currently "${project.status}". Please set the project status to Active first.`,
+        confirmButtonText: "Understood",
+        cancelButtonText: null,
+      });
+      return;
+    }
     setTaskTargetProject(project);
     setIsTaskModalOpen(true);
-  }, []);
+  }, [deleteAlert]);
 
   // Status Cards for Projects
   const projectStatusCards = useMemo(() => {
@@ -453,6 +487,7 @@ const TaskCreation = () => {
         onEdit: (task) => setSelectedTaskForDetails(task),
         editLabel: "View Details",
         onDelete: handleDeleteTask,
+        canDelete: (task) => task?.status !== "Running",
         ...(isAdminUser
           ? {}
           : {
@@ -530,8 +565,8 @@ const TaskCreation = () => {
     {
       id: "deadlineProgress",
       field: "deadlineProgress",
-      headerName: "Deadline Progress",
-      width: 150,
+      headerName: "Deadline & Progress",
+      width: 175,
       type: "custom",
       render: (_, row) => <TaskDeadlineTimer task={row} />,
     },
@@ -584,6 +619,8 @@ const TaskCreation = () => {
       headerName: "Action",
       width: 70,
       type: "actions",
+      deleteDisabled: (row) => row.status === "Running",
+      deleteDisabledTitle: () => "Running tasks cannot be deleted while in progress",
       onDelete: (row) => handleDeleteTask(row),
     },
   ];

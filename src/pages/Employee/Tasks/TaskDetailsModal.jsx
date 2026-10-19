@@ -1,6 +1,7 @@
 import { CheckCircle2, Clock3, Folder, UserCheck, User, Calendar, FileText, ArrowRight } from "lucide-react";
 import { HpCommonModal } from "@/hp-common-modal";
 import TaskDeadlineTimer from "./TaskDeadlineTimer";
+import { formatDuration } from "@/utils/taskDeadline";
 
 const Detail = ({ label, value, className = "", icon: Icon }) => (
   <div className={`min-w-0 rounded-xl border border-slate-200/80 bg-white p-3.5 ${className}`}>
@@ -121,6 +122,26 @@ const TaskDetailsModal = ({
               value={task.estimatedHoursLabel || "Not set"}
               icon={Clock3}
             />
+            {Number(task.totalWorkedMs) > 0 && (
+              <Detail
+                label="Time Worked"
+                value={formatDuration(task.totalWorkedMs)}
+                icon={Clock3}
+              />
+            )}
+            {task.startedAt && (
+              <Detail
+                label="Started At"
+                value={new Date(task.startedAt).toLocaleString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
+                icon={Calendar}
+              />
+            )}
             <Detail
               label="Created By"
               value={task.createdByName || "System"}

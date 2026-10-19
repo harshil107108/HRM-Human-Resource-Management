@@ -200,13 +200,25 @@ registerCellType("actions", {
         ? colDef.editDisabled(row)
         : colDef.editDisabled;
 
+    const deleteTitle = deleteDisabled
+      ? typeof colDef.deleteDisabledTitle === "function"
+        ? colDef.deleteDisabledTitle(row)
+        : colDef.deleteDisabledTitle || "Deletion is disabled for this item"
+      : colDef.actionLabel || "Delete";
+
+    const editTitle = editDisabled
+      ? typeof colDef.editDisabledTitle === "function"
+        ? colDef.editDisabledTitle(row)
+        : colDef.editDisabledTitle || "Editing is disabled for this item"
+      : "Edit";
+
     return (
       <div className="hp-grid-actions">
         {typeof colDef.onClick === "function" && (
           <button
             type="button"
             className="hp-grid-action-btn hp-grid-action-btn--delete"
-            title={deleteDisabled ? "Only pending leave requests can be deleted" : colDef.actionLabel || "Delete"}
+            title={deleteTitle}
             disabled={deleteDisabled}
             onClick={() => !deleteDisabled && colDef.onClick(row, rowIndex)}
           >
@@ -217,7 +229,7 @@ registerCellType("actions", {
           <button
             type="button"
             className="hp-grid-action-btn hp-grid-action-btn--edit"
-            title={editDisabled ? "Only pending leave requests can be edited" : "Edit"}
+            title={editTitle}
             disabled={editDisabled}
             onClick={() => !editDisabled && colDef.onEdit(row, rowIndex)}
           >
@@ -228,7 +240,7 @@ registerCellType("actions", {
           <button
             type="button"
             className="hp-grid-action-btn hp-grid-action-btn--delete"
-            title={deleteDisabled ? "Only pending leave requests can be deleted" : "Delete"}
+            title={deleteTitle}
             disabled={deleteDisabled}
             onClick={() => !deleteDisabled && colDef.onDelete(row, rowIndex)}
           >

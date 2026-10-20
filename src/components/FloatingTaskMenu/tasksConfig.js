@@ -1,0 +1,122 @@
+import {
+  UtensilsCrossed,
+  Users,
+  MessagesSquare,
+  Clock,
+  Sunset,
+  Coffee,
+  Target,
+  Briefcase,
+  PlusCircle,
+} from "lucide-react";
+
+/**
+ * Task Shortcuts configuration for FloatingTaskMenu & Centered Timer.
+ * Styled to seamlessly match the HRM enterprise application design system:
+ * Clean white surfaces, slate borders, and crisp semantic icons.
+ */
+export const DEFAULT_TASKS = [
+  {
+    id: "lunch-break",
+    label: "Lunch Break",
+    shortLabel: "Lunch",
+    icon: UtensilsCrossed,
+    description: "Pause for lunch and recharge",
+    category: "Break",
+    iconColor: "text-amber-600",
+    iconBg: "bg-amber-50 border-amber-200",
+    badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
+  },
+  {
+    id: "meeting",
+    label: "Meeting",
+    shortLabel: "Meeting",
+    icon: Users,
+    description: "Team sync, standup, or client call",
+    category: "Meeting",
+    iconColor: "text-blue-600",
+    iconBg: "bg-blue-50 border-blue-200",
+    badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
+  },
+  {
+    id: "discussion",
+    label: "Discussion",
+    shortLabel: "Discussion",
+    icon: MessagesSquare,
+    description: "Quick chat, brainstorming, or 1:1",
+    category: "Collab",
+    iconColor: "text-indigo-600",
+    iconBg: "bg-indigo-50 border-indigo-200",
+    badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  },
+  {
+    id: "formal-break",
+    label: "Formal Break",
+    shortLabel: "Formal Break",
+    icon: Clock,
+    description: "Official scheduled break time",
+    category: "Break",
+    iconColor: "text-emerald-600",
+    iconBg: "bg-emerald-50 border-emerald-200",
+    badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  },
+  {
+    id: "evening-break",
+    label: "Evening Break",
+    shortLabel: "Evening Break",
+    icon: Sunset,
+    description: "Evening rest and tea pause",
+    category: "Break",
+    iconColor: "text-orange-600",
+    iconBg: "bg-orange-50 border-orange-200",
+    badgeColor: "bg-orange-50 text-orange-700 border-orange-200",
+  },
+  {
+    id: "tea-coffee-break",
+    label: "Tea / Coffee Break",
+    shortLabel: "Tea / Coffee",
+    icon: Coffee,
+    description: "Quick beverage and mental refresh",
+    category: "Refresh",
+    iconColor: "text-amber-700",
+    iconBg: "bg-amber-50/80 border-amber-200",
+    badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
+  },
+  {
+    id: "focus-time",
+    label: "Focus Time",
+    shortLabel: "Focus Time",
+    icon: Target,
+    description: "Deep uninterrupted sprint work",
+    category: "Focus",
+    iconColor: "text-sky-600",
+    iconBg: "bg-sky-50 border-sky-200",
+    badgeColor: "bg-sky-50 text-sky-700 border-sky-200",
+  },
+  {
+    id: "personal-work",
+    label: "Personal Work",
+    shortLabel: "Personal Work",
+    icon: Briefcase,
+    description: "Individual tasks, learning, and admin",
+    category: "Work",
+    iconColor: "text-slate-700",
+    iconBg: "bg-slate-100 border-slate-200",
+    badgeColor: "bg-slate-100 text-slate-700 border-slate-200",
+  },
+  {
+    id: "custom-task",
+    label: "Custom Task",
+    shortLabel: "Custom Task",
+    icon: PlusCircle,
+    description: "Create or log a custom activity",
+    category: "Custom",
+    iconColor: "text-purple-600",
+    iconBg: "bg-purple-50 border-purple-200",
+    badgeColor: "bg-purple-50 text-purple-700 border-purple-200",
+  },
+];
+
+export const getTaskById = (taskId, customTasks = DEFAULT_TASKS) => {
+  return customTasks.find((task) => task.id === taskId) || null;
+};

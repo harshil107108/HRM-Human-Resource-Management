@@ -12,6 +12,7 @@ export const labelClass = `
 block
 text-[12px]
 font-bold
+font-['Nunito',sans-serif]
 text-slate-700
 leading-5
 select-none
@@ -19,7 +20,7 @@ tracking-[0.01em]
 `;
 
 // Input
-export const inputClass = `w-full h-8 rounded-sm border border-slate-200 bg-slate-50/80 px-2.5 text-xs font-bold text-slate-800 placeholder:font-medium placeholder:text-slate-400 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 outline-none hover:border-sky-300 hover:bg-white focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100 disabled:border-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed`;
+export const inputClass = `w-full h-8 rounded-sm border border-slate-200 bg-slate-50/80 px-2.5 text-xs font-bold font-['Nunito',sans-serif] text-slate-800 placeholder:font-medium placeholder:text-slate-400 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 outline-none hover:border-sky-300 hover:bg-white focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100 disabled:border-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed`;
 
 // Select
 export const selectClass = `
@@ -46,6 +47,7 @@ py-2
 
 text-xs
 font-bold
+font-['Nunito',sans-serif]
 text-slate-800
 
 placeholder:text-slate-400

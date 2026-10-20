@@ -1,4 +1,4 @@
-const useOfferLetterConfig = ({ handleDelete } = {}) => {
+const useOfferLetterConfig = ({ handleDelete, handleSendEmail } = {}) => {
   const offerListingColDef = [
     {
       id: "candidateName",
@@ -10,7 +10,7 @@ const useOfferLetterConfig = ({ handleDelete } = {}) => {
       id: "jobTitle",
       field: "jobTitle",
       headerName: "Position",
-      width: 180,
+      width: 170,
     },
     {
       id: "offeredCtc",
@@ -23,26 +23,26 @@ const useOfferLetterConfig = ({ handleDelete } = {}) => {
       id: "joiningDate",
       field: "joiningDate",
       headerName: "Joining Date",
-      width: 150,
+      width: 130,
       type: "date",
     },
     {
       id: "validUntil",
       field: "validUntil",
       headerName: "Offer Valid Until",
-      width: 150,
+      width: 130,
       type: "date",
     },
     {
       id: "status",
       field: "status",
       headerName: "Offer Status",
-      width: 170,
-      render: (status) => {
+      width: 190,
+      render: (status, row) => {
         const val = status || "Draft";
         if (val === "Accepted") {
           return (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               Accepted (In Onboarding)
             </span>
@@ -50,10 +50,21 @@ const useOfferLetterConfig = ({ handleDelete } = {}) => {
         }
         if (val === "Sent") {
           return (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-              Sent to Candidate
-            </span>
+            <div className="flex flex-col gap-0.5">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 w-fit">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                Sent to Candidate
+              </span>
+              {row?.emailSent ? (
+                <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-1 pl-1">
+                  ✓ Emailed to candidate
+                </span>
+              ) : row?.emailError ? (
+                <span className="text-[11px] text-amber-600 font-medium pl-1 truncate max-w-[180px]" title={row.emailError}>
+                  ⚠ Email issue: {row.emailError}
+                </span>
+              ) : null}
+            </div>
           );
         }
         if (val === "Declined") {
@@ -68,6 +79,46 @@ const useOfferLetterConfig = ({ handleDelete } = {}) => {
             {val}
           </span>
         );
+      },
+    },
+    {
+      id: "emailStatus",
+      field: "emailSent",
+      headerName: "Email Delivery",
+      width: 150,
+      render: (_, row) => {
+        if (row?.emailSent) {
+          const sentDate = row.emailSentAt
+            ? new Date(row.emailSentAt).toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+              })
+            : "";
+          return (
+            <div
+              className="inline-flex items-center gap-1.5 text-xs text-emerald-700 font-semibold bg-emerald-50/90 border border-emerald-200 px-2 py-0.5 rounded-md"
+              title={`Delivered to ${row.emailSentTo || "candidate"}${row.emailSentAt ? ` on ${new Date(row.emailSentAt).toLocaleString()}` : ""}`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span>Delivered {sentDate ? `(${sentDate})` : ""}</span>
+            </div>
+          );
+        }
+        if (row?.status === "Sent" && row?.emailError) {
+          return (
+            <div
+              className="inline-flex items-center gap-1 text-xs text-rose-600 font-medium bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md cursor-help"
+              title={row.emailError}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+              <span>Failed</span>
+            </div>
+          );
+        }
+        if (row?.status === "Sent") {
+          return <span className="text-xs text-slate-400 font-medium">Pending</span>;
+        }
+        return <span className="text-xs text-slate-300 font-normal">—</span>;
       },
     },
     {

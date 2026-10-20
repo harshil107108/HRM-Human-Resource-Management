@@ -27,6 +27,7 @@ const EXIT_MS = 240;
 export default function HpPageLoader({
     containerRef,
     label = "Loading…",
+    minDuration = 650,
     maxWait = 10000,
     onReady,
 }) {
@@ -65,17 +66,46 @@ export default function HpPageLoader({
         };
     }, [containerRef]);
 
-    // Wait for the network to go idle, then for the filled UI to paint.
+    // Wait for compulsory minimum display, network idle, and filled UI to paint.
     useEffect(() => {
+        const mountTime = Date.now();
         let settleTimer;
         let finished = false;
         let raf1;
         let raf2;
 
-        const finish = () => {
+        const isFormReady = () => {
+            if (!containerRef?.current) return true;
+            return Boolean(
+                containerRef.current.querySelector(
+                    "input, select, textarea, form, .hp-company-content, .hp-company-page, [data-field-id]"
+                )
+            );
+        };
+
+        const tryFinish = () => {
             if (finished) return;
+
+            const elapsed = Date.now() - mountTime;
+            const remainingMin = Math.max(0, minDuration - elapsed);
+
+            if (remainingMin > 0) {
+                settleTimer = window.setTimeout(tryFinish, remainingMin);
+                return;
+            }
+
+            if (getActivityCount() > 0) {
+                // Network requests still in-flight (dropdowns / record data), keep waiting
+                return;
+            }
+
+            if (!isFormReady()) {
+                // Form elements haven't painted into DOM yet, re-check in 50ms
+                settleTimer = window.setTimeout(tryFinish, 50);
+                return;
+            }
+
             finished = true;
-            window.clearTimeout(settleTimer);
             raf1 = requestAnimationFrame(() => {
                 raf2 = requestAnimationFrame(() => {
                     setPhase("leaving");
@@ -87,13 +117,15 @@ export default function HpPageLoader({
         const check = () => {
             window.clearTimeout(settleTimer);
             if (getActivityCount() === 0) {
-                settleTimer = window.setTimeout(finish, IDLE_SETTLE_MS);
+                const elapsed = Date.now() - mountTime;
+                const delay = Math.max(IDLE_SETTLE_MS, minDuration - elapsed);
+                settleTimer = window.setTimeout(tryFinish, delay);
             }
         };
 
         const unsubscribe = subscribeActivity(check);
         check();
-        const capTimer = window.setTimeout(finish, maxWait);
+        const capTimer = window.setTimeout(tryFinish, maxWait);
 
         return () => {
             unsubscribe();
@@ -102,7 +134,7 @@ export default function HpPageLoader({
             cancelAnimationFrame(raf1);
             cancelAnimationFrame(raf2);
         };
-    }, [maxWait]);
+    }, [containerRef, minDuration, maxWait]);
 
     useEffect(() => {
         if (phase !== "leaving") return undefined;
@@ -110,13 +142,17 @@ export default function HpPageLoader({
         return () => window.clearTimeout(timer);
     }, [phase]);
 
-    if (phase === "done" || !rect) return null;
+    if (phase === "done") return null;
+
+    const loaderStyle = rect
+        ? { top: rect.top, left: rect.left, width: rect.width, height: rect.height }
+        : { position: "fixed", inset: 0, zIndex: 45 };
 
     return (
         <div
             className="hrm-page-loader"
             data-state={phase}
-            style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
+            style={loaderStyle}
             role="status"
             aria-live="polite"
             aria-busy={phase === "loading"}

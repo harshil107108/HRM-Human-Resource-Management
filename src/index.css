@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -57,6 +57,64 @@
 
 body {
 	font-family: inherit;
+}
+
+/* Nunito font for all formMethod inputs, selects, textareas, labels, and SelectWrapper */
+input,
+select,
+textarea,
+.hp-grid-filter-input,
+.hp-grid-filter-select,
+[data-form-engine],
+.form-engine-input,
+.form-select__control,
+.form-select__menu,
+.form-select__option,
+.form-select__single-value,
+.form-select__multi-value,
+.form-select__placeholder,
+.form-select__input-container,
+.form-select__input,
+.form-select__menu-list {
+	font-family: "Nunito", sans-serif;
+}
+
+/* Zebra striping for SelectWrapper dropdowns */
+.form-select__option:nth-of-type(even) {
+	background-color: #f8fafc;
+}
+.form-select__option:nth-of-type(odd) {
+	background-color: #ffffff;
+}
+
+/* Polished hover & active states for SelectWrapper dropdowns */
+.form-select__option {
+	color: #334155;
+	transition: background-color 0.15s ease, color 0.15s ease !important;
+}
+
+.form-select__option--is-focused:not(.form-select__option--is-selected) {
+	background-color: #e0f2fe !important;
+	color: #0369a1 !important;
+	font-weight: 600 !important;
+}
+
+.form-select__option--is-selected {
+	background-color: #0284c7 !important;
+	color: #ffffff !important;
+	font-weight: 700 !important;
+}
+
+.form-select__option--is-selected.form-select__option--is-focused {
+	background-color: #0369a1 !important;
+	color: #ffffff !important;
+}
+
+.form-select__placeholder {
+	white-space: nowrap !important;
+	overflow: hidden !important;
+	text-overflow: ellipsis !important;
+	max-width: 100% !important;
 }
 
 /* ----------------------------------------------------------------------

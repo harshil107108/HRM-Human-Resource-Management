@@ -81,3 +81,5 @@ export function getColumnStyle(column) {
     boxSizing: "border-box",
   };
 }
+
+

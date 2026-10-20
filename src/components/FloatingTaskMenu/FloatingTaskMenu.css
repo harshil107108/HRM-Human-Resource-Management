@@ -1,0 +1,24 @@
+/* FloatingTaskMenu styling & animations */
+
+.floating-task-menu-root {
+  position: relative;
+  z-index: 9990;
+  pointer-events: auto;
+}
+
+/* Ensure smooth pointer tracking across browsers without scrolling conflict */
+.floating-task-menu-root button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Respect user's reduced-motion operating system preferences */
+@media (prefers-reduced-motion: reduce) {
+  .floating-task-menu-root *,
+  .floating-task-menu-root *::before,
+  .floating-task-menu-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

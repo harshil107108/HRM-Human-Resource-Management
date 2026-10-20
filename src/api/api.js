@@ -66,6 +66,15 @@ const apiEndpoints = {
             ExitDeleteByID: "/employee/exit/deleteExitById",
             ExitGetByID: "/employee/exit/getExitById",
         },
+        dayReport: {
+            getDayReport: "/employee/day-report/getDayReport",
+            addActivity: "/employee/day-report/addActivity",
+            updateActivity: "/employee/day-report/updateActivity",
+            deleteActivity: "/employee/day-report/deleteActivity",
+            toggleLock: "/employee/day-report/toggleLock",
+            getAllDayReports: "/employee/day-report/getAllDayReports",
+            unlockDayReport: "/employee/day-report/unlockDayReport",
+        },
     },
 
     tasks: {
@@ -109,7 +118,7 @@ const apiEndpoints = {
             DesignationHelp: "/organization/designation/getDesignationHelp",
         }
     },
-    
+
     recruitment: {
         jobOpening: {
             JobOpeningAddEdit: "/recruitment/jobopening/addEditJobOpening",
@@ -136,6 +145,7 @@ const apiEndpoints = {
             OfferGetData: "/recruitment/offer/getOfferLetters",
             OfferDeleteByID: "/recruitment/offer/deleteOfferLetterById",
             OfferGetByID: "/recruitment/offer/getOfferLetterById",
+            SendOfferEmail: "/recruitment/offer/sendOfferEmail",
         },
         onboarding: {
             OnboardingAddEdit: "/recruitment/onboarding/addEditOnboarding",

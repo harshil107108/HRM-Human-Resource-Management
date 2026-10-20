@@ -317,6 +317,7 @@ const TaskCreation = () => {
       });
       if (!res?.aborted && res?.success) {
         await getTasks();
+        window.dispatchEvent(new CustomEvent("dayReportUpdated"));
       }
     },
     [apiCall, getTasks],

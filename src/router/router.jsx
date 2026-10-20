@@ -34,6 +34,8 @@ import EmployeeDocuments from "@/pages/Employee/EmployeeDocuments";
 import ExitManagementListing from "@/pages/Employee/ExitManagement/ExitManagementListing";
 import TaskManagementListing from "@/pages/Employee/Tasks/TaskManagementListing";
 import TaskCreation from "@/pages/Employee/Tasks/TaskCreation";
+import DayReportListing from "@/pages/Employee/DayReport/DayReportListing";
+import DayReportUnlockListing from "@/pages/Employee/DayReportUnlock/DayReportUnlockListing";
 
 // Attendance Modules
 import AttendanceLogListing from "@/pages/Attendance/Logs/AttendanceLogListing";
@@ -89,6 +91,7 @@ import NotificationSettings from "@/pages/Settings/NotificationSettings";
 import EmailTemplates from "@/pages/Settings/EmailTemplates";
 import IntegrationSettings from "@/pages/Settings/IntegrationSettings";
 import SecuritySettings from "@/pages/Settings/SecuritySettings";
+import { FloatingTaskMenuDemo } from "@/components/FloatingTaskMenu";
 
 const router = createBrowserRouter([
   {
@@ -98,6 +101,10 @@ const router = createBrowserRouter([
         <Login />
       </PublicOnly>
     ),
+  },
+  {
+    path: "/floating-task-menu",
+    element: <FloatingTaskMenuDemo />,
   },
 
   {
@@ -339,6 +346,22 @@ const router = createBrowserRouter([
       {
         path: "employees/documents",
         element: <EmployeeDocuments />,
+      },
+      {
+        path: "employee/day-report",
+        element: <DayReportListing />,
+      },
+      {
+        path: "employees/day-report",
+        element: <DayReportListing />,
+      },
+      {
+        path: "employee/day-report-unlock",
+        element: <DayReportUnlockListing />,
+      },
+      {
+        path: "employees/day-report-unlock",
+        element: <DayReportUnlockListing />,
       },
       {
         path: "employee/assets",

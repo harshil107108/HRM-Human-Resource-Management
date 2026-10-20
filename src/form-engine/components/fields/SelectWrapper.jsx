@@ -332,6 +332,17 @@ export default function SelectWrapper({ field, form }) {
         (item) => String(item) === String(data.value),
       );
 
+      const optionIndex =
+        typeof optionProps.index === "number"
+          ? optionProps.index
+          : options.findIndex(
+              (item) =>
+                String(item.value) === String(data.value) &&
+                String(item.label) === String(data.label),
+            );
+
+      const zebraClass = optionIndex % 2 === 0 ? "bg-slate-50/80" : "bg-white";
+
       return (
         <div
           ref={innerRef}
@@ -343,8 +354,10 @@ export default function SelectWrapper({ field, form }) {
 
             handleOptionToggle(data.value);
           }}
-          className={`flex cursor-pointer items-center gap-2 border-b border-slate-100 px-3 py-1.5 text-sm transition-colors duration-100 last:border-b-0 ${
-            isSelected ? "bg-sky-50" : "hover:bg-slate-50"
+          className={`flex cursor-pointer items-center gap-2.5 border-b border-slate-100 px-3 py-1.5 text-sm transition-colors duration-150 last:border-b-0 ${
+            isSelected
+              ? "bg-sky-100/80 text-sky-900 font-semibold"
+              : `hover:bg-sky-100/80 hover:text-sky-800 text-slate-700 ${zebraClass}`
           }`}
         >
           <input
@@ -354,43 +367,60 @@ export default function SelectWrapper({ field, form }) {
             className="h-4 w-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-2 focus:ring-sky-200 focus:ring-offset-0"
           />
 
-          <span className="truncate text-slate-700">{data.label}</span>
+          <span className="truncate text-slate-700 font-['Nunito',sans-serif]">{data.label}</span>
         </div>
       );
     },
-    [draftValues, handleOptionToggle],
+    [draftValues, handleOptionToggle, options],
   );
 
   const renderSingleOption = useCallback(
     (optionProps) => {
       const { data, innerRef, innerProps, isSelected, isFocused } = optionProps;
 
-      const optionIndex = options.findIndex(
-        (item) =>
-          String(item.value) === String(data.value) &&
-          String(item.label) === String(data.label),
-      );
+      const optionIndex =
+        typeof optionProps.index === "number"
+          ? optionProps.index
+          : options.findIndex(
+              (item) =>
+                String(item.value) === String(data.value) &&
+                String(item.label) === String(data.label),
+            );
 
       const zebraBackground = optionIndex % 2 === 0 ? "#f8fafc" : "#ffffff";
+
+      let bgColor = zebraBackground;
+      let textColor = "#334155";
+      let fontWeight = 500;
+
+      if (isSelected && isFocused) {
+        bgColor = "#0369a1";
+        textColor = "#ffffff";
+        fontWeight = 700;
+      } else if (isSelected) {
+        bgColor = "#0284c7";
+        textColor = "#ffffff";
+        fontWeight = 700;
+      } else if (isFocused) {
+        bgColor = "#e0f2fe";
+        textColor = "#0369a1";
+        fontWeight = 600;
+      }
 
       return (
         <div
           ref={innerRef}
           {...innerProps}
-          className="cursor-pointer"
+          className="cursor-pointer transition-colors duration-150"
           style={{
-            backgroundColor: isSelected
-              ? "#e0f2fe"
-              : isFocused
-                ? "#f1f5f9"
-                : zebraBackground,
-            padding: "6px 10px",
-            borderBottom: "1px solid #e5e7eb",
-            color: "#0f172a",
+            backgroundColor: bgColor,
+            color: textColor,
+            padding: "7px 12px",
+            borderBottom: "1px solid #f1f5f9",
+            fontFamily: "'Nunito', sans-serif",
             fontSize: 12,
-            fontWeight: isSelected ? 600 : 500,
+            fontWeight,
             lineHeight: 1.4,
-            transition: "background-color 0.12s ease",
           }}
         >
           {data.label}
@@ -418,12 +448,12 @@ export default function SelectWrapper({ field, form }) {
               className="h-4 w-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-2 focus:ring-sky-200 focus:ring-offset-0"
             />
 
-            <span className="text-sm font-medium text-slate-600">
+            <span className="text-sm font-medium text-slate-600 font-['Nunito',sans-serif]">
               Select all
             </span>
 
             {draftValues.length > 0 && (
-              <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+              <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500 font-['Nunito',sans-serif]">
                 {draftValues.length} selected
               </span>
             )}
@@ -438,7 +468,7 @@ export default function SelectWrapper({ field, form }) {
               type="button"
               onMouseDown={(event) => event.preventDefault()}
               onClick={handleApply}
-              className="rounded-md bg-sky-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-sky-700 active:bg-sky-800"
+              className="rounded-md bg-sky-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-sky-700 active:bg-sky-800 font-['Nunito',sans-serif]"
             >
               Apply
             </button>
@@ -508,7 +538,7 @@ export default function SelectWrapper({ field, form }) {
         onMenuOpen={handleMenuOpen}
         onMenuClose={handleMenuClose}
         classNamePrefix="form-select"
-        className="w-full"
+        className="w-full font-['Nunito',sans-serif]"
         components={
           isMultiSelect
             ? {
@@ -548,6 +578,7 @@ const customStyles = (error) => ({
     display: "flex",
     flexWrap: "nowrap",
     alignItems: "center",
+    fontFamily: "'Nunito', sans-serif",
     fontSize: 11,
     backgroundColor: "#f8fafc",
     transition: "all .2s ease",
@@ -569,15 +600,21 @@ const customStyles = (error) => ({
 
   placeholder: (base) => ({
     ...base,
+    fontFamily: "'Nunito', sans-serif",
     color: "#94a3b8",
-    margin: 3,
+    margin: 0,
     fontSize: 11,
-    fontWeight: 700,
+    fontWeight: 600,
     lineHeight: 1.2,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    maxWidth: "calc(100% - 4px)",
   }),
 
   singleValue: (base) => ({
     ...base,
+    fontFamily: "'Nunito', sans-serif",
     color: "#0f172a",
     margin: 0,
     right: 12,
@@ -590,6 +627,21 @@ const customStyles = (error) => ({
     fontSize: 11,
     fontWeight: 700,
     lineHeight: 1.2,
+  }),
+
+  input: (base) => ({
+    ...base,
+    fontFamily: "'Nunito', sans-serif",
+  }),
+
+  multiValue: (base) => ({
+    ...base,
+    fontFamily: "'Nunito', sans-serif",
+  }),
+
+  multiValueLabel: (base) => ({
+    ...base,
+    fontFamily: "'Nunito', sans-serif",
   }),
 
   indicatorSeparator: (base) => ({
@@ -632,6 +684,7 @@ const customStyles = (error) => ({
 
   menu: (base) => ({
     ...base,
+    fontFamily: "'Nunito', sans-serif",
     marginTop: 6,
     borderRadius: 8,
     overflow: "hidden",
@@ -643,6 +696,7 @@ const customStyles = (error) => ({
 
   menuList: (base) => ({
     ...base,
+    fontFamily: "'Nunito', sans-serif",
     padding: 0,
     maxHeight: 240,
     scrollbarWidth: "thin",
@@ -650,27 +704,45 @@ const customStyles = (error) => ({
     overflowY: "auto",
   }),
 
-  option: (base, state) => ({
-    ...base,
-    padding: "6px 10px",
-    borderRadius: 0,
-    borderBottom: "1px solid #e5e7eb",
-    marginBottom: 0,
-    cursor: "pointer",
-    backgroundColor: state.isSelected
-      ? "#e0f2fe"
-      : state.isFocused
-        ? "#f1f5f9"
-        : "#fff",
-    color: "#0f172a",
-    fontSize: 12,
-    fontWeight: state.isSelected ? 700 : 600,
-    lineHeight: 1.4,
-    transition: "background-color .12s ease",
-  }),
+  option: (base, state) => {
+    let bgColor = "#ffffff";
+    let textColor = "#334155";
+    let fontWeight = 500;
+
+    if (state.isSelected && state.isFocused) {
+      bgColor = "#0369a1";
+      textColor = "#ffffff";
+      fontWeight = 700;
+    } else if (state.isSelected) {
+      bgColor = "#0284c7";
+      textColor = "#ffffff";
+      fontWeight = 700;
+    } else if (state.isFocused) {
+      bgColor = "#e0f2fe";
+      textColor = "#0369a1";
+      fontWeight = 600;
+    }
+
+    return {
+      ...base,
+      fontFamily: "'Nunito', sans-serif",
+      padding: "7px 12px",
+      borderRadius: 0,
+      borderBottom: "1px solid #f1f5f9",
+      marginBottom: 0,
+      cursor: "pointer",
+      backgroundColor: bgColor,
+      color: textColor,
+      fontSize: 12,
+      fontWeight,
+      lineHeight: 1.4,
+      transition: "background-color .15s ease, color .15s ease",
+    };
+  },
 
   noOptionsMessage: (base) => ({
     ...base,
+    fontFamily: "'Nunito', sans-serif",
     color: "#94a3b8",
     fontSize: 13.5,
     padding: "12px 8px",
@@ -678,6 +750,7 @@ const customStyles = (error) => ({
 
   loadingMessage: (base) => ({
     ...base,
+    fontFamily: "'Nunito', sans-serif",
     color: "#94a3b8",
     fontSize: 13.5,
   }),

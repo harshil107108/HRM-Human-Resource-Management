@@ -19,41 +19,24 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  Mail,
 } from "lucide-react";
+import MailSendingModal from "./MailSendingModal";
 
 const OfferLetterListing = () => {
   const { apiCall, isPending } = useApiCall();
-  const { deleteAlert, successAlert, warningAlert } = useAlert();
+  const { deleteAlert, successAlert, warningAlert, confirmAlert } = useAlert();
 
   const [offerListingData, setOfferListingData] = useState([]);
   const [selectedFilterStatus, setSelectedFilterStatus] = useState("");
-
-  const handleDelete = (id) => {
-    deleteAlert({
-      title: "Delete Offer Letter?",
-      text: "Are you sure you want to delete this offer letter? This action cannot be undone.",
-      confirmButtonText: "Delete",
-      cancelButtonText: "Cancel",
-      onClick: async () => {
-        const res = await apiCall({
-          id: "deleteOffer",
-          api: api + apiEndpoints.recruitment.offer.OfferDeleteByID,
-          payload: { _id: id },
-        });
-
-        if (res.success) {
-          successAlert({
-            title: "Offer Deleted",
-            text: "Offer letter has been deleted successfully.",
-          });
-          getOfferListing();
-        }
-      },
-    });
-  };
-
-  const { offerListingColDef } = useOfferLetterConfig({ handleDelete });
-  const { isModalOpen, extraParams, onModalOpen, onModalClose } = useModal();
+  const [mailModal, setMailModal] = useState({
+    isOpen: false,
+    status: "sending",
+    candidateName: "",
+    candidateEmail: "",
+    message: "",
+    error: "",
+  });
 
   const getOfferListing = useCallback(async () => {
     const res = await apiCall({
@@ -79,11 +62,105 @@ const OfferLetterListing = () => {
     getOfferListing();
   }, [getOfferListing]);
 
+  const handleDelete = (id) => {
+    deleteAlert({
+      title: "Delete Offer Letter?",
+      text: "Are you sure you want to delete this offer letter? This action cannot be undone.",
+      confirmButtonText: "Delete",
+      cancelButtonText: "Cancel",
+      onClick: async () => {
+        const res = await apiCall({
+          id: "deleteOffer",
+          api: api + apiEndpoints.recruitment.offer.OfferDeleteByID,
+          payload: { _id: id },
+        });
+
+        if (res.success) {
+          successAlert({
+            title: "Offer Deleted",
+            text: "Offer letter has been deleted successfully.",
+          });
+          getOfferListing();
+        }
+      },
+    });
+  };
+
+  const handleSendEmail = useCallback(
+    (offer) => {
+      if (!offer) return;
+
+      const candidateName =
+        offer.candidateName || offer.candidate?.candidateName || "Candidate";
+      const candidateEmail =
+        offer.candidate?.email || offer.emailSentTo || "";
+
+      confirmAlert({
+        title: "Send Offer Letter Email?",
+        text: candidateEmail
+          ? `Send official offer letter email to ${candidateName} (${candidateEmail}) from company mail?`
+          : `Send official offer letter email to ${candidateName} from company mail?`,
+        confirmButtonText: "Send Email",
+        cancelButtonText: "Cancel",
+        onClick: async () => {
+          setMailModal({
+            isOpen: true,
+            status: "sending",
+            candidateName,
+            candidateEmail,
+            message: "",
+            error: "",
+          });
+
+          try {
+            const res = await apiCall({
+              id: "sendOfferEmail",
+              api: api + apiEndpoints.recruitment.offer.SendOfferEmail,
+              payload: { _id: offer._id },
+            });
+
+            if (res?.success) {
+              setMailModal((prev) => ({
+                ...prev,
+                status: "success",
+                message:
+                  res.data?.message ||
+                  `Offer letter email sent successfully to ${candidateName}.`,
+              }));
+              await getOfferListing();
+            } else {
+              setMailModal((prev) => ({
+                ...prev,
+                status: "error",
+                error: res?.message || "Failed to dispatch offer email.",
+              }));
+            }
+          } catch (err) {
+            setMailModal((prev) => ({
+              ...prev,
+              status: "error",
+              error: err?.message || "Network error while dispatching offer email.",
+            }));
+          }
+        },
+      });
+    },
+    [apiCall, confirmAlert, getOfferListing],
+  );
+
+  const { offerListingColDef } = useOfferLetterConfig({
+    handleDelete,
+    handleSendEmail,
+  });
+  const { isModalOpen, extraParams, onModalOpen, onModalClose } = useModal();
+
   // Execute status update with automatic pipeline move to Onboarding when Accepted
   const executeStatusUpdate = async (offer, targetStatus, statusTitle) => {
     try {
-      const candidateId = offer.candidate?._id || offer.candidate;
-      const jobOpeningId = offer.jobOpening?._id || offer.jobOpening;
+      const candidateName =
+        offer.candidateName || offer.candidate?.candidateName || "Candidate";
+      const candidateEmail =
+        offer.candidate?.email || offer.emailSentTo || "";
 
       if (targetStatus === "Accepted") {
         // Update offer status to Accepted (backend automatically updates candidate stage to Hired and creates Onboarding record)
@@ -98,9 +175,56 @@ const OfferLetterListing = () => {
 
         successAlert({
           title: "Offer Accepted!",
-          text: `Offer accepted for "${offer.candidateName}". Candidate profile moved to Onboarding module.`,
+          text: `Offer accepted for "${candidateName}". Candidate profile moved to Onboarding module.`,
         });
         await getOfferListing();
+        return;
+      }
+
+      // When moving to Sent, display the Lottie Mail Sending Animation overlay
+      if (targetStatus === "Sent") {
+        setMailModal({
+          isOpen: true,
+          status: "sending",
+          candidateName,
+          candidateEmail,
+          message: "",
+          error: "",
+        });
+
+        try {
+          const res = await apiCall({
+            id: "updateOfferStatus",
+            api: api + apiEndpoints.recruitment.offer.OfferAddEdit,
+            payload: {
+              _id: offer._id,
+              status: "Sent",
+            },
+          });
+
+          if (res?.success) {
+            setMailModal((prev) => ({
+              ...prev,
+              status: "success",
+              message:
+                res?.data?.message ||
+                `Offer letter marked as Sent and delivered to ${candidateName} via email.`,
+            }));
+            await getOfferListing();
+          } else {
+            setMailModal((prev) => ({
+              ...prev,
+              status: "error",
+              error: res?.message || "Failed to dispatch offer email.",
+            }));
+          }
+        } catch (err) {
+          setMailModal((prev) => ({
+            ...prev,
+            status: "error",
+            error: err?.message || "Error while dispatching offer email.",
+          }));
+        }
         return;
       }
 
@@ -116,7 +240,9 @@ const OfferLetterListing = () => {
       if (res?.success) {
         successAlert({
           title: "Status Updated",
-          text: `Offer letter for "${offer.candidateName}" changed to ${statusTitle || targetStatus}.`,
+          text:
+            res?.data?.message ||
+            `Offer letter for "${candidateName}" changed to ${statusTitle || targetStatus}.`,
         });
         await getOfferListing();
       }
@@ -137,14 +263,43 @@ const OfferLetterListing = () => {
         return;
       }
 
-      // Requirement: Offer letter must be "Sent" before it can be Accepted or Declined
+      const candidateName =
+        offer.candidateName || offer.candidate?.candidateName || "Candidate";
+      const isSentPreviously = offer.status === "Sent" || offer.emailSent;
+
+      // Requirement 1: Offer letter must be "Sent" before it can be Accepted or Declined
       if (
         (targetStatus === "Accepted" || targetStatus === "Declined") &&
-        offer.status !== "Sent"
+        !isSentPreviously
       ) {
         warningAlert({
           title: "Offer Must Be Sent First",
-          text: `Offer letter for "${offer.candidateName || "Candidate"}" is currently in "${offer.status || "Draft"}". You must send the offer letter to the candidate before it can be marked as ${statusTitle || targetStatus}.`,
+          text: `Offer letter for "${candidateName}" is currently in "${offer.status || "Draft"}". You must send the offer letter to the candidate before it can be marked as ${statusTitle || targetStatus}.`,
+        });
+        return;
+      }
+
+      // Requirement 2: When email has been sent, status CANNOT be changed to Draft or Expired.
+      // Only Accept or Decline are allowed!
+      if (
+        isSentPreviously &&
+        (targetStatus === "Draft" || targetStatus === "Expired")
+      ) {
+        warningAlert({
+          title: "Status Revert Not Allowed",
+          text: `The offer letter email has already been sent to "${candidateName}". Once sent, an offer cannot be reverted to Draft or marked as Expired. You can only mark it as Accepted or Declined.`,
+        });
+        return;
+      }
+
+      // Requirement 3: Once finalized as Accepted or Declined, prevent changing to Draft or Expired
+      if (
+        (offer.status === "Accepted" || offer.status === "Declined") &&
+        (targetStatus === "Draft" || targetStatus === "Expired")
+      ) {
+        warningAlert({
+          title: "Offer Finalized",
+          text: `This offer letter is already finalized (${offer.status}). It cannot be changed to ${statusTitle || targetStatus}.`,
         });
         return;
       }
@@ -297,11 +452,30 @@ const OfferLetterListing = () => {
 
   useDocumentTitle("orvexa | Offer Letters");
 
-  // Right-click menu: Edit, status changes and Delete.
+  // Right-click menu: Edit, Send Email, status changes and Delete.
   const contextData = createRowContextMenu({
     onEdit: (row) => handleDoubleClick({ data: row }),
+    extraItems: [
+      {
+        id: "send-email",
+        permission: "edit",
+        text: "Send / Resend Offer Email",
+        icon: <Mail size={14} className="text-blue-600" />,
+        onClick: (row) => handleSendEmail(row),
+      },
+    ],
     onDelete: (row) => handleDelete(row._id),
-    statusCards: offerSummary,
+    statusCards: (row) => {
+      const isSent = row.status === "Sent" || row.emailSent;
+      if (isSent) {
+        // Once an offer letter email has been sent, it cannot be reverted to Draft or Expired.
+        // It can only be marked as Accepted or Declined.
+        return offerSummary.filter(
+          (card) => card.status === "Accepted" || card.status === "Declined",
+        );
+      }
+      return offerSummary;
+    },
     statusField: "status",
     onStatusChange: handleRequestStatusChange,
   });
@@ -311,11 +485,19 @@ const OfferLetterListing = () => {
       {/* 6 Modern Status Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mt-3 mr-2">
         {offerSummary.map((item) => {
+          const isSentOfferDragging =
+            draggingOffer?.status === "Sent" || draggingOffer?.emailSent;
+
           const isDropDisabled =
             item.isDisabled ||
+            // If dragging a non-Sent offer, cannot drop on Accepted or Declined
             (isDragging &&
               (item.status === "Accepted" || item.status === "Declined") &&
-              draggingOffer?.status !== "Sent");
+              !isSentOfferDragging) ||
+            // If dragging a Sent offer, CANNOT drop on Draft, Expired, or Sent
+            (isDragging &&
+              isSentOfferDragging &&
+              (item.status === "Draft" || item.status === "Expired" || item.status === "Sent"));
 
           return (
             <div key={item.id}>
@@ -361,6 +543,12 @@ const OfferLetterListing = () => {
         />
       )}
 
+      {/* Lottie Mail Sending / Sent Animation Overlay */}
+      <MailSendingModal
+        {...mailModal}
+        onClose={() => setMailModal((prev) => ({ ...prev, isOpen: false }))}
+      />
+
       {/* Grid listing with both List and Cards view */}
       <div className="min-h-0 flex-1">
         <HpGrid
@@ -391,7 +579,8 @@ const OfferLetterListing = () => {
           panding={
             isPending("deleteOffer") ||
             isPending("getOfferListing") ||
-            isPending("updateOfferStatus")
+            isPending("updateOfferStatus") ||
+            isPending("sendOfferEmail")
           }
         />
       </div>

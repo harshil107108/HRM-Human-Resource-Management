@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback, useState } from "react";
+import { useEffect, useMemo, useCallback, useRef, useState } from "react";
 import HpCard from "@/components/common/HpCard";
 import { formMethod, FormRenderer } from "@/form-engine";
 import useApiCall from "@/hooks/useApiCall";
@@ -10,14 +10,16 @@ import { Mail, Save, RefreshCw } from "lucide-react";
 
 const EmailTemplates = () => {
     const [templatesData, setTemplatesData] = useState(DEFAULT_TEMPLATES);
+    const templatesDataRef = useRef(DEFAULT_TEMPLATES);
+    const formmethodRef = useRef(null);
 
     const onTemplateChange = useCallback((selectedKey) => {
-        const tpl = templatesData[selectedKey] || DEFAULT_TEMPLATES[selectedKey];
+        const tpl = templatesDataRef.current[selectedKey] || DEFAULT_TEMPLATES[selectedKey];
         if (tpl) {
-            formmethod.methods.setValue("subject", tpl.subject);
-            formmethod.methods.setValue("body", tpl.body);
+            formmethodRef.current?.methods.setValue("subject", tpl.subject);
+            formmethodRef.current?.methods.setValue("body", tpl.body);
         }
-    }, [templatesData]);
+    }, []);
 
     const { smtpSchema, templateSchema, emailConfigSchema, initialValue } = useEmailSettingsConfig({
         onTemplateChange,
@@ -31,6 +33,10 @@ const EmailTemplates = () => {
             initialValue,
         });
     }, [emailConfigSchema, initialValue]);
+
+    useEffect(() => {
+        formmethodRef.current = formmethod;
+    }, [formmethod]);
 
     const fetchEmailSettings = useCallback(async () => {
         const res = await apiCall({
@@ -46,6 +52,7 @@ const EmailTemplates = () => {
                 ...DEFAULT_TEMPLATES,
                 ...(settingsData?.templates || {}),
             };
+            templatesDataRef.current = mergedTemplates;
             setTemplatesData(mergedTemplates);
 
             const currentKey = settingsData.templateKey || "welcome_employee";
@@ -77,6 +84,7 @@ const EmailTemplates = () => {
                         body: formData.body,
                     },
                 };
+                templatesDataRef.current = updatedTemplates;
                 setTemplatesData(updatedTemplates);
 
                 const res = await apiCall({

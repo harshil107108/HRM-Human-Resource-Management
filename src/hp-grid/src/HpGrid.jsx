@@ -190,6 +190,7 @@ function HpGridBase(props) {
     // ---- toolbar (title bar / search / + Add button, like the reference UI) ----
     title, // e.g. "Database & Branch"
     icon, // any ReactNode - rendered in a small teal square before the title
+    toolbarRight, // custom elements (e.g. DateField, Today button)
     searchable = false,
     searchPlaceholder = "Search here...",
     onSearchChange, // (term) => void -- optional external listener
@@ -1067,9 +1068,9 @@ function HpGridBase(props) {
               onClick={
                 hasKids
                   ? (e) => {
-                      e.stopPropagation();
-                      toggleRowExpanded(row._rowKey);
-                    }
+                    e.stopPropagation();
+                    toggleRowExpanded(row._rowKey);
+                  }
                   : undefined
               }
             >
@@ -1381,11 +1382,12 @@ function HpGridBase(props) {
 
   const showToolbar = Boolean(
     title ||
-      icon ||
-      searchable ||
-      onAddClick ||
-      toggle ||
-      (expand && treeModel?.parentKeys?.size > 0),
+    icon ||
+    toolbarRight ||
+    searchable ||
+    onAddClick ||
+    toggle ||
+    (expand && treeModel?.parentKeys?.size > 0),
   );
   const isCardView = toggle && viewMode === "card";
   const cardTitleColumn =
@@ -1449,6 +1451,7 @@ function HpGridBase(props) {
             {title && <span>{title}</span>}
           </div>
           <div className="hp-grid-toolbar-actions">
+            {toolbarRight}
             {expand && treeModel?.parentKeys?.size > 0 && (
               <button
                 type="button"
@@ -1786,15 +1789,15 @@ function HpGridBase(props) {
                           typeof renderCardProgress === "function"
                             ? renderCardProgress({ row, rowIndex })
                             : (() => {
-                                const col = colDef.find(
-                                  (c) =>
-                                    c.field === "deadlineProgress" ||
-                                    c.id === "deadlineProgress",
-                                );
-                                return col && typeof col.render === "function"
-                                  ? col.render(row.deadlineProgress, row, rowIndex)
-                                  : null;
-                              })();
+                              const col = colDef.find(
+                                (c) =>
+                                  c.field === "deadlineProgress" ||
+                                  c.id === "deadlineProgress",
+                              );
+                              return col && typeof col.render === "function"
+                                ? col.render(row.deadlineProgress, row, rowIndex)
+                                : null;
+                            })();
                         return progressNode ? (
                           <div className="hp-grid-card-progress-bar-wrap">
                             {progressNode}

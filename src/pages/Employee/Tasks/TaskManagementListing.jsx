@@ -149,6 +149,7 @@ const TaskManagementListing = () => {
         });
         if (!res?.aborted && res?.success) {
           await getTasks();
+          window.dispatchEvent(new CustomEvent("dayReportUpdated"));
         }
       } finally {
         updateInProgress.current = false;

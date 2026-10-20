@@ -8,17 +8,57 @@ import { useAuth } from "@/context/AuthContext";
 import { getMenuIcon } from "@/utils/menuIcons";
 
 // Server menu tree (already filtered to what the user may view) -> nav items.
-const toNavigation = (menus = []) =>
-  menus.map((group) => ({
-    label: group.menuName,
-    icon: getMenuIcon(group.icon),
-    path: group.path,
-    children: group.children?.length
+const toNavigation = (menus = [], user) =>
+  menus.map((group) => {
+    let children = group.children?.length
       ? group.children
           .filter((child) => child.path !== "/administration/permissions")
           .map((child) => ({ label: child.menuName, path: child.path }))
-      : undefined,
-  }));
+      : undefined;
+
+    // Check if user is Admin, HR, Manager, or Team Leader
+    const isSupervisor =
+      user?.isSuperAdmin ||
+      ["SUPER_ADMIN", "ADMIN", "HR", "MANAGER", "TEAM_LEADER", "TL", "LEAD"].includes(
+        String(user?.roleCode || user?.role || "").toUpperCase()
+      );
+
+    const isEmployeeGroup =
+      group.menuCode === "EMPLOYEE" ||
+      group.menuName === "Employees" ||
+      group.menuName === "Employee" ||
+      group.path === "/employee";
+
+    if (isEmployeeGroup && isSupervisor) {
+      children = children ? [...children] : [];
+      const hasUnlock = children.some(
+        (c) =>
+          c.path === "/employee/day-report-unlock" ||
+          c.path === "/employees/day-report-unlock"
+      );
+      if (!hasUnlock) {
+        const dayReportIndex = children.findIndex((c) =>
+          c.path?.includes("day-report")
+        );
+        const unlockItem = {
+          label: "Day Report Unlock",
+          path: "/employee/day-report-unlock",
+        };
+        if (dayReportIndex >= 0) {
+          children.splice(dayReportIndex + 1, 0, unlockItem);
+        } else {
+          children.push(unlockItem);
+        }
+      }
+    }
+
+    return {
+      label: group.menuName,
+      icon: getMenuIcon(group.icon),
+      path: group.path,
+      children,
+    };
+  });
 
 // ==========================================
 // SUB-COMPONENTS
@@ -114,8 +154,8 @@ export const Sidebar = ({
   setIsMobileOpen,
 }) => {
   const location = useLocation();
-  const { menus } = useAuth();
-  const NAVIGATION_SCHEMA = useMemo(() => toNavigation(menus), [menus]);
+  const { menus, user } = useAuth();
+  const NAVIGATION_SCHEMA = useMemo(() => toNavigation(menus, user), [menus, user]);
   const [expandedGroups, setExpandedGroups] = useState({});
   const navigationCollapsed = isCollapsed && !isMobileOpen;
 

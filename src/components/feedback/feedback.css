@@ -860,8 +860,8 @@ body:has(.hp-footer:not(.hp-footer--hidden)) .hrm-toast-region {
 	flex-direction: column;
 	align-items: center;
 	gap: 16px;
-	/* Only shown when loading takes noticeable time — fast loads never flash. */
-	animation: hrm-page-loader-in 260ms var(--hrm-ease-out) 300ms both;
+	/* Compulsory immediate logo display on mount */
+	animation: hrm-page-loader-in 220ms var(--hrm-ease-out) both;
 }
 
 /* If the page becomes ready while the logo is still appearing, freeze it so

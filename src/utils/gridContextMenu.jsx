@@ -69,8 +69,6 @@ export const createRowContextMenu = ({
   statusLabel = "Mark as",
   extraItems = [],
 } = {}) => {
-  const statusOptions = statusCards.filter((card) => card?.status && !card.isDisabled);
-
   return ({ row }) => {
     if (!row) return [];
     const items = [];
@@ -93,7 +91,9 @@ export const createRowContextMenu = ({
 
     const locked = typeof isStatusLocked === "function" && isStatusLocked(row);
     if (!locked && statusField && typeof onStatusChange === "function") {
-      const available = statusOptions.filter(
+      const cards = typeof statusCards === "function" ? statusCards(row) : statusCards;
+      const resolvedOptions = (cards || []).filter((card) => card?.status && !card.isDisabled);
+      const available = resolvedOptions.filter(
         (card) => !sameStatus(row[statusField], card.status),
       );
       if (available.length) {

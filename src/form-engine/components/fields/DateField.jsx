@@ -199,10 +199,14 @@ export default function DateField({ field, form, ...standaloneProps }) {
     required,
     min,
     max,
+    showHint = true,
+    showRangeHint = true,
     defaultToday = false,
     value: standaloneValue,
     onChange: standaloneOnChange,
     onBlur: standaloneOnBlur,
+    className = "",
+    wrapperClassName = "",
   } = field || standaloneProps;
   const store = form || EMPTY_FORM_STORE;
   const formValue = useFormStore(store, (snapshot) => snapshot.values[id]);
@@ -360,6 +364,7 @@ export default function DateField({ field, form, ...standaloneProps }) {
       monthRef.current?.select();
     }
   };
+
   const handleMonthChange = (e) => {
     const v = e.target.value.replace(/\D/g, "").slice(0, 2);
     setMonth(v);
@@ -369,6 +374,7 @@ export default function DateField({ field, form, ...standaloneProps }) {
       yearRef.current?.select();
     }
   };
+
   const handleYearChange = (e) => {
     const v = e.target.value.replace(/\D/g, "").slice(0, 4);
     setYear(v);
@@ -378,14 +384,77 @@ export default function DateField({ field, form, ...standaloneProps }) {
   const handleBlur = (e) => {
     // don't fire "leaving the field" logic when focus just moved between
     // the day/month/year segments of this same widget
-    if (wrapperRef.current && wrapperRef.current.contains(e.relatedTarget))
+    if (wrapperRef.current && wrapperRef.current.contains(e.relatedTarget)) {
       return;
-    validateAndCommit(day, month, year, { fillDefaults: true });
+    }
+
+    const curDay = dayRef.current?.value?.replace(/\D/g, "") ?? day;
+    const curMonth = monthRef.current?.value?.replace(/\D/g, "") ?? month;
+    const curYear = yearRef.current?.value?.replace(/\D/g, "") ?? year;
+
+    let nextDay = curDay;
+    let nextMonth = curMonth;
+    if (curDay && curDay.length === 1 && Number(curDay) > 0) {
+      nextDay = `0${curDay}`;
+      setDay(nextDay);
+    }
+    if (curMonth && curMonth.length === 1 && Number(curMonth) > 0) {
+      nextMonth = `0${curMonth}`;
+      setMonth(nextMonth);
+    }
+
+    validateAndCommit(nextDay, nextMonth, curYear, { fillDefaults: true });
     onBlur?.(); // FORM STORE HOOK: form.methods.blurField(id)
   };
 
   const makeKeyDownHandler = (segment) => (e) => {
+    if (e.key === "/" || e.key === "." || e.key === "-") {
+      e.preventDefault();
+      if (segment === "day") {
+        const rawDay = dayRef.current?.value?.replace(/\D/g, "") || day;
+        const nextDay =
+          rawDay && rawDay.length === 1 && Number(rawDay) > 0
+            ? `0${rawDay}`
+            : rawDay;
+        if (nextDay !== day) {
+          setDay(nextDay);
+          validateAndCommit(nextDay, month, year);
+        }
+        monthRef.current?.focus();
+        monthRef.current?.select();
+        return;
+      } else if (segment === "month") {
+        const rawMonth = monthRef.current?.value?.replace(/\D/g, "") || month;
+        const nextMonth =
+          rawMonth && rawMonth.length === 1 && Number(rawMonth) > 0
+            ? `0${rawMonth}`
+            : rawMonth;
+        if (nextMonth !== month) {
+          setMonth(nextMonth);
+          validateAndCommit(day, nextMonth, year);
+        }
+        yearRef.current?.focus();
+        yearRef.current?.select();
+        return;
+      }
+    }
+
     if (e.key === "Tab") {
+      if (segment === "day") {
+        const rawDay = dayRef.current?.value?.replace(/\D/g, "") || day;
+        if (rawDay && rawDay.length === 1 && Number(rawDay) > 0) {
+          const padded = `0${rawDay}`;
+          setDay(padded);
+          validateAndCommit(padded, month, year);
+        }
+      } else if (segment === "month") {
+        const rawMonth = monthRef.current?.value?.replace(/\D/g, "") || month;
+        if (rawMonth && rawMonth.length === 1 && Number(rawMonth) > 0) {
+          const padded = `0${rawMonth}`;
+          setMonth(padded);
+          validateAndCommit(day, padded, year);
+        }
+      }
       if (e.shiftKey) {
         if (segment === "day") {
           e.preventDefault();
@@ -417,11 +486,38 @@ export default function DateField({ field, form, ...standaloneProps }) {
         }
       }
     }
+
     if (e.key === "Enter") {
       e.preventDefault();
-      validateAndCommit(day, month, year, { fillDefaults: true });
-      form?.methods.focusNext(id);
-      return;
+      if (segment === "day") {
+        const rawDay = dayRef.current?.value?.replace(/\D/g, "") || day;
+        const nextDay =
+          rawDay && rawDay.length === 1 && Number(rawDay) > 0
+            ? `0${rawDay}`
+            : rawDay;
+        setDay(nextDay);
+        validateAndCommit(nextDay, month, year);
+        monthRef.current?.focus();
+        monthRef.current?.select();
+        return;
+      }
+      if (segment === "month") {
+        const rawMonth = monthRef.current?.value?.replace(/\D/g, "") || month;
+        const nextMonth =
+          rawMonth && rawMonth.length === 1 && Number(rawMonth) > 0
+            ? `0${rawMonth}`
+            : rawMonth;
+        setMonth(nextMonth);
+        validateAndCommit(day, nextMonth, year);
+        yearRef.current?.focus();
+        yearRef.current?.select();
+        return;
+      }
+      if (segment === "year") {
+        validateAndCommit(day, month, year, { fillDefaults: true });
+        form?.methods.focusNext(id);
+        return;
+      }
     }
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -594,7 +690,7 @@ export default function DateField({ field, form, ...standaloneProps }) {
     "h-7 bg-transparent text-center text-xs font-bold text-slate-800 outline-none tabular-nums placeholder:font-medium placeholder:text-slate-400 disabled:cursor-not-allowed disabled:text-slate-500";
 
   return (
-    <div className={`${wrapperClass} relative`} ref={wrapperRef}>
+    <div className={`${wrapperClass} relative ${className || wrapperClassName || ""}`} ref={wrapperRef}>
       {displayError && isFocused && (
         <FieldErrorTooltip message={displayError} />
       )}
@@ -700,20 +796,28 @@ export default function DateField({ field, form, ...standaloneProps }) {
             <button
               type="button"
               tabIndex={-1}
-              disabled={disabled}
+              disabled={disabled || Boolean(min && value && value <= min)}
               onClick={() => stepDay(-1)}
               aria-label="Previous day"
-              className="flex h-6 w-4 items-center justify-center text-slate-400 hover:text-sky-600 disabled:cursor-not-allowed"
+              className={`flex h-6 w-4 items-center justify-center ${
+                min && value && value <= min
+                  ? "text-slate-200 cursor-not-allowed"
+                  : "text-slate-400 hover:text-sky-600"
+              } disabled:cursor-not-allowed`}
             >
               <ChevronIcon direction="left" />
             </button>
             <button
               type="button"
               tabIndex={-1}
-              disabled={disabled}
+              disabled={disabled || Boolean(max && value && value >= max)}
               onClick={() => stepDay(1)}
               aria-label="Next day"
-              className="flex h-6 w-4 items-center justify-center text-slate-400 hover:text-sky-600 disabled:cursor-not-allowed"
+              className={`flex h-6 w-4 items-center justify-center ${
+                max && value && value >= max
+                  ? "text-slate-200 cursor-not-allowed"
+                  : "text-slate-400 hover:text-sky-600"
+              } disabled:cursor-not-allowed`}
             >
               <ChevronIcon direction="right" />
             </button>
@@ -846,7 +950,7 @@ export default function DateField({ field, form, ...standaloneProps }) {
           )}
       </div>
 
-      {!displayError && (min || max) && (
+      {showRangeHint && showHint && !displayError && (min || max) && (
         <p className="mt-1 text-[11px] font-semibold text-slate-500">
           {min && max
             ? `Allowed: ${formatDisplay(min)} – ${formatDisplay(max)}`

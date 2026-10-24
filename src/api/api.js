@@ -169,6 +169,12 @@ const apiEndpoints = {
             ShiftGetByID: "/attendance/shift/getShiftById",
             ShiftHelp: "/attendance/shift/getShiftHelp",
         },
+        weekend: {
+            WeekendAddEdit: "/attendance/weekend/addEditWeekendPolicy",
+            WeekendGetData: "/attendance/weekend/getWeekendPolicies",
+            WeekendDeleteByID: "/attendance/weekend/deleteWeekendPolicyById",
+            WeekendGetByID: "/attendance/weekend/getWeekendPolicyById",
+        },
         request: {
             RequestAddEdit: "/attendance/request/addEditAttendanceRequest",
             RequestGetData: "/attendance/request/getAttendanceRequests",

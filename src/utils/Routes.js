@@ -133,6 +133,10 @@ export const NAVIGATION_SCHEMA = [
         path: "/attendance/holidays",
       },
       {
+        label: "Weekend Policy",
+        path: "/attendance/weekend-policy",
+      },
+      {
         label: "Attendance Requests",
         path: "/attendance/requests",
       },

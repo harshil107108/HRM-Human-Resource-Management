@@ -42,6 +42,8 @@ export default function SelectWrapper({ field, form }) {
     options: staticOptions = [],
     disabled,
     required,
+    menuPlacement: propMenuPlacement,
+    maxMenuHeight = 220,
 
     // API configuration
     api,
@@ -52,6 +54,8 @@ export default function SelectWrapper({ field, form }) {
   const value = useFormStore(form, (state) => state.values[id]);
   const error = useFormStore(form, (state) => state.errors[id]);
 
+  const containerRef = useRef(null);
+  const [placement, setPlacement] = useState(propMenuPlacement || "auto");
   const [options, setOptions] = useState(staticOptions);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
@@ -60,6 +64,12 @@ export default function SelectWrapper({ field, form }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [draftValues, setDraftValues] = useState([]);
   const enterSelectionRef = useRef(false);
+
+  useEffect(() => {
+    if (propMenuPlacement) {
+      setPlacement(propMenuPlacement);
+    }
+  }, [propMenuPlacement]);
 
   const isMultiSelect = Boolean(field.isMultiSelect || field.multiSelect);
 
@@ -239,7 +249,24 @@ export default function SelectWrapper({ field, form }) {
   const handleMenuOpen = useCallback(() => {
     setDraftValues(selectedValues);
     setIsMenuOpen(true);
-  }, [selectedValues]);
+
+    if (propMenuPlacement && propMenuPlacement !== "auto") {
+      setPlacement(propMenuPlacement);
+      return;
+    }
+
+    if (containerRef.current && typeof window !== "undefined") {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      // If space below is less than 260px and space above is greater, open UP to prevent screen overlap
+      if (spaceBelow < 260 && spaceAbove > spaceBelow) {
+        setPlacement("top");
+        return;
+      }
+    }
+    setPlacement("auto");
+  }, [propMenuPlacement, selectedValues]);
 
   const handleMenuClose = useCallback(() => {
     setDraftValues(selectedValues);
@@ -492,7 +519,7 @@ export default function SelectWrapper({ field, form }) {
   const displayError = error || apiError;
 
   return (
-    <div className={`${wrapperClass} relative`}>
+    <div ref={containerRef} className={`${wrapperClass} relative`}>
       {displayError && isFocused && (
         <FieldErrorTooltip message={displayError} />
       )}
@@ -529,7 +556,8 @@ export default function SelectWrapper({ field, form }) {
         isSearchable
         closeMenuOnSelect={isMultiSelect ? false : true}
         hideSelectedOptions={false}
-        menuPlacement="auto"
+        maxMenuHeight={maxMenuHeight}
+        menuPlacement={placement}
         menuPortalTarget={document.body}
         menuPosition="fixed"
         menuShouldScrollIntoView={false}
@@ -685,13 +713,14 @@ const customStyles = (error) => ({
   menu: (base) => ({
     ...base,
     fontFamily: "'Nunito', sans-serif",
-    marginTop: 6,
+    margin: "4px 0",
     borderRadius: 8,
     overflow: "hidden",
     boxShadow:
       "0 16px 32px -8px rgba(15, 23, 42, 0.16), 0 4px 8px -2px rgba(15, 23, 42, 0.06)",
     border: "1px solid #e2e8f0",
     backgroundColor: "#fff",
+    zIndex: 9999,
   }),
 
   menuList: (base) => ({

@@ -41,6 +41,7 @@ import DayReportUnlockListing from "@/pages/Employee/DayReportUnlock/DayReportUn
 import AttendanceLogListing from "@/pages/Attendance/Logs/AttendanceLogListing";
 import ShiftListing from "@/pages/Attendance/Shifts/ShiftListing";
 import AttendanceHolidayCalendar from "@/pages/Attendance/Holidays/AttendanceHolidayCalendar";
+import WeekendPolicyListing from "@/pages/Attendance/Weekends/WeekendPolicyListing";
 import AttendanceRequestListing from "@/pages/Attendance/Requests/AttendanceRequestListing";
 
 // Leave Modules
@@ -427,6 +428,14 @@ const router = createBrowserRouter([
       {
         path: "attendance/holidays",
         element: <AttendanceHolidayCalendar />,
+      },
+      {
+        path: "attendance/weekend-policy",
+        element: <WeekendPolicyListing />,
+      },
+      {
+        path: "attendance/weekends",
+        element: <WeekendPolicyListing />,
       },
       {
         path: "attendance/requests",

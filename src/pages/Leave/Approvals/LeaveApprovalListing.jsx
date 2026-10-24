@@ -5,6 +5,7 @@ import useDragAndDrop from "@/hooks/useDragAndDrop";
 import useApiCall from "@/hooks/useApiCall";
 import useAlert from "@/hooks/useAlert";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
+import { useAuth } from "@/context/AuthContext";
 import { api, apiEndpoints } from "@/api/api";
 import { formatDateForInput } from "@/utils/dateUtils";
 import { confirmStatusChange } from "@/utils/confirmStatusChange";
@@ -14,10 +15,12 @@ import { CalendarDays, CheckCircle2, Clock3, Files, XCircle } from "lucide-react
 
 const DRAG_TYPE = "LEAVE_REQUEST";
 const REVIEWABLE_STATUSES = new Set(["Approved", "Rejected"]);
+const APPROVER_ROLES = new Set(["ADMIN", "SUPER_ADMIN", "HR", "MANAGER"]);
 
 const formatLeaveRequests = (data) =>
   data.map((item) => ({
     ...item,
+    rawEmployeeId: item.employeeId?._id || item.employeeId,
     employeeName: item.employeeId
       ? [
           item.employeeId.firstName,
@@ -35,12 +38,41 @@ const formatLeaveRequests = (data) =>
   }));
 
 const LeaveApprovalListing = () => {
+  const { user } = useAuth();
   const { apiCall, isPending } = useApiCall();
-  const { successAlert } = useAlert();
+  const { successAlert, errorAlert } = useAlert();
   const [requestData, setRequestData] = useState([]);
   const [selectedFilterStatus, setSelectedFilterStatus] = useState("");
   const [selectedRequest, setSelectedRequest] = useState(null);
   const updateInProgress = useRef(false);
+
+  // Check if current user has an authorized role (Admin, HR, Manager)
+  const isApproverRole = Boolean(
+    user?.isSuperAdmin || APPROVER_ROLES.has(String(user?.roleCode || "").toUpperCase()),
+  );
+
+  // Check if the leave request was applied by the current user
+  const isSelfRequest = useCallback(
+    (request) => {
+      if (!request || !user?._id) return false;
+      const applicantId = String(
+        request.employeeId?._id || request.rawEmployeeId || request.employeeId || "",
+      );
+      return Boolean(applicantId && applicantId === String(user._id));
+    },
+    [user?._id],
+  );
+
+  // Check if current user is allowed to approve/reject this specific request
+  const canReviewRequest = useCallback(
+    (request) => {
+      if (!isApproverRole) return false;
+      if (!request || request.status !== "Pending") return false;
+      if (isSelfRequest(request)) return false;
+      return true;
+    },
+    [isApproverRole, isSelfRequest],
+  );
 
   const getLeaveRequests = useCallback(async () => {
     const res = await apiCall({
@@ -74,6 +106,24 @@ const LeaveApprovalListing = () => {
   const updateRequestStatus = useCallback(
     async (request, nextStatus, statusTitle) => {
       if (!request?._id || !REVIEWABLE_STATUSES.has(nextStatus)) return;
+
+      // 1. Role validation check
+      if (!isApproverRole) {
+        errorAlert({
+          title: "Action Restricted",
+          text: "Only Admin, HR, or Manager have authority to approve or reject leave requests.",
+        });
+        return;
+      }
+
+      // 2. Prevent self-approval check
+      if (isSelfRequest(request)) {
+        errorAlert({
+          title: "Self-Approval Restricted",
+          text: "You cannot approve or reject your own leave request. It must be reviewed by another manager, HR, or administrator.",
+        });
+        return;
+      }
 
       if (request.status !== "Pending") {
         await getLeaveRequests();
@@ -109,7 +159,7 @@ const LeaveApprovalListing = () => {
         updateInProgress.current = false;
       }
     },
-    [apiCall, getLeaveRequests, successAlert],
+    [apiCall, getLeaveRequests, successAlert, errorAlert, isApproverRole, isSelfRequest],
   );
 
   const {
@@ -186,7 +236,26 @@ const LeaveApprovalListing = () => {
 
   const columns = useMemo(
     () => [
-      { id: "employeeName", field: "employeeName", headerName: "Employee", width: 230 },
+      {
+        id: "employeeName",
+        field: "employeeName",
+        headerName: "Employee",
+        width: 250,
+        type: "custom",
+        render: (val, row) => {
+          const isSelf = isSelfRequest(row);
+          return (
+            <div className="flex items-center gap-1.5 truncate">
+              <span className="truncate">{val}</span>
+              {isSelf && (
+                <span className="shrink-0 rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-200">
+                  You (Self)
+                </span>
+              )}
+            </div>
+          );
+        },
+      },
       { id: "leaveTypeName", field: "leaveTypeName", headerName: "Leave Type", width: 170 },
       { id: "startDate", field: "startDate", headerName: "Start Date", width: 130 },
       { id: "endDate", field: "endDate", headerName: "End Date", width: 130 },
@@ -219,7 +288,7 @@ const LeaveApprovalListing = () => {
       },
       { id: "reason", field: "reason", headerName: "Reason", width: 280 },
     ],
-    [],
+    [isSelfRequest],
   );
 
   const handleStatusCardClick = (status) => {
@@ -240,23 +309,27 @@ const LeaveApprovalListing = () => {
       title: item.status === "Approved" ? "Approve" : "Reject",
     }));
 
-  const contextData = (params) =>
-    createRowContextMenu({
+  const contextData = (params) => {
+    const row = params?.data || params?.row;
+    const canReview = row ? canReviewRequest(row) : isApproverRole;
+
+    return createRowContextMenu({
       onEdit: handleViewDetails,
       editLabel: "View Details",
       isReadOnly: () => true,
       canEdit: () => true,
-      isStatusLocked: (request) => request.status !== "Pending",
-      statusCards: statusActions,
+      isStatusLocked: (request) => !canReviewRequest(request),
+      statusCards: canReview ? statusActions : [],
       statusField: "status",
       statusLabel: "Action:",
       onStatusChange: updateRequestStatus,
     })(params);
+  };
 
   const handleGridDragStart = ({ event, row }) => {
     handleDragStart(event, row, {
       type: DRAG_TYPE,
-      canDrag: (request) => request.status === "Pending",
+      canDrag: (request) => canReviewRequest(request),
     });
   };
 
@@ -283,10 +356,10 @@ const LeaveApprovalListing = () => {
                   : selectedFilterStatus === ""
               }
               isDraggingAny={isDragging}
-              isDropTarget={canDrop && isDropTarget(item.status)}
+              isDropTarget={canDrop && isApproverRole && isDropTarget(item.status)}
               onDragOver={(event) =>
                 handleDragOver(event, item.status, {
-                  disabled: !canDrop || isPending("updateLeaveRequestStatus"),
+                  disabled: !canDrop || !isApproverRole || isPending("updateLeaveRequestStatus"),
                   acceptTypes: [DRAG_TYPE],
                   meta: item,
                 })
@@ -294,7 +367,7 @@ const LeaveApprovalListing = () => {
               onDragLeave={(event) => handleDragLeave(event, item.status)}
               onDrop={(event) =>
                 handleDrop(event, item.status, {
-                  disabled: !canDrop || isPending("updateLeaveRequestStatus"),
+                  disabled: !canDrop || !isApproverRole || isPending("updateLeaveRequestStatus"),
                   acceptTypes: [DRAG_TYPE],
                   meta: item,
                   onDrop: (request) =>
@@ -342,6 +415,10 @@ const LeaveApprovalListing = () => {
         open={Boolean(selectedRequest)}
         request={selectedRequest}
         onClose={() => setSelectedRequest(null)}
+        onStatusChange={updateRequestStatus}
+        canReview={canReviewRequest(selectedRequest)}
+        isSelfRequest={isSelfRequest(selectedRequest)}
+        isApproverRole={isApproverRole}
       />
     </div>
   );

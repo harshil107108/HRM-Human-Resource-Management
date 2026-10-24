@@ -119,6 +119,62 @@ export function AuthProvider({ children }) {
     [applySession],
   );
 
+  const faceLogin = useCallback(
+    async (imageBase64) => {
+      try {
+        const res = await axios.post(api + apiEndpoints.auth.faceLogin, { image: imageBase64 });
+        if (!res.data?.success) {
+          return { success: false, message: res.data?.message || "Face recognition failed." };
+        }
+        applySession(res.data.data);
+        return {
+          success: true,
+          message: res.data?.message,
+          attendance: res.data?.data?.attendance,
+          user: res.data?.data?.user,
+        };
+      } catch (error) {
+        const notRecognized = Boolean(error?.response?.data?.notRecognized);
+        const notEnrolled = Boolean(error?.response?.data?.notEnrolled);
+        const message =
+          error?.response?.data?.message ||
+          (error?.response ? "Face sign-in failed. Please try again." : "Can't reach the server. Check your connection.");
+        return { success: false, message, notRecognized, notEnrolled };
+      }
+    },
+    [applySession],
+  );
+
+  const enrollFace = useCallback(
+    async ({ employeeId, image, password, autoLogin = true }) => {
+      try {
+        const res = await axios.post(api + apiEndpoints.auth.faceEnroll, {
+          employeeId,
+          image,
+          password,
+          autoLogin,
+        });
+        if (!res.data?.success) {
+          return { success: false, message: res.data?.message || "Face registration failed." };
+        }
+        if (autoLogin && res.data?.data?.token) {
+          applySession(res.data.data);
+        }
+        return {
+          success: true,
+          message: res.data?.message,
+          data: res.data?.data,
+        };
+      } catch (error) {
+        const message =
+          error?.response?.data?.message ||
+          (error?.response ? "Face registration failed. Please try again." : "Can't reach the server.");
+        return { success: false, message };
+      }
+    },
+    [applySession],
+  );
+
   // Re-fetch user, permissions and menus (e.g. after changing role permissions).
   const refreshSession = useCallback(async () => {
     if (!currentToken) return;
@@ -146,10 +202,12 @@ export function AuthProvider({ children }) {
       isSuperAdmin,
       can,
       login,
+      faceLogin,
+      enrollFace,
       logout,
       refreshSession,
     };
-  }, [session, restoring, login, logout, refreshSession]);
+  }, [session, restoring, login, faceLogin, enrollFace, logout, refreshSession]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

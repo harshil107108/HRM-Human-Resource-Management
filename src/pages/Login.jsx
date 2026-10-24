@@ -12,18 +12,208 @@ import {
   Loader2,
   Shield,
   Users,
+  Camera,
+  RefreshCw,
+  UserPlus,
+  Scan,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import FaceEnrollModal from "./FaceEnrollModal";
+import FaceTargetOverlay from "@/components/common/FaceTargetOverlay";
+import { captureSquareSnapshot } from "@/utils/faceCapture";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, faceLogin } = useAuth();
 
+  const [authMode, setAuthMode] = useState("face"); // "face" (Employee/Manager/HR) or "admin" (Admin/Password)
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [cameraActive, setCameraActive] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showEnrollModal, setShowEnrollModal] = useState(false);
+  const [enrollSnapshot, setEnrollSnapshot] = useState("");
+
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const isScanningRef = useRef(false);
+  const failureCountRef = useRef(0);
+
+  // Start webcam when Face mode is selected
+  useEffect(() => {
+    let isMounted = true;
+
+    async function initCamera() {
+      if (authMode !== "face") return;
+      setError("");
+      setSuccessMessage("");
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+          audio: false,
+        });
+        if (!isMounted) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        setCameraActive(true);
+      } catch (err) {
+        if (isMounted) {
+          setCameraActive(false);
+          setError("Webcam permission denied or camera not found. Please enable camera access.");
+        }
+      }
+    }
+
+    if (authMode === "face") {
+      initCamera();
+    } else {
+      stopCamera();
+    }
+
+    return () => {
+      isMounted = false;
+      stopCamera();
+    };
+  }, [authMode]);
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setCameraActive(false);
+  };
+
+  // Automatic Face Detection & Clock-in Loop
+  useEffect(() => {
+    if (authMode !== "face" || !cameraActive || showEnrollModal || successMessage) {
+      return;
+    }
+
+    let active = true;
+
+    const autoScanInterval = setInterval(async () => {
+      if (
+        !active ||
+        isScanningRef.current ||
+        !videoRef.current ||
+        showEnrollModal ||
+        successMessage
+      ) {
+        return;
+      }
+
+      const video = videoRef.current;
+      if (video.readyState < 2 || video.paused || video.ended) {
+        return;
+      }
+
+      isScanningRef.current = true;
+      setCapturing(true);
+
+      try {
+        const dataUrl = captureSquareSnapshot(video, 0.85, 480);
+        if (!dataUrl) {
+          isScanningRef.current = false;
+          setCapturing(false);
+          return;
+        }
+
+        const result = await faceLogin(dataUrl);
+
+        if (!active) return;
+
+        if (result.success) {
+          setSuccessMessage(result.message || "Face verified! Attendance clocked in successfully.");
+          stopCamera();
+          return;
+        }
+
+        // Handle bystander, multi-person or environmental alerts
+        if (
+          result.message &&
+          (result.message.toLowerCase().includes("multiple people") ||
+            result.message.toLowerCase().includes("no human face") ||
+            result.message.toLowerCase().includes("blurry") ||
+            result.message.toLowerCase().includes("dark"))
+        ) {
+          setError(result.message);
+          failureCountRef.current = 0;
+          return;
+        }
+
+        // If no face is enrolled in the system yet
+        if (result.notEnrolled) {
+          setEnrollSnapshot(dataUrl);
+          setError("No registered faces in database. Click 'Register Face' below if you want to enroll.");
+          return;
+        }
+
+        // If face is detected in camera but not recognized in database
+        if (result.notRecognized) {
+          setEnrollSnapshot(dataUrl);
+          setError("Face not recognized in database. If you have not registered yet, click 'Register Face' below.");
+        }
+      } catch (err) {
+        // Continue scanning loop quietly
+      } finally {
+        if (active) {
+          setCapturing(false);
+          isScanningRef.current = false;
+        }
+      }
+    }, 1800);
+
+    return () => {
+      active = false;
+      clearInterval(autoScanInterval);
+      isScanningRef.current = false;
+    };
+  }, [authMode, cameraActive, showEnrollModal, successMessage, faceLogin]);
+
+  const handleFaceScan = async () => {
+    if (capturing || !videoRef.current) return;
+    setError("");
+    setCapturing(true);
+
+    try {
+      const dataUrl = captureSquareSnapshot(videoRef.current, 0.85, 480);
+      if (!dataUrl) {
+        setError("Camera is not ready. Please wait a moment.");
+        setCapturing(false);
+        return;
+      }
+
+      const result = await faceLogin(dataUrl);
+      if (!result.success) {
+        if (result.notRecognized || result.notEnrolled) {
+          setEnrollSnapshot(dataUrl);
+          setError(result.message || "Face not recognized in database. Click 'Register Face' below to enroll.");
+        } else {
+          setError(result.message || "Face recognition failed. Please try again.");
+        }
+        setCapturing(false);
+      } else {
+        setSuccessMessage(result.message || "Face verified! Attendance clocked in successfully.");
+        stopCamera();
+      }
+    } catch (err) {
+      setError("Failed to capture image snapshot. Please retry.");
+      setCapturing(false);
+    }
+  };
 
   // On success the session is set and the route guard redirects into the app.
   const handleSubmit = async (e) => {
@@ -257,110 +447,247 @@ export default function Login() {
           <div className="absolute -top-20 -left-20 w-44 h-44 bg-indigo-100/50 rounded-full blur-3xl pointer-events-none" />
 
           {/* Heading */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs uppercase tracking-widest mb-2">
+          <div className="mb-5">
+            <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs uppercase tracking-widest mb-1">
               <Shield className="w-4 h-4" />
               <span>Identity Verification</span>
             </div>
 
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-              Access Dashboard
+            <h2 className="text-xl font-bold tracking-tight text-slate-900">
+              {authMode === "face" ? "Biometric Attendance & Sign-In" : "Administrator Portal"}
             </h2>
 
-            <p className="text-[12px] text-slate-400 font-medium mt-1">
-              Sign in with your username and password
+            <p className="text-[12px] text-slate-400 font-medium mt-0.5">
+              {authMode === "face"
+                ? "Employees, HR & Managers: verify face to punch in attendance"
+                : "Sign in with your administrator username and password"}
             </p>
           </div>
 
-          {/* Email / Password Form */}
-          <form
-            className="space-y-5"
-            onSubmit={handleSubmit}
-          >
-
-            {error && (
-              <div
-                role="alert"
-                className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-semibold text-rose-700"
-              >
-                <AlertCircle className="mt-px h-4 w-4 shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {/* Username */}
-            <div className="space-y-1.5">
-              <label
-                className="text-[10px] font-bold uppercase tracking-widest text-slate-400"
-                htmlFor="username"
-              >
-                Username
-              </label>
-
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-
-                <input
-                  id="username"
-                  required
-                  autoFocus
-                  autoComplete="username"
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-9.5 pr-3 py-2.5 text-xs text-slate-950 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-semibold"
-                  placeholder="your.username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div className="space-y-1.5">
-
-              <label
-                className="text-[10px] font-bold uppercase tracking-widest text-slate-400"
-                htmlFor="password"
-              >
-                Security Password
-              </label>
-
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-
-                <input
-                  id="password"
-                  required
-                  autoComplete="current-password"
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-9.5 pr-9 py-2.5 text-xs text-slate-950 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-semibold"
-                  placeholder="••••••••••••"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
+          {/* Mode Switcher Tabs */}
+          <div className="flex p-1 mb-5 bg-slate-100/90 rounded-xl border border-slate-200/60">
             <button
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-rose-500 hover:from-indigo-500 hover:via-purple-500 hover:to-rose-450 text-white text-xs font-bold rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all cursor-pointer"
-              type="submit"
-              disabled={submitting}
+              type="button"
+              onClick={() => {
+                setAuthMode("face");
+                setError("");
+                setSuccessMessage("");
+              }}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                authMode === "face"
+                  ? "bg-white text-indigo-700 shadow-sm"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
             >
-              <span>{submitting ? "Signing in…" : "Sign In to Workspace"}</span>
-
-              {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
+              <Camera className="w-3.5 h-3.5" />
+              <span>Face ID (Staff)</span>
             </button>
 
-          </form>
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode("admin");
+                setError("");
+                setSuccessMessage("");
+              }}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                authMode === "admin"
+                  ? "bg-white text-indigo-700 shadow-sm"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Admin Login</span>
+            </button>
+          </div>
+
+          {error && (
+            <div
+              role="alert"
+              className="mb-4 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-semibold text-rose-700"
+            >
+              <AlertCircle className="mt-px h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {successMessage && (
+            <div
+              role="alert"
+              className="mb-4 flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs font-semibold text-emerald-700"
+            >
+              <CheckCircle2 className="mt-px h-4 w-4 shrink-0" />
+              <span>{successMessage}</span>
+            </div>
+          )}
+
+          {/* 1. FACE RECOGNITION LOGIN MODE */}
+          {authMode === "face" && (
+            <div className="space-y-4">
+              <div className="relative w-full h-64 bg-slate-950 rounded-2xl overflow-hidden border border-slate-700/60 shadow-xl flex items-center justify-center">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover transform scale-x-[-1]"
+                />
+
+                {/* Minimalist Biometric Viewport Reticle with Darkened Vignette */}
+                <FaceTargetOverlay
+                  capturing={capturing}
+                  cameraActive={cameraActive}
+                  sizeClass="w-44 h-48 sm:w-48 sm:h-52"
+                />
+
+                {!cameraActive && (
+                  <div className="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center text-white p-4 text-center z-20">
+                    <Camera className="w-8 h-8 text-indigo-400 mb-2 animate-bounce" />
+                    <p className="text-xs font-semibold">Camera is initializing...</p>
+                    <p className="text-[10px] text-slate-400 mt-1">Please ensure webcam permissions are allowed</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Automated Biometric Status Indicator (Hands-free, no button needed) */}
+              <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-100/90 border border-slate-200/80 text-xs shadow-xs">
+                <div className="flex items-center gap-2.5">
+                  <span className="relative flex h-2 w-2">
+                    <span
+                      className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
+                        capturing ? "bg-amber-400" : "bg-emerald-400"
+                      } opacity-75`}
+                    />
+                    <span
+                      className={`relative inline-flex rounded-full h-2 w-2 ${
+                        capturing ? "bg-amber-500" : "bg-emerald-500"
+                      }`}
+                    />
+                  </span>
+                  <span className="font-semibold text-slate-700">
+                    {capturing ? "Verifying face..." : "Hands-Free Auto-Attendance Active"}
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-medium">Automatic Clock-In</span>
+              </div>
+
+              {/* Fallback & Registration Actions */}
+              <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (videoRef.current) {
+                      const snap = captureSquareSnapshot(videoRef.current, 0.85, 480);
+                      if (snap) {
+                        setEnrollSnapshot(snap);
+                      }
+                    }
+                    setShowEnrollModal(true);
+                  }}
+                  className="w-full py-2 px-3 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-indigo-600 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <UserPlus className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Face not registered yet? Enroll Profile</span>
+                </button>
+
+                <div className="flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode("admin")}
+                    className="text-xs text-slate-500 hover:text-indigo-600 font-semibold transition-colors cursor-pointer"
+                  >
+                    Switch to Manual Password Login →
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 2. ADMIN USERNAME / PASSWORD FORM */}
+          {authMode === "admin" && (
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              {/* Username */}
+              <div className="space-y-1.5">
+                <label
+                  className="text-[10px] font-bold uppercase tracking-widest text-slate-400"
+                  htmlFor="username"
+                >
+                  Admin Username
+                </label>
+
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+
+                  <input
+                    id="username"
+                    required
+                    autoFocus
+                    autoComplete="username"
+                    className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-9.5 pr-3 py-2.5 text-xs text-slate-950 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-semibold"
+                    placeholder="admin"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="space-y-1.5">
+                <label
+                  className="text-[10px] font-bold uppercase tracking-widest text-slate-400"
+                  htmlFor="password"
+                >
+                  Admin Password
+                </label>
+
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+
+                  <input
+                    id="password"
+                    required
+                    autoComplete="current-password"
+                    className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-9.5 pr-9 py-2.5 text-xs text-slate-950 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-semibold"
+                    placeholder="••••••••••••"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-rose-500 hover:from-indigo-500 hover:via-purple-500 hover:to-rose-450 text-white text-xs font-bold rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all cursor-pointer"
+                type="submit"
+                disabled={submitting}
+              >
+                <span>{submitting ? "Signing in…" : "Sign In as Administrator"}</span>
+                {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
+              </button>
+            </form>
+          )}
         </motion.div>
       </div>
+
+      {/* Face Not In Database / Enrollment Modal */}
+      <FaceEnrollModal
+        isOpen={showEnrollModal}
+        onClose={() => setShowEnrollModal(false)}
+        initialSnapshot={enrollSnapshot}
+        onManualLogin={() => {
+          setAuthMode("admin");
+          setShowEnrollModal(false);
+        }}
+      />
     </div>
   );
 }

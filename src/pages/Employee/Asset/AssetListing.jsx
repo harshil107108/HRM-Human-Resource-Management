@@ -1,5 +1,4 @@
 import { HpGrid } from "@/hp-grid/src";
-import { createRowContextMenu } from "@/utils/gridContextMenu";
 import { useLocation, useNavigate } from "react-router-dom";
 import useAssetConfig from "./useAssetConfig";
 import useAlert from "@/hooks/useAlert";
@@ -9,16 +8,6 @@ import useApiCall from "@/hooks/useApiCall";
 import { formatDateForInput } from "@/utils/dateUtils";
 import AssetCard from "./AssetCard";
 import AssetAssignModal from "./AssetAssignModal";
-import useDragAndDrop from "@/hooks/useDragAndDrop";
-import { confirmStatusChange } from "@/utils/confirmStatusChange";
-import {
-  Layers,
-  CheckCircle2,
-  UserCheck,
-  Wrench,
-  AlertTriangle,
-  Trash2,
-} from "lucide-react";
 
 const AssetListing = () => {
   const navigate = useNavigate();
@@ -29,6 +18,12 @@ const AssetListing = () => {
 
   const [AssetListingData, setAssetListingData] = useState([]);
   const [selectedFilterStatus, setSelectedFilterStatus] = useState("");
+
+  // Drag and drop states
+  const [draggingStatus, setDraggingStatus] = useState(null); // { status, title }
+  const [draggingAsset, setDraggingAsset] = useState(null); // asset object
+  const [activeDropTargetAssetId, setActiveDropTargetAssetId] = useState(null);
+  const [activeDropTargetStatus, setActiveDropTargetStatus] = useState(null);
 
   // Assign Modal state
   const [assignModalState, setAssignModalState] = useState({
@@ -46,7 +41,7 @@ const AssetListing = () => {
       onClick: async () => {
         const res = await apiCall({
           id: "deleteAsset",
-          api: api + apiEndpoints.employee.asset.AssetDeleteByID,
+          api: api + apiEndpoints.employee,
           payload: {
             _id: id,
           },
@@ -93,8 +88,8 @@ const AssetListing = () => {
         api: api + apiEndpoints.employee.asset.AssetGetData,
         payload: assetStatus
           ? {
-              assetStatus,
-            }
+            assetStatus,
+          }
           : {},
       });
 
@@ -134,7 +129,90 @@ const AssetListing = () => {
     getAssetListing();
   }, [getAssetListing]);
 
-  // Executes status update request to backend with complete payload validation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setDraggingStatus(null);
+        setDraggingAsset(null);
+        setActiveDropTargetAssetId(null);
+        setActiveDropTargetStatus(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const assetSummary = useMemo(() => {
+    const getStatusCount = (status) => {
+      return AssetListingData.filter(
+        (item) => item?.assetStatus?.toLowerCase() === status.toLowerCase(),
+      ).length;
+    };
+
+    return [
+      {
+        id: "totalAssets",
+        title: "Total Assets",
+        value: AssetListingData.length.toLocaleString(),
+        icon: "▣",
+        type: "blue",
+        status: "",
+        isDraggable: false,
+        isDisabled: true, // disabled per user requirement: cannot be dragged or dropped on
+      },
+      {
+        id: "available",
+        title: "Available",
+        value: getStatusCount("AVAILABLE").toLocaleString(),
+        icon: "✓",
+        type: "green",
+        status: "AVAILABLE",
+        isDraggable: true,
+        isDisabled: false,
+      },
+      {
+        id: "assigned",
+        title: "Assigned",
+        value: getStatusCount("ASSIGNED").toLocaleString(),
+        icon: "♙",
+        type: "purple",
+        status: "ASSIGNED",
+        isDraggable: true,
+        isDisabled: false,
+      },
+      {
+        id: "underRepair",
+        title: "Under Repair",
+        value: getStatusCount("UNDER_REPAIR").toLocaleString(),
+        icon: "🔧",
+        type: "orange",
+        status: "UNDER_REPAIR",
+        isDraggable: true,
+        isDisabled: false,
+      },
+      {
+        id: "lost",
+        title: "Lost",
+        value: getStatusCount("LOST").toLocaleString(),
+        icon: "!",
+        type: "red",
+        status: "LOST",
+        isDraggable: true,
+        isDisabled: false,
+      },
+      {
+        id: "disposed",
+        title: "Disposed",
+        value: getStatusCount("DISPOSED").toLocaleString(),
+        icon: "✓",
+        type: "cyan",
+        status: "DISPOSED",
+        isDraggable: true,
+        isDisabled: false,
+      },
+    ];
+  }, [AssetListingData]);
+
   const executeStatusUpdate = async (
     asset,
     targetStatus,
@@ -233,7 +311,7 @@ const AssetListing = () => {
         formData.append(
           "assignedDate",
           assignmentData.assignedDate ||
-            new Date().toISOString().split("T")[0],
+          new Date().toISOString().split("T")[0],
         );
         if (assignmentData.expectedReturnDate) {
           formData.append(
@@ -247,7 +325,6 @@ const AssetListing = () => {
           formData.append("description", fullData.description);
         }
       } else {
-        // Unassigning employee
         formData.append("assignedEmployee", "");
         formData.append("assignedDate", "");
         formData.append("expectedReturnDate", "");
@@ -275,172 +352,166 @@ const AssetListing = () => {
     }
   };
 
-  // Handles requested status change from drag-and-drop with all edge cases
-  const handleRequestStatusChange = useCallback(
-    async (asset, targetStatus, statusTitle) => {
-      if (!asset || !targetStatus) return;
+  const handleRequestStatusChange = (asset, targetStatus, statusTitle) => {
+    if (!asset || !targetStatus) return;
 
-      // Edge Case 1: Same status drop -> do not trigger network request
-      if (asset.assetStatus === targetStatus) {
-        successAlert({
-          title: "Already in status",
-          text: `Asset "${asset.assetName}" is already marked as ${statusTitle || targetStatus}.`,
-        });
-        return;
-      }
-
-      // Edge Case 2: Changing status to ASSIGNED -> popup employee selection modal
-      if (targetStatus === "ASSIGNED") {
-        const confirmed = await confirmStatusChange({
-          fieldName: "Asset Status",
-          currentValue: asset.assetStatus,
-          nextValue: targetStatus,
-          currentLabel: asset.assetStatus,
-          nextLabel: statusTitle || targetStatus,
-        });
-        if (!confirmed) return;
-
-        setAssignModalState({
-          open: true,
-          asset,
-        });
-        return;
-      }
-
-      // Edge Case 3: Asset currently ASSIGNED and moving to another status -> prompt confirmation
-      if (asset.assetStatus === "ASSIGNED" && asset.assignedEmployee) {
-        deleteAlert({
-          title: "Unassign Asset?",
-          text: `Asset "${asset.assetName}" is currently assigned to ${asset.assignedEmployee}. Changing status to "${statusTitle || targetStatus}" will unassign it. Do you want to proceed?`,
-          confirmButtonText: "Yes, Change Status",
-          cancelButtonText: "Cancel",
-          onClick: async () => {
-            await executeStatusUpdate(asset, targetStatus, null, statusTitle);
-          },
-        });
-        return;
-      }
-
-      // Edge Case 4: Standard transition
-      const confirmed = await confirmStatusChange({
-        fieldName: "Asset Status",
-        currentValue: asset.assetStatus,
-        nextValue: targetStatus,
-        currentLabel: asset.assetStatus,
-        nextLabel: statusTitle || targetStatus,
+    if (asset.assetStatus === targetStatus) {
+      successAlert({
+        title: "Already in status",
+        text: `Asset "${asset.assetName}" is already marked as ${statusTitle || targetStatus}.`,
       });
-      if (!confirmed) return;
-      executeStatusUpdate(asset, targetStatus, null, statusTitle);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [executeStatusUpdate],
-  );
-
-  // Professional Drag and Drop Hook
-  // Dragging only works from Asset Card/Row -> Status Card
-  const {
-    draggedItem: draggingAsset,
-    isDragging,
-    isDropTarget,
-    handleDragStart,
-    handleDragEnd,
-    handleDragOver,
-    handleDragLeave,
-    handleDrop,
-  } = useDragAndDrop({
-    defaultType: "ASSET_CARD",
-    onDrop: (asset, targetStatus, meta) => {
-      handleRequestStatusChange(asset, targetStatus, meta?.title);
-    },
-  });
-
-  const assetSummary = useMemo(() => {
-    const getStatusCount = (status) => {
-      return AssetListingData.filter(
-        (item) => item?.assetStatus?.toLowerCase() === status.toLowerCase(),
-      ).length;
-    };
-
-    return [
-      {
-        id: "totalAssets",
-        title: "Total Assets",
-        value: AssetListingData.length.toLocaleString(),
-        icon: <Layers size={19} className="stroke-[2.2]" />,
-        type: "blue",
-        status: "",
-        isDisabled: true, // Overview counter: not a drop target
-      },
-      {
-        id: "available",
-        title: "Available",
-        value: getStatusCount("AVAILABLE").toLocaleString(),
-        icon: <CheckCircle2 size={19} className="stroke-[2.2]" />,
-        type: "green",
-        status: "AVAILABLE",
-        isDisabled: false, // Drop target
-      },
-      {
-        id: "assigned",
-        title: "Assigned",
-        value: getStatusCount("ASSIGNED").toLocaleString(),
-        icon: <UserCheck size={19} className="stroke-[2.2]" />,
-        type: "purple",
-        status: "ASSIGNED",
-        isDisabled: false, // Drop target
-      },
-      {
-        id: "underRepair",
-        title: "Under Repair",
-        value: getStatusCount("UNDER_REPAIR").toLocaleString(),
-        icon: <Wrench size={19} className="stroke-[2.2]" />,
-        type: "orange",
-        status: "UNDER_REPAIR",
-        isDisabled: false, // Drop target
-      },
-      {
-        id: "lost",
-        title: "Lost",
-        value: getStatusCount("LOST").toLocaleString(),
-        icon: <AlertTriangle size={19} className="stroke-[2.2]" />,
-        type: "red",
-        status: "LOST",
-        isDisabled: false, // Drop target
-      },
-      {
-        id: "disposed",
-        title: "Disposed",
-        value: getStatusCount("DISPOSED").toLocaleString(),
-        icon: <Trash2 size={19} className="stroke-[2.2]" />,
-        type: "cyan",
-        status: "DISPOSED",
-        isDisabled: false, // Drop target
-      },
-    ];
-  }, [AssetListingData]);
-
-  const handleStatusCardClick = (status) => {
-    if (!status) {
-      // Clicked Total Assets -> clear filter to show all
-      setSelectedFilterStatus("");
-      getAssetListing("");
       return;
     }
+
+    if (targetStatus === "ASSIGNED") {
+      setAssignModalState({
+        open: true,
+        asset,
+      });
+      return;
+    }
+
+    if (asset.assetStatus === "ASSIGNED" && asset.assignedEmployee) {
+      deleteAlert({
+        title: "Unassign Asset?",
+        text: `Asset "${asset.assetName}" is currently assigned to ${asset.assignedEmployee}. Changing status to "${statusTitle || targetStatus}" will unassign it. Do you want to proceed?`,
+        confirmButtonText: "Yes, Change Status",
+        cancelButtonText: "Cancel",
+        onClick: async () => {
+          await executeStatusUpdate(asset, targetStatus, null, statusTitle);
+        },
+      });
+      return;
+    }
+
+    executeStatusUpdate(asset, targetStatus, null, statusTitle);
+  };
+
+  const handleStatusCardClick = (status) => {
     const nextFilter = selectedFilterStatus === status ? "" : status;
     setSelectedFilterStatus(nextFilter);
     getAssetListing(nextFilter);
   };
 
-  // HpGrid drag handlers for draggable asset cards / rows
+  // Status Cards Drag Handlers
+  const handleStatusDragStart = (e, item) => {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData(
+      "application/json",
+      JSON.stringify({
+        type: "STATUS_CARD",
+        status: item.status,
+        title: item.title,
+      }),
+    );
+    setDraggingStatus(item);
+  };
+
+  const handleStatusDragEnd = () => {
+    setDraggingStatus(null);
+    setActiveDropTargetAssetId(null);
+  };
+
+  const handleStatusDragOver = (e, item) => {
+    if (item.isDisabled) {
+      e.dataTransfer.dropEffect = "none";
+      return;
+    }
+    if (draggingAsset) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      setActiveDropTargetStatus(item.status);
+    }
+  };
+
+  const handleStatusDragLeave = (e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      setActiveDropTargetStatus(null);
+    }
+  };
+
+  const handleStatusDrop = (e, item) => {
+    if (item.isDisabled) return;
+    e.preventDefault();
+    setActiveDropTargetStatus(null);
+
+    let droppedAsset = draggingAsset;
+    if (!droppedAsset) {
+      try {
+        const raw = e.dataTransfer.getData("application/json");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.type === "ASSET_CARD") droppedAsset = parsed.asset;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    if (droppedAsset) {
+      handleRequestStatusChange(droppedAsset, item.status, item.title);
+    }
+  };
+
   const handleGridCardDragStart = ({ event, row }) => {
-    handleDragStart(event, row, { type: "ASSET_CARD" });
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData(
+      "application/json",
+      JSON.stringify({
+        type: "ASSET_CARD",
+        asset: row,
+      }),
+    );
+    setDraggingAsset(row);
   };
 
   const handleGridCardDragEnd = () => {
-    handleDragEnd();
+    setDraggingAsset(null);
+    setActiveDropTargetStatus(null);
+  };
+
+  const handleGridCardDragOver = ({ event, row }) => {
+    if (draggingStatus) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      if (activeDropTargetAssetId !== row._id) {
+        setActiveDropTargetAssetId(row._id);
+      }
+    }
+  };
+
+  const handleGridCardDragLeave = ({ row }) => {
+    if (activeDropTargetAssetId === row._id) {
+      setActiveDropTargetAssetId(null);
+    }
+  };
+
+  const handleGridCardDrop = ({ event, row }) => {
+    event.preventDefault();
+    setActiveDropTargetAssetId(null);
+
+    let statusInfo = draggingStatus;
+    if (!statusInfo) {
+      try {
+        const raw = event.dataTransfer.getData("application/json");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.type === "STATUS_CARD") statusInfo = parsed;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    if (statusInfo) {
+      handleRequestStatusChange(row, statusInfo.status, statusInfo.title);
+    }
   };
 
   const getCardClassName = ({ row }) => {
+    if (activeDropTargetAssetId === row._id) {
+      return "hp-grid-card--drop-target";
+    }
     if (draggingAsset?._id === row._id) {
       return "hp-grid-card--dragging";
     }
@@ -448,6 +519,9 @@ const AssetListing = () => {
   };
 
   const getRowClassName = (row) => {
+    if (activeDropTargetAssetId === row._id) {
+      return "hp-grid-row--drop-target";
+    }
     if (draggingAsset?._id === row._id) {
       return "hp-grid-row--dragging";
     }
@@ -464,58 +538,56 @@ const AssetListing = () => {
     );
   };
 
-  // Right-click menu: Edit, status changes and Delete.
-  const contextData = createRowContextMenu({
-    onEdit: (row) => handleDoubleClick({ data: row }),
-    onDelete: (row) => handleDelete(row._id),
-    statusCards: assetSummary,
-    statusField: "assetStatus",
-    onStatusChange: handleRequestStatusChange,
-  });
-
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
-      {/* 6 Modern Status Cards */}
+      {/* 6 Status Cards */}
       <div className="grid grid-cols-6 gap-2.5 mt-3 mr-2">
         {assetSummary.map((item) => (
           <div key={item.id}>
             <AssetCard
               {...item}
-              isSelectedFilter={
-                item.status
-                  ? selectedFilterStatus === item.status
-                  : selectedFilterStatus === ""
-              }
-              isDraggingAny={isDragging}
-              isDropTarget={isDropTarget(item.status)}
-              onDragOver={(e) =>
-                handleDragOver(e, item.status, {
-                  disabled: item.isDisabled,
-                  acceptTypes: ["ASSET_CARD"],
-                  meta: item,
-                })
-              }
-              onDragLeave={(e) => handleDragLeave(e, item.status)}
-              onDrop={(e) =>
-                handleDrop(e, item.status, {
-                  disabled: item.isDisabled,
-                  acceptTypes: ["ASSET_CARD"],
-                  meta: item,
-                  onDrop: (asset) =>
-                    handleRequestStatusChange(asset, item.status, item.title),
-                })
-              }
+              isSelectedFilter={selectedFilterStatus === item.status}
+              isDragging={draggingStatus?.status === item.status}
+              isDropTarget={activeDropTargetStatus === item.status}
+              onDragStart={(e) => handleStatusDragStart(e, item)}
+              onDragEnd={handleStatusDragEnd}
+              onDragOver={(e) => handleStatusDragOver(e, item)}
+              onDragLeave={handleStatusDragLeave}
+              onDrop={(e) => handleStatusDrop(e, item)}
               onClick={() => handleStatusCardClick(item.status)}
             />
           </div>
         ))}
       </div>
 
+      {/* Visual drag hints */}
+      {draggingStatus && (
+        <div className="mr-2 flex items-center justify-between rounded-md border border-blue-200 bg-blue-50/90 px-3 py-1.5 text-xs text-blue-800 shadow-2xs">
+          <span className="font-semibold">
+            🎯 Dragging "{draggingStatus.title}": Drop onto any asset card or
+            table row below to update its status.
+          </span>
+          <span className="text-[11px] font-medium text-blue-600">
+            Press ESC to cancel
+          </span>
+        </div>
+      )}
+
+      {draggingAsset && (
+        <div className="mr-2 flex items-center justify-between rounded-md border border-purple-200 bg-purple-50/90 px-3 py-1.5 text-xs text-purple-800 shadow-2xs">
+          <span className="font-semibold">
+            🎯 Dragging "{draggingAsset.assetName}": Drop onto any of the 5
+            status cards above to update its status.
+          </span>
+          <span className="text-[11px] font-medium text-purple-600">
+            Press ESC to cancel
+          </span>
+        </div>
+      )}
 
       {/* Grid listing */}
       <div className="min-h-0 flex-1">
         <HpGrid
-          contextData={contextData}
           id="assetListing"
           title="Asset"
           rowData={AssetListingData}
@@ -538,15 +610,19 @@ const AssetListing = () => {
             "companyName",
             "warrantyEndDate",
           ]}
-          // Draggable Asset Cards (One-way: Asset Card -> Status Card)
           cardDraggable
           onCardDragStart={handleGridCardDragStart}
           onCardDragEnd={handleGridCardDragEnd}
+          onCardDragOver={handleGridCardDragOver}
+          onCardDragLeave={handleGridCardDragLeave}
+          onCardDrop={handleGridCardDrop}
           getCardClassName={getCardClassName}
-          // Draggable Asset Rows
           rowDraggable
           onRowDragStart={handleGridCardDragStart}
           onRowDragEnd={handleGridCardDragEnd}
+          onRowDragOver={handleGridCardDragOver}
+          onRowDragLeave={handleGridCardDragLeave}
+          onRowDrop={handleGridCardDrop}
           rowClassName={getRowClassName}
           panding={
             isPending("deleteAsset") ||

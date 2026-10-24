@@ -184,17 +184,10 @@ export default function TaskMenuPanel({
       >
         {/* Header Bar matching HRM header */}
         <div className="flex items-center justify-between pb-3 mb-2.5 border-b border-slate-100 px-0.5">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="w-3 h-3 text-blue-600" />
-              <span>Quick Tasks</span>
-            </span>
-          </div>
+          <div className="flex items-center gap-2"></div>
 
           <div className="flex items-center gap-1.5">
-            <span className="hidden sm:inline-block text-[10px] font-mono font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-              ESC
-            </span>
+
             <button
               type="button"
               onClick={onClose}
@@ -230,8 +223,6 @@ export default function TaskMenuPanel({
 
         {/* Footer */}
         <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between px-1 text-xs text-slate-500">
-          <span>Click any task to start timer</span>
-          <span className="text-[11px] font-medium text-slate-400">9 Tasks</span>
         </div>
       </div>
     </>

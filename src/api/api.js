@@ -305,6 +305,9 @@ const apiEndpoints = {
 
     auth: {
         login: "/auth/login",
+        faceLogin: "/auth/face-login",
+        faceEnroll: "/auth/face-enroll",
+        enrollmentCandidates: "/auth/enrollment-candidates",
         me: "/auth/me",
     },
 
@@ -491,6 +494,9 @@ const apiEndpoints = {
     },
     auth: {
         login: "/auth/login",
+        faceLogin: "/auth/face-login",
+        faceEnroll: "/auth/face-enroll",
+        enrollmentCandidates: "/auth/enrollment-candidates",
         me: "/auth/me",
     },
     menu: {

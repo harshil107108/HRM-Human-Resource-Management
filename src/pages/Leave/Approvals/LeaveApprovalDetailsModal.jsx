@@ -7,6 +7,10 @@ import {
   Mail,
   UserRound,
   UserRoundCheck,
+  CheckCircle2,
+  XCircle,
+  ShieldAlert,
+  Lock,
 } from "lucide-react";
 
 const Detail = ({ label, value, className = "", icon: Icon }) => (
@@ -48,7 +52,15 @@ const formatDateTime = (value) => {
       }).format(date);
 };
 
-const LeaveApprovalDetailsModal = ({ open, request, onClose }) => {
+const LeaveApprovalDetailsModal = ({
+  open,
+  request,
+  onClose,
+  onStatusChange,
+  canReview = false,
+  isSelfRequest = false,
+  isApproverRole = false,
+}) => {
   if (!request) return null;
 
   const employee = request.employeeId;
@@ -176,6 +188,72 @@ const LeaveApprovalDetailsModal = ({ open, request, onClose }) => {
               <Detail label="Last Updated" value={formatDateTime(request.updatedAt)} icon={Clock3} />
             </div>
           </section>
+
+          {/* APPROVAL DECISION SECTION OR PERMISSION NOTICE */}
+          {request.status === "Pending" && (
+            <section className="pt-2 border-t border-slate-100">
+              {canReview && onStatusChange && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/70 to-teal-50/70 p-4 shadow-xs">
+                  <div>
+                    <span className="block text-sm font-bold text-slate-800">
+                      Approval Decision
+                    </span>
+                    <span className="mt-0.5 block text-xs text-slate-500">
+                      Authorized decision: approve or reject this leave application
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onStatusChange(request, "Rejected", "Reject");
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-4 py-2 text-xs font-bold text-rose-700 shadow-xs hover:bg-rose-50 hover:border-rose-300 transition-colors cursor-pointer"
+                    >
+                      <XCircle size={15} />
+                      <span>Reject</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onStatusChange(request, "Approved", "Approve");
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition-colors cursor-pointer"
+                    >
+                      <CheckCircle2 size={15} />
+                      <span>Approve</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {isSelfRequest && (
+                <div className="flex items-start gap-2.5 rounded-2xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-800">
+                  <ShieldAlert size={16} className="shrink-0 text-amber-600 mt-0.5" />
+                  <div>
+                    <span className="font-bold">Self-Approval Restricted: </span>
+                    <span>
+                      You cannot approve or reject your own leave request. It must be reviewed by another manager, HR, or administrator.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {!isApproverRole && !isSelfRequest && (
+                <div className="flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-slate-50 p-3.5 text-xs text-slate-600">
+                  <Lock size={16} className="shrink-0 text-slate-400 mt-0.5" />
+                  <div>
+                    <span className="font-bold">Read-Only Permission: </span>
+                    <span>
+                      Employees cannot approve or reject leave applications. Only Admin, HR, or Manager have approval authority.
+                    </span>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
         </div>
       </div>
     </HpCommonModal>

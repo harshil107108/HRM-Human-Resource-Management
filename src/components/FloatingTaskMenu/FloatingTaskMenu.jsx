@@ -121,6 +121,11 @@ export default function FloatingTaskMenu({
       setStartTime(new Date());
       setSessionNote("");
       setIsFullScreen(true);
+
+      try {
+        localStorage.setItem("hrm.activeTask", JSON.stringify(task));
+        window.dispatchEvent(new CustomEvent("hrmActiveTaskChanged", { detail: task }));
+      } catch {}
     },
     [isLocked, onTaskSelect]
   );
@@ -151,6 +156,11 @@ export default function FloatingTaskMenu({
     setActiveTask(null);
     setElapsedSeconds(0);
     setIsPaused(false);
+
+    try {
+      localStorage.removeItem("hrm.activeTask");
+      window.dispatchEvent(new CustomEvent("hrmActiveTaskChanged", { detail: null }));
+    } catch {}
   }, [activeTask, elapsedSeconds, startTime, sessionNote, onTaskStop]);
 
   // Minimize Timer to dynamic island

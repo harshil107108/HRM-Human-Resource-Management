@@ -30,8 +30,8 @@ export default function TaskItem({
         group relative flex flex-col items-center justify-center p-2.5 rounded-xl
         bg-slate-50/70 hover:bg-blue-50/70 active:bg-blue-100/60
         border border-slate-200/80 hover:border-blue-300
-        transition-all duration-150 outline-none select-none cursor-pointer
-        hover:shadow-xs active:scale-95
+        transition-all duration-200 ease-out outline-none select-none cursor-pointer
+        hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-95
         focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2
         ${isSelected ? "bg-blue-50 border-blue-400 ring-1 ring-blue-300" : ""}
       `}
@@ -40,7 +40,7 @@ export default function TaskItem({
       <div
         className={`
           w-10 h-10 rounded-lg flex items-center justify-center border shadow-xs
-          transition-transform duration-150 group-hover:scale-105
+          transition-colors duration-200
           ${task.iconBg || "bg-white border-slate-200"}
         `}
       >

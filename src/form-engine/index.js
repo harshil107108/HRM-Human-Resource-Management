@@ -80,6 +80,7 @@ registerFieldType("time12", memoizeField(Time12HourField));
 export { default as formMethod, extendFormMethod } from "./core/formMethod";
 export { FormStore } from "./core/FormStore";
 export { default as FormRenderer } from "./components/FormRenderer";
+export { default as SelectWrapper } from "./components/fields/SelectWrapper";
 export {
   registerFieldType,
   getFieldComponent,

@@ -10,6 +10,7 @@ import FloatingTaskMenu from "@/components/FloatingTaskMenu";
 import useApiCall from "@/hooks/useApiCall";
 import { api, apiEndpoints } from "@/api/api";
 import DayReportLockedOverlay from "@/pages/Employee/DayReport/DayReportLockedOverlay";
+import ChatWidget from "@/components/chat/ChatWidget";
 
 const MainLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -190,11 +191,32 @@ const MainLayout = () => {
       {/* AssistiveTouch Floating Task Shortcut Launcher */}
       <FloatingTaskMenu
         isLocked={isTodayReportLocked}
-        onTaskSelect={(task) => {
+        onTaskSelect={async (task) => {
           toast.info({
             title: task.label,
             message: `Timer active for ${task.label}`,
           });
+
+          // Sync break/task status to backend so other users see it in Employee Directory
+          try {
+            await apiCall({
+              id: "updateMyActivityStatus",
+              api: `${api}${apiEndpoints.dashboard.updateActivityStatus}`,
+              payload: {
+                employeeId:
+                  user?.employee?._id ||
+                  user?.employeeRef ||
+                  user?._id ||
+                  user?.id,
+                email: user?.email,
+                employeeCode: user?.employeeCode,
+                status: task?.label || "Active",
+              },
+              silent: true,
+            });
+          } catch (e) {
+            console.error("Failed to sync activity status to server:", e);
+          }
         }}
         onTaskStop={async (session) => {
           const elapsedMinutes = Math.max(
@@ -216,6 +238,27 @@ const MainLayout = () => {
             activityType = "Meeting";
           } else if (taskCategory === "Focus" || taskCategory === "Work") {
             activityType = "Task";
+          }
+
+          // Reset status on server back to Active
+          try {
+            await apiCall({
+              id: "resetMyActivityStatus",
+              api: `${api}${apiEndpoints.dashboard.updateActivityStatus}`,
+              payload: {
+                employeeId:
+                  user?.employee?._id ||
+                  user?.employeeRef ||
+                  user?._id ||
+                  user?.id,
+                email: user?.email,
+                employeeCode: user?.employeeCode,
+                status: "Active",
+              },
+              silent: true,
+            });
+          } catch (e) {
+            console.error("Failed to reset activity status:", e);
           }
 
           try {
@@ -273,6 +316,9 @@ const MainLayout = () => {
             onRefresh={checkLockStatus}
           />
         )}
+
+      {/* Internal Chat Widget (Bottom Right) */}
+      <ChatWidget />
     </div>
   );
 };

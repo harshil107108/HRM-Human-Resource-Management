@@ -41,7 +41,7 @@ const AssetListing = () => {
       onClick: async () => {
         const res = await apiCall({
           id: "deleteAsset",
-          api: api + apiEndpoints.employee,
+          api: api + apiEndpoints.employee.asset.AssetDeleteByID,
           payload: {
             _id: id,
           },

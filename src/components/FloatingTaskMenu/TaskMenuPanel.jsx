@@ -1,11 +1,28 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { X, Sparkles, Lock } from "lucide-react";
+import { X, Sparkles, Lock, Clock } from "lucide-react";
+import axios from "axios";
+import { useAuth } from "@/context/AuthContext";
+import { api, apiEndpoints } from "@/api/api";
 import TaskItem from "./TaskItem";
 
 const MENU_WIDTH = 340;
 const MENU_HEIGHT = 390;
 const SCREEN_MARGIN = 16;
 const TRIGGER_SIZE = 56;
+
+const formatTimeDisplay = (val) => {
+  if (!val) return "";
+  if (/AM|PM/i.test(val)) return val;
+  const parts = String(val).split(":");
+  if (parts.length >= 2) {
+    let hour = parseInt(parts[0], 10);
+    const minute = parts[1].padStart(2, "0");
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12;
+    return `${String(hour).padStart(2, "0")}:${minute} ${ampm}`;
+  }
+  return val;
+};
 
 /**
  * TaskMenuPanel
@@ -28,6 +45,87 @@ export default function TaskMenuPanel({
   const panelRef = useRef(null);
   const itemRefs = useRef([]);
   const [focusedIndex, setFocusedIndex] = useState(0);
+  const { user } = useAuth();
+  const [punchInTime, setPunchInTime] = useState(() => {
+    return sessionStorage.getItem("hrm.punchInTime") || "";
+  });
+
+  // Resolve today's punch in time
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const sessionRaw = localStorage.getItem("hrm.session");
+    let sessionData = null;
+    try {
+      sessionData = sessionRaw ? JSON.parse(sessionRaw) : null;
+    } catch {}
+
+    const directPunchIn =
+      user?.attendance?.clockIn ||
+      user?.attendance?.punchTime ||
+      sessionData?.attendance?.clockIn ||
+      sessionData?.attendance?.punchTime ||
+      user?.clockIn ||
+      user?.punchIn;
+
+    if (directPunchIn) {
+      const formatted = formatTimeDisplay(directPunchIn);
+      setPunchInTime(formatted);
+      sessionStorage.setItem("hrm.punchInTime", formatted);
+      return;
+    }
+
+    let isCancelled = false;
+    const fetchTodayPunchIn = async () => {
+      try {
+        const token = sessionData?.token || user?.token;
+        const res = await axios.post(
+          api + apiEndpoints.attendance.log.LogGetData,
+          {},
+          { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        );
+
+        if (!isCancelled && res.data?.success && Array.isArray(res.data?.data)) {
+          const todayStr = new Date().toISOString().split("T")[0];
+          const logs = res.data.data;
+          const currentEmpId = user?.employeeId || user?._id || user?.id;
+
+          const match =
+            logs.find((l) => {
+              const logDate = l.date ? String(l.date).slice(0, 10) : "";
+              const matchesEmp =
+                !currentEmpId ||
+                String(l.employeeId?._id || l.employeeId?.employeeId || l.employeeId) === String(currentEmpId);
+              return logDate === todayStr && matchesEmp && l.clockIn;
+            }) ||
+            logs.find((l) => {
+              const logDate = l.date ? String(l.date).slice(0, 10) : "";
+              return logDate === todayStr && l.clockIn;
+            });
+
+          if (match?.clockIn) {
+            const formatted = formatTimeDisplay(match.clockIn);
+            setPunchInTime(formatted);
+            sessionStorage.setItem("hrm.punchInTime", formatted);
+            return;
+          }
+        }
+      } catch (err) {
+        // Fallback gracefully
+      }
+
+      if (!isCancelled) {
+        const fallback = sessionStorage.getItem("hrm.punchInTime") || "09:30 AM";
+        setPunchInTime(fallback);
+      }
+    };
+
+    fetchTodayPunchIn();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isOpen, user]);
 
   // Compute smart position based on trigger coordinates & viewport bounds
   const panelPosition = useMemo(() => {
@@ -183,11 +281,21 @@ export default function TaskMenuPanel({
         className="fixed z-[9985] rounded-2xl bg-white border border-slate-200 shadow-xl shadow-slate-900/15 p-4 pt-3.5 select-none outline-none animate-in fade-in zoom-in-95 duration-150 ease-out"
       >
         {/* Header Bar matching HRM header */}
-        <div className="flex items-center justify-between pb-3 mb-2.5 border-b border-slate-100 px-0.5">
-          <div className="flex items-center gap-2"></div>
+        <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100 px-0.5">
+          <div className="flex items-center gap-2">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 shadow-2xs">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="text-[11px] font-medium text-slate-600">Punch In:</span>
+              <span className="text-[11.5px] font-bold text-emerald-600 tracking-tight">
+                {punchInTime || "09:30 AM"}
+              </span>
+            </div>
+          </div>
 
           <div className="flex items-center gap-1.5">
-
             <button
               type="button"
               onClick={onClose}

@@ -1,8 +1,151 @@
-import { Search, Bell, Mail, Globe, Menu, X, ArrowRight, LogOut, ChevronDown, ShieldCheck } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Search,
+  Bell,
+  Mail,
+  Globe,
+  MessageSquare,
+  Menu,
+  X,
+  ArrowRight,
+  LogOut,
+  ChevronDown,
+  ShieldCheck,
+  CheckCheck,
+  CheckSquare,
+  Clock,
+  Trash2,
+  Calendar,
+  Inbox,
+  CheckCircle2,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useChat } from "@/context/ChatContext";
 import { getUploadUrl } from "@/utils/fileUpload";
+import { HpImagePreview } from "@/components/feedback";
+import useApiCall from "@/hooks/useApiCall";
+import { api, apiEndpoints } from "@/api/api";
+
+const formatTimeAgo = (date) => {
+  if (!date) return "";
+  const now = new Date();
+  const past = new Date(date);
+  const diffSec = Math.floor((now - past) / 1000);
+  if (diffSec < 60) return "Just now";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return past.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+};
+
+const getPriorityMeta = (priority = "Medium") => {
+  const p = String(priority).toLowerCase();
+  if (p === "urgent" || p === "high") {
+    return {
+      bg: "bg-rose-50 text-rose-700 ring-1 ring-rose-600/20",
+      dot: "bg-rose-500",
+    };
+  }
+  if (p === "low") {
+    return {
+      bg: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20",
+      dot: "bg-emerald-500",
+    };
+  }
+  return {
+    bg: "bg-amber-50 text-amber-700 ring-1 ring-amber-600/20",
+    dot: "bg-amber-500",
+  };
+};
+
+const getSenderDisplayName = (sender) => {
+  if (!sender) return "Admin / HR";
+  if (typeof sender === "string") return sender;
+  const fullName = [sender.firstName, sender.middleName, sender.lastName].filter(Boolean).join(" ");
+  return fullName || "Manager";
+};
+
+/**
+ * Loud, crisp, and attractive crystal chime sound synthesized with Web Audio API.
+ * Uses a resonant 3-note ascending chord (G5 -> C6 -> E6), tuned harmonic overtones,
+ * and a 4.5kHz low-pass filter with punchy envelope for high audibility across speakers.
+ */
+const playNotificationSound = () => {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
+    const now = ctx.currentTime;
+
+    // Crisp low-pass filter with mild resonance to preserve bright acoustic sheen
+    const masterFilter = ctx.createBiquadFilter();
+    masterFilter.type = "lowpass";
+    masterFilter.frequency.setValueAtTime(4500, now);
+    masterFilter.Q.setValueAtTime(0.7, now);
+
+    // Master volume: louder and punchy so it is easily heard across rooms and laptop speakers
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.42, now);
+
+    masterFilter.connect(masterGain);
+    masterGain.connect(ctx.destination);
+
+    // 3-note ascending crystal chime: G5 (784Hz) -> C6 (1046.5Hz) -> E6 (1318.5Hz)
+    const notes = [
+      { freq: 783.99, delay: 0.0, duration: 0.38, weight: 0.75 },
+      { freq: 1046.50, delay: 0.075, duration: 0.45, weight: 0.88 },
+      { freq: 1318.51, delay: 0.15, duration: 0.70, weight: 1.0 },
+    ];
+
+    notes.forEach(({ freq, delay, duration, weight }) => {
+      const startTime = now + delay;
+      const stopTime = startTime + duration;
+
+      // Primary tone
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, startTime);
+
+      // Second harmonic overtone for brilliant acoustic shimmer
+      const overtone = ctx.createOscillator();
+      const overtoneGain = ctx.createGain();
+      overtone.type = "sine";
+      overtone.frequency.setValueAtTime(freq * 2, startTime);
+
+      // Snappy attack and natural exponential decay
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.55 * weight, startTime + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, stopTime);
+
+      overtoneGain.gain.setValueAtTime(0.0001, startTime);
+      overtoneGain.gain.exponentialRampToValueAtTime(0.12 * weight, startTime + 0.01);
+      overtoneGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration * 0.45);
+
+      osc.connect(gain);
+      overtone.connect(overtoneGain);
+
+      gain.connect(masterFilter);
+      overtoneGain.connect(masterFilter);
+
+      osc.start(startTime);
+      overtone.start(startTime);
+
+      osc.stop(stopTime);
+      overtone.stop(stopTime);
+    });
+  } catch (err) {
+    console.warn("[Sound] Notification sound playback skipped:", err);
+  }
+};
 
 // Searchable pages = the menus this user can open.
 const toSearchItems = (menus = []) =>
@@ -27,9 +170,135 @@ export const Header = ({
 }) => {
   const navigate = useNavigate();
   const { user, menus, logout } = useAuth();
+  const { isChatOpen, openChat, closeChat, isMinimized, totalUnread } = useChat();
   const SEARCH_ITEMS = useMemo(() => toSearchItems(menus), [menus]);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
   const profileRef = useRef(null);
+
+  const { apiCall } = useApiCall();
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifTab, setNotifTab] = useState("all");
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loadingNotifs, setLoadingNotifs] = useState(false);
+  const notifRef = useRef(null);
+  const lastUnreadCountRef = useRef(null);
+  const isInitialLoadRef = useRef(true);
+
+  const filteredNotifications = useMemo(() => {
+    if (notifTab === "unread") {
+      return notifications.filter((n) => !n.isRead);
+    }
+    return notifications;
+  }, [notifications, notifTab]);
+
+  const fetchNotifications = useCallback(async (isSilent = false) => {
+    if (!user) return;
+    if (!isSilent) setLoadingNotifs(true);
+    try {
+      const res = await apiCall({
+        id: "getNotifications",
+        api: api + apiEndpoints.notification.getNotifications,
+        payload: {},
+        showErrorAlert: false,
+      });
+
+      if (res?.success && res?.data) {
+        const payload = res.data?.data || res.data || {};
+        const rawList = payload.notifications || res.data?.notifications || (Array.isArray(payload) ? payload : []);
+        const count = payload.unreadCount ?? res.data?.unreadCount ?? rawList.filter((n) => !n.isRead).length;
+
+        setNotifications(rawList);
+        setUnreadCount(count);
+
+        // Play chime sound when new unread notifications arrive
+        if (
+          !isInitialLoadRef.current &&
+          count > 0 &&
+          lastUnreadCountRef.current !== null &&
+          count > lastUnreadCountRef.current
+        ) {
+          playNotificationSound();
+        }
+        lastUnreadCountRef.current = count;
+        isInitialLoadRef.current = false;
+      }
+    } catch (_) {
+      // ignore transient poll error
+    } finally {
+      if (!isSilent) setLoadingNotifs(false);
+    }
+  }, [apiCall, user]);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(() => {
+      fetchNotifications(true);
+    }, 10000); // Check every 10s for real-time task notifications
+
+    const handleFocus = () => fetchNotifications(true);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [fetchNotifications]);
+
+  // Close the notification menu on outside click / Escape.
+  useEffect(() => {
+    if (!notifOpen) return undefined;
+    const onPointerDown = (event) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) setNotifOpen(false);
+    };
+    const onKeyDown = (event) => event.key === "Escape" && setNotifOpen(false);
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [notifOpen]);
+
+  const handleMarkAllAsRead = async () => {
+    setUnreadCount(0);
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    await apiCall({
+      id: "markAsRead",
+      api: api + apiEndpoints.notification.markAsRead,
+      payload: { all: true },
+      showErrorAlert: false,
+    });
+  };
+
+  const handleClearAll = async () => {
+    setNotifications([]);
+    setUnreadCount(0);
+    await apiCall({
+      id: "clearNotifications",
+      api: api + apiEndpoints.notification.clear,
+      payload: {},
+      showErrorAlert: false,
+    });
+  };
+
+  const handleNotificationClick = async (notif) => {
+    if (!notif.isRead) {
+      setUnreadCount((c) => Math.max(0, c - 1));
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === notif._id ? { ...n, isRead: true } : n))
+      );
+      apiCall({
+        id: "markAsRead",
+        api: api + apiEndpoints.notification.markAsRead,
+        payload: { id: notif._id },
+        showErrorAlert: false,
+      });
+    }
+    setNotifOpen(false);
+    navigate("/employees/task-management");
+  };
 
   // Close the profile menu on outside click / Escape.
   useEffect(() => {
@@ -165,36 +434,271 @@ export const Header = ({
       </div>
 
       {/* Right Navigation controls */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-0.5">
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-1.5">
+          {/* Notifications Dropdown */}
+          <div ref={notifRef} className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setNotifOpen((prev) => !prev);
+                if (!notifOpen) fetchNotifications();
+              }}
+              className={`relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-150 outline-none focus:outline-none focus-visible:outline-none select-none ${
+                notifOpen
+                  ? "bg-slate-100 text-blue-600 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 active:bg-slate-200/60"
+              }`}
+              title="Notifications"
+              aria-label="Notifications"
+              aria-expanded={notifOpen}
+            >
+              <Bell className="w-4 h-4 stroke-[1.8]" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white shadow-xs pointer-events-none">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <div
+                role="region"
+                aria-label="Notifications panel"
+                className="absolute right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 md:translate-x-0 md:left-auto md:right-0 top-full mt-2 w-[350px] sm:w-[410px] overflow-hidden rounded-2xl border border-slate-200/90 bg-white/98 shadow-2xl shadow-slate-900/12 backdrop-blur-xl z-50 animate-in fade-in zoom-in-95 duration-150"
+              >
+                {/* Header */}
+                <div className="px-4 pt-3 pb-2.5 border-b border-slate-100 bg-white">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px] font-bold text-slate-900 tracking-tight">Notifications</span>
+                      {unreadCount > 0 ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white shadow-2xs">
+                          {unreadCount} new
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          Caught up
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {unreadCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleMarkAllAsRead}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50/80 transition-colors"
+                          title="Mark all as read"
+                        >
+                          <CheckCheck className="w-3.5 h-3.5" />
+                          <span>Mark all read</span>
+                        </button>
+                      )}
+                      {notifications.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleClearAll}
+                          className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          title="Clear all notifications"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Segmented Filter Tabs & Auto-delete info */}
+                  <div className="flex items-center justify-between pt-0.5">
+                    <div className="inline-flex items-center bg-slate-100/80 p-0.5 rounded-lg text-[11px] font-medium text-slate-600">
+                      <button
+                        type="button"
+                        onClick={() => setNotifTab("all")}
+                        className={`px-2.5 py-1 rounded-md transition-all ${
+                          notifTab === "all"
+                            ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                            : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        All ({notifications.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNotifTab("unread")}
+                        className={`px-2.5 py-1 rounded-md transition-all ${
+                          notifTab === "unread"
+                            ? "bg-white text-blue-600 font-semibold shadow-2xs"
+                            : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        Unread ({unreadCount})
+                      </button>
+                    </div>
+
+                    <span
+                      className="inline-flex items-center gap-1 text-[10px] text-slate-400 font-medium"
+                      title="Notifications automatically delete after 24 hours"
+                    >
+                      <Clock className="w-3 h-3 text-slate-400" />
+                      Auto-clears in 24h
+                    </span>
+                  </div>
+                </div>
+
+                {/* List */}
+                <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100/80 [scrollbar-width:thin]">
+                  {loadingNotifs && notifications.length === 0 ? (
+                    <div className="py-12 text-center text-slate-400 text-xs">
+                      Loading notifications...
+                    </div>
+                  ) : filteredNotifications.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50/80 text-blue-600 mb-3 border border-blue-100/60 shadow-2xs">
+                        <Inbox className="h-6 w-6 stroke-[1.8]" />
+                      </div>
+                      <p className="text-[13px] font-semibold text-slate-800">
+                        {notifTab === "unread" ? "No unread notifications" : "All caught up"}
+                      </p>
+                      <p className="text-[11px] text-slate-400 mt-1 max-w-[240px] leading-relaxed">
+                        {notifTab === "unread"
+                          ? "You have reviewed all current task updates."
+                          : "When Admin or HR assigns you tasks, they will appear here. Past updates auto-delete after 24 hours."}
+                      </p>
+                    </div>
+                  ) : (
+                    filteredNotifications.map((notif) => {
+                      const isUnread = !notif.isRead;
+                      const priority = notif.metadata?.priority || "Medium";
+                      const priorityInfo = getPriorityMeta(priority);
+                      const senderName = getSenderDisplayName(notif.sender);
+
+                      return (
+                        <div
+                          key={notif._id}
+                          onClick={() => handleNotificationClick(notif)}
+                          className={`group relative flex items-start gap-3 px-4 py-3 cursor-pointer transition-all ${
+                            isUnread
+                              ? "bg-blue-50/30 hover:bg-blue-50/60"
+                              : "bg-white hover:bg-slate-50/80"
+                          }`}
+                        >
+                          {/* Unread Left Border Accent */}
+                          {isUnread && (
+                            <span className="absolute left-0 top-2.5 bottom-2.5 w-[3px] bg-blue-600 rounded-r-full" />
+                          )}
+
+                          {/* Left Avatar / Type Icon */}
+                          <div className="relative shrink-0 mt-0.5">
+                            {notif.sender?.profileImage ? (
+                              <img
+                                src={getUploadUrl(notif.sender.profileImage)}
+                                alt=""
+                                className="h-9 w-9 rounded-full object-cover ring-1 ring-slate-200"
+                              />
+                            ) : (
+                              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 text-white font-bold text-[11px] shadow-2xs">
+                                {initialsOf(senderName)}
+                              </div>
+                            )}
+                            <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white ring-1 ring-slate-200 text-blue-600 shadow-2xs">
+                              <CheckSquare className="w-2.5 h-2.5 stroke-[2.5]" />
+                            </span>
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1.5">
+                              <span className="text-[11px] font-semibold text-slate-900 truncate">
+                                {senderName}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-medium shrink-0">
+                                {formatTimeAgo(notif.createdAt)}
+                              </span>
+                            </div>
+
+                            <p className={`text-[12px] leading-snug mt-0.5 line-clamp-2 ${isUnread ? "font-medium text-slate-900" : "text-slate-600"}`}>
+                              {notif.message}
+                            </p>
+
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                              <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${priorityInfo.bg}`}>
+                                <span className={`h-1.5 w-1.5 rounded-full ${priorityInfo.dot}`} />
+                                {priority}
+                              </span>
+
+                              {notif.metadata?.dueDate && (
+                                <span className="inline-flex items-center gap-1 text-[10px] text-slate-500 font-medium">
+                                  <Calendar className="w-3 h-3 text-slate-400" />
+                                  Due {new Date(notif.metadata.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                </span>
+                              )}
+
+                              <span className="ml-auto inline-flex items-center gap-0.5 text-[10px] font-semibold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Open Task <ArrowRight className="w-3 h-3" />
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="border-t border-slate-100 bg-slate-50/70 px-4 py-2.5 flex items-center justify-between">
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    Auto-clears after 24 hours
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNotifOpen(false);
+                      navigate("/employees/task-management");
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    <span>View Task Board</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Internal Chat Button */}
           <button
-            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-md transition-colors relative"
-            aria-label="Notifications"
+            type="button"
+            onClick={() => {
+              if (isChatOpen && !isMinimized) {
+                closeChat();
+              } else {
+                openChat();
+              }
+            }}
+            className={`relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-150 outline-none focus:outline-none focus-visible:outline-none select-none ${
+              isChatOpen && !isMinimized
+                ? "bg-slate-100 text-blue-600 shadow-2xs"
+                : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 active:bg-slate-200/60"
+            }`}
+            title="Internal Chat"
+            aria-label="Internal Chat"
           >
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-blue-600 rounded-full ring-2 ring-white"></span>
-          </button>
-          <button
-            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-md transition-colors"
-            aria-label="Messages"
-          >
-            <Mail className="w-4 h-4" />
-          </button>
-          <button
-            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-md transition-colors"
-            aria-label="Languages"
-          >
-            <Globe className="w-4 h-4" />
+            <MessageSquare className="w-4 h-4 stroke-[1.8]" />
+            {totalUnread > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white ring-2 ring-white shadow-xs pointer-events-none">
+                {totalUnread > 99 ? "99+" : totalUnread}
+              </span>
+            )}
           </button>
         </div>
 
         <div ref={profileRef} className="relative pl-3 border-l border-slate-200">
-          <button
-            type="button"
+          <div
             onClick={() => setProfileOpen((open) => !open)}
             aria-haspopup="menu"
             aria-expanded={profileOpen}
-            className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-slate-50 cursor-pointer select-none transition-colors border border-transparent hover:border-slate-200/60"
           >
             <div className="text-right hidden md:block">
               <p className="text-[12px] font-semibold text-slate-900 leading-none">
@@ -205,18 +709,31 @@ export const Header = ({
               </p>
             </div>
             {user?.profileImage ? (
-              <img
-                className="w-7 h-7 rounded-full object-cover border border-slate-200"
-                alt=""
-                src={getUploadUrl(user.profileImage)}
-              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPreviewImage({
+                    src: getUploadUrl(user.profileImage),
+                    alt: user?.name || "Profile Picture",
+                  });
+                }}
+                className="relative group/avatar cursor-pointer focus:outline-none shrink-0"
+                title="Click to preview image"
+              >
+                <img
+                  className="w-7 h-7 rounded-full object-cover border border-slate-200 transition-transform duration-200 group-hover/avatar:scale-110 ring-2 ring-transparent group-hover/avatar:ring-blue-400 shadow-xs"
+                  alt={user?.name || "Profile Picture"}
+                  src={getUploadUrl(user.profileImage)}
+                />
+              </button>
             ) : (
               <span className="flex h-7 w-7 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-[11px] font-bold text-blue-700">
                 {initialsOf(user?.name)}
               </span>
             )}
             <ChevronDown className={`hidden md:block h-3.5 w-3.5 text-slate-400 transition-transform ${profileOpen ? "rotate-180" : ""}`} />
-          </button>
+          </div>
 
           {profileOpen && (
             <div
@@ -247,6 +764,17 @@ export const Header = ({
           )}
         </div>
       </div>
+
+      {/* Full-screen Circular Image Preview (Same as Employee Directory) */}
+      {previewImage && (
+        <HpImagePreview
+          open={Boolean(previewImage)}
+          src={previewImage.src}
+          alt={previewImage.alt}
+          shape="circle"
+          onClose={() => setPreviewImage(null)}
+        />
+      )}
     </header>
   );
 };

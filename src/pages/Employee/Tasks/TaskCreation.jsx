@@ -667,16 +667,15 @@ const TaskCreation = () => {
       )}
 
       <div className="flex h-full min-h-0 flex-col gap-3">
-        {/* Top Header with Switcher Tabs & Quick Actions */}
-        <div className="mr-2 mt-2 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 shadow-sm">
-          {/* Tabs */}
-          <div className="flex items-center gap-1.5 rounded-lg bg-slate-100/90 p-1">
+        {/* View Switcher Tabs Only */}
+        <div className="mr-2 mt-1 flex items-center">
+          <div className="inline-flex items-center gap-1 rounded-xl bg-slate-200/60 p-1 select-none border border-slate-200/70">
             <button
               type="button"
               onClick={() => setActiveTab("projects")}
-              className={`inline-flex items-center gap-2 rounded-md px-3.5 py-1.5 text-xs font-bold transition ${
+              className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all outline-none focus:outline-none focus-visible:outline-none select-none ${
                 activeTab === "projects"
-                  ? "bg-white text-blue-700 shadow-sm"
+                  ? "bg-white text-blue-700 shadow-2xs"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -689,9 +688,9 @@ const TaskCreation = () => {
             <button
               type="button"
               onClick={() => setActiveTab("tasks")}
-              className={`inline-flex items-center gap-2 rounded-md px-3.5 py-1.5 text-xs font-bold transition ${
+              className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all outline-none focus:outline-none focus-visible:outline-none select-none ${
                 activeTab === "tasks"
-                  ? "bg-white text-blue-700 shadow-sm"
+                  ? "bg-white text-blue-700 shadow-2xs"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -700,35 +699,6 @@ const TaskCreation = () => {
               <span className="rounded-full bg-slate-200/80 px-1.5 py-0.2 text-[10px] text-slate-700">
                 {tasks.length}
               </span>
-            </button>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setTaskTargetProject(null);
-                setIsTaskModalOpen(true);
-              }}
-              className="group inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-white px-3.5 py-2 text-xs font-semibold text-sky-700 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-md active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 motion-reduce:transition-none"
-            >
-              <ClipboardPlus
-                size={15}
-                className="transition-transform duration-200 group-hover:rotate-6 group-hover:scale-110 motion-reduce:transition-none"
-              />
-              <span>Create &amp; Assign Task</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onProjectModalOpen({ mode: "add" })}
-              className="group inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 motion-reduce:transition-none"
-            >
-              <Plus
-                size={15}
-                className="transition-transform duration-200 group-hover:rotate-90 group-hover:scale-110 motion-reduce:transition-none"
-              />
-              <span>Add Project</span>
             </button>
           </div>
         </div>
@@ -786,7 +756,7 @@ const TaskCreation = () => {
               colDef={projectColumns}
               style={{ height: "100%" }}
               onAddClick={() => onProjectModalOpen({ mode: "add" })}
-              addButtonLabel="New Project"
+              addButtonLabel="Add Project"
               onDoubleClick={openEditProject}
               columnFilterable
               panding={
@@ -826,7 +796,7 @@ const TaskCreation = () => {
                 setTaskTargetProject(null);
                 setIsTaskModalOpen(true);
               }}
-              addButtonLabel="Assign Task"
+              addButtonLabel="Create & Assign Task"
               onDoubleClick={(params) => {
                 const task = params?.data || params?.row || params;
                 if (task?._id) setSelectedTaskForDetails(task);

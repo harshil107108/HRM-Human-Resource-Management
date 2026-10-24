@@ -328,6 +328,7 @@ const apiEndpoints = {
     dashboard: {
         stats: "/dashboard/getDashboardStats",
         recentActivities: "/dashboard/getRecentActivities",
+        updateActivityStatus: "/dashboard/updateActivityStatus",
     },
 
     common: {
@@ -522,6 +523,18 @@ const apiEndpoints = {
             RoleGetByID: "/administration/role/getRoleById",
             RoleHelp: "/administration/role/getRoleHelp",
         },
+    },
+    notification: {
+        getNotifications: "/notifications/getNotifications",
+        markAsRead: "/notifications/markAsRead",
+        clear: "/notifications/clear",
+    },
+    chat: {
+        getColleagues: "/chat/colleagues",
+        getMessages: (targetUserId) => `/chat/messages/${targetUserId}`,
+        sendMessage: "/chat/send",
+        markAsRead: "/chat/mark-as-read",
+        getUnreadCount: "/chat/unread-count",
     },
 };
 

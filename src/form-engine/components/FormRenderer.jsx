@@ -2,38 +2,108 @@ import React from "react";
 import { useFormStore } from "../hooks/useFormStore";
 import { getFieldComponent } from "../core/fieldRegistry";
 
-const getGridSpanStyle = (field) => {
-  const classNames = [
+export const getResponsiveGridClasses = (field) => {
+  let classNames = [
     field.className,
     field.wrapperClassName,
     field.containerClassName,
   ]
     .filter(Boolean)
-    .join(" ");
+    .join(" ")
+    .trim();
 
-  const matches = [...classNames.matchAll(/(?:([a-z0-9-]+):)?col-span-(\d+|full)/g)];
+  // Normalize common developer typos like call-span or call-sapn
+  classNames = classNames
+    .replace(/\bcall-span-/gi, "col-span-")
+    .replace(/\bcall-sapn-/gi, "col-span-")
+    .replace(/\bcol-sapn-/gi, "col-span-");
 
-  if (matches.length > 0) {
-    // Prioritize responsive breakpoint like md: or lg:, else prefer non-12, else last match
-    const responsive = matches.find((m) => m[1] === "md" || m[1] === "lg");
-    const nonFull = matches.find((m) => m[2] !== "12" && m[2] !== "full");
-    const chosen = responsive || nonFull || matches[matches.length - 1];
-    const spanValue = chosen[2];
+  // Check if any responsive breakpoint prefixes exist: sm:, md:, lg:, xl:, 2xl:
+  const hasResponsiveCol = /(?:^|\s)(?:sm|md|lg|xl|2xl):col-span-(?:\d+|full)/.test(classNames);
+  const hasBaseCol = /(?:^|\s)col-span-(?:\d+|full)(?:\s|$)/.test(classNames);
 
-    return {
-      gridColumn: spanValue === "full" ? "1 / -1" : `span ${spanValue} / span ${spanValue}`,
-    };
+  // If the schema developer explicitly provided responsive col-span classes:
+  if (hasResponsiveCol) {
+    if (!hasBaseCol) {
+      return `col-span-12 ${classNames}`.trim();
+    }
+    return classNames;
   }
 
+  // If a static col-span-X is specified (e.g. "col-span-3", "col-span-4", "col-span-6", etc.)
+  const baseMatch = classNames.match(/(?:^|\s)col-span-(\d+|full)(?:\s|$)/);
+  if (baseMatch) {
+    const spanValue = baseMatch[1];
+    const otherClasses = classNames.replace(/(?:^|\s)col-span-(\d+|full)(?:\s|$)/g, " ").trim();
+
+    let responsiveSpan = "";
+    switch (spanValue) {
+      case "12":
+      case "full":
+        responsiveSpan = "col-span-12";
+        break;
+      case "6":
+        responsiveSpan = "col-span-12 sm:col-span-6";
+        break;
+      case "4":
+        responsiveSpan = "col-span-12 sm:col-span-6 lg:col-span-4";
+        break;
+      case "3":
+        responsiveSpan = "col-span-12 sm:col-span-6 lg:col-span-3";
+        break;
+      case "2":
+        responsiveSpan = "col-span-12 sm:col-span-4 lg:col-span-2";
+        break;
+      case "1":
+        responsiveSpan = "col-span-6 sm:col-span-3 lg:col-span-1";
+        break;
+      default: {
+        const num = parseInt(spanValue, 10);
+        if (num >= 8) {
+          responsiveSpan = `col-span-12 lg:col-span-${spanValue}`;
+        } else {
+          responsiveSpan = `col-span-12 sm:col-span-6 lg:col-span-${spanValue}`;
+        }
+        break;
+      }
+    }
+
+    return otherClasses ? `${responsiveSpan} ${otherClasses}` : responsiveSpan;
+  }
+
+  // If field.gridCols is specified
   if (field.gridCols) {
-    return {
-      gridColumn: field.gridCols === "full" ? "1 / -1" : `span ${field.gridCols} / span ${field.gridCols}`,
-    };
+    const cols = String(field.gridCols);
+    let responsiveSpan = "";
+    switch (cols) {
+      case "12":
+      case "full":
+        responsiveSpan = "col-span-12";
+        break;
+      case "6":
+        responsiveSpan = "col-span-12 sm:col-span-6";
+        break;
+      case "4":
+        responsiveSpan = "col-span-12 sm:col-span-6 lg:col-span-4";
+        break;
+      case "3":
+        responsiveSpan = "col-span-12 sm:col-span-6 lg:col-span-3";
+        break;
+      case "2":
+        responsiveSpan = "col-span-12 sm:col-span-4 lg:col-span-2";
+        break;
+      case "1":
+        responsiveSpan = "col-span-6 sm:col-span-3 lg:col-span-1";
+        break;
+      default:
+        responsiveSpan = "col-span-12 sm:col-span-6";
+        break;
+    }
+    return classNames ? `${responsiveSpan} ${classNames}` : responsiveSpan;
   }
 
-  return {
-    gridColumn: "span 6 / span 6",
-  };
+  // Default fallback if no col-span or gridCols is set
+  return classNames ? `col-span-12 sm:col-span-6 ${classNames}` : "col-span-12 sm:col-span-6";
 };
 
 export default function FormRenderer({
@@ -56,9 +126,9 @@ export default function FormRenderer({
 
   return (
     <div
-      className={`grid gap-x-4 gap-y-6 items-start ${className}`.trim()}
+      className={`hrm-form-grid grid grid-cols-12 gap-x-4 gap-y-5 items-start ${className}`.trim()}
       style={{
-        gridTemplateColumns: `repeat(12, minmax(0, 1fr))`,
+        gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
       }}
     >
       {schema.map((field) => {
@@ -75,16 +145,10 @@ export default function FormRenderer({
           );
         }
 
-        const fieldWrapperClassName = [
-          field.className,
-          field.wrapperClassName,
-          field.containerClassName,
-        ]
-          .filter(Boolean)
-          .join(" ");
-
-        const spanStyle = getGridSpanStyle(field);
+        const fieldWrapperClassName = getResponsiveGridClasses(field);
         const fieldWrapperStyle = {
+          minWidth: 0,
+          maxWidth: "100%",
           ...(field.minWidth
             ? {
               minWidth:
@@ -93,7 +157,6 @@ export default function FormRenderer({
                   : field.minWidth,
             }
             : {}),
-          ...spanStyle,
         };
 
         return (

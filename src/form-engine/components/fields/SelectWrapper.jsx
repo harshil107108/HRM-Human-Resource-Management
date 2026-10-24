@@ -1,10 +1,60 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Select from "react-select";
+import Select, { components } from "react-select";
 import { useFormStore } from "../../hooks/useFormStore";
 import { labelClass, wrapperClass } from "../../styles/formtheme";
 import { beginActivity } from "../../../utils/networkActivity";
 import { confirmStatusChange } from "../../../utils/confirmStatusChange";
+import HpCheckbox from "@/components/common/HpCheckbox";
 import FieldErrorTooltip from "./FieldErrorTooltip";
+
+const MultiValue = () => null;
+
+const MultiValueContainer = ({ children, ...props }) => {
+  const selected = props.getValue() || [];
+  const isMulti = props.isMulti;
+
+  if (!isMulti || selected.length === 0) {
+    return (
+      <components.ValueContainer {...props}>
+        {children}
+      </components.ValueContainer>
+    );
+  }
+
+  const inputChild = Array.isArray(children)
+    ? children[children.length - 1]
+    : children;
+
+  let displayText = "";
+  let extraCount = 0;
+
+  if (selected.length === 1) {
+    displayText = selected[0]?.label || String(selected[0]?.value || "");
+  } else if (selected.length === 2) {
+    displayText = `${selected[0]?.label || ""}, ${selected[1]?.label || ""}`;
+  } else {
+    displayText = `${selected[0]?.label || ""}, ${selected[1]?.label || ""}`;
+    extraCount = selected.length - 2;
+  }
+
+  return (
+    <components.ValueContainer {...props}>
+      {!props.selectProps.inputValue && (
+        <div className="flex items-center gap-1.5 max-w-[calc(100%-12px)] overflow-hidden pointer-events-none select-none">
+          <span className="truncate text-[11px] font-bold text-slate-900 font-['Nunito',sans-serif] leading-tight">
+            {displayText}
+          </span>
+          {extraCount > 0 && (
+            <span className="inline-flex shrink-0 items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 leading-none">
+              +{extraCount}
+            </span>
+          )}
+        </div>
+      )}
+      {inputChild}
+    </components.ValueContainer>
+  );
+};
 
 export function shouldHandleSelectKeyDown(event, { form, id }) {
   if (event.key === "Tab" && event.shiftKey) {
@@ -188,12 +238,12 @@ export default function SelectWrapper({ field, form }) {
   const selectedValue = useMemo(() => {
     if (isMultiSelect) {
       return options.filter((item) =>
-        draftValues.some((selected) => String(selected) === String(item.value)),
+        selectedValues.some((selected) => String(selected) === String(item.value)),
       );
     }
 
     return options.find((item) => String(item.value) === String(value)) || null;
-  }, [draftValues, isMultiSelect, options, value]);
+  }, [isMultiSelect, options, selectedValues, value]);
 
   // ============================================================
   // CHANGE
@@ -209,7 +259,17 @@ export default function SelectWrapper({ field, form }) {
       }
 
       const shouldAdvanceAfterSelection = enterSelectionRef.current;
-      if (/(status|stage|round)/i.test(`${id} ${label || ""}`)) {
+      const isExcludedFromConfirmation =
+        field.confirmChange === false ||
+        Boolean(field.skipConfirm) ||
+        Boolean(field.disableConfirm) ||
+        /marital/i.test(`${id} ${label || ""}`) ||
+        /employ(ee|ment).*status/i.test(`${id} ${label || ""}`);
+
+      if (
+        !isExcludedFromConfirmation &&
+        /(status|stage|round)/i.test(`${id} ${label || ""}`)
+      ) {
         const nextValue = selected?.value ?? "";
         const currentOption = options.find(
           (option) => String(option.value) === String(value),
@@ -353,7 +413,7 @@ export default function SelectWrapper({ field, form }) {
 
   const renderOption = useCallback(
     (optionProps) => {
-      const { data, innerRef, innerProps } = optionProps;
+      const { data, innerRef, innerProps, isFocused } = optionProps;
 
       const isSelected = draftValues.some(
         (item) => String(item) === String(data.value),
@@ -368,7 +428,7 @@ export default function SelectWrapper({ field, form }) {
                 String(item.label) === String(data.label),
             );
 
-      const zebraClass = optionIndex % 2 === 0 ? "bg-slate-50/80" : "bg-white";
+      const zebraBackground = optionIndex % 2 === 0 ? "#f8fafc" : "#ffffff";
 
       return (
         <div
@@ -378,23 +438,36 @@ export default function SelectWrapper({ field, form }) {
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
-
             handleOptionToggle(data.value);
           }}
-          className={`flex cursor-pointer items-center gap-2.5 border-b border-slate-100 px-3 py-1.5 text-sm transition-colors duration-150 last:border-b-0 ${
+          className={`flex cursor-pointer items-center gap-2.5 transition-colors duration-150 border-b border-slate-100 last:border-b-0 ${
             isSelected
-              ? "bg-sky-100/80 text-sky-900 font-semibold"
-              : `hover:bg-sky-100/80 hover:text-sky-800 text-slate-700 ${zebraClass}`
+              ? "bg-sky-50 text-sky-950 font-semibold"
+              : isFocused
+              ? "bg-sky-100/60 text-sky-900"
+              : "text-slate-700"
           }`}
+          style={{
+            backgroundColor: isSelected
+              ? "#f0f9ff"
+              : isFocused
+              ? "#e0f2fe"
+              : zebraBackground,
+            padding: "7px 12px",
+            fontFamily: "'Nunito', sans-serif",
+            fontSize: 12,
+            lineHeight: 1.4,
+          }}
         >
-          <input
-            type="checkbox"
+          <HpCheckbox
+            size="sm"
             checked={isSelected}
-            readOnly
-            className="h-4 w-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-2 focus:ring-sky-200 focus:ring-offset-0"
+            onChange={() => handleOptionToggle(data.value)}
+            className="pointer-events-none shrink-0"
           />
-
-          <span className="truncate text-slate-700 font-['Nunito',sans-serif]">{data.label}</span>
+          <span className="truncate flex-1 font-['Nunito',sans-serif]">
+            {data.label}
+          </span>
         </div>
       );
     },
@@ -462,50 +535,70 @@ export default function SelectWrapper({ field, form }) {
   // ============================================================
 
   const renderMenuList = useCallback(
-    ({ children }) => (
-      <div>
-        {isMultiSelect && (
-          <div className="flex items-center gap-2.5 border-b border-slate-100 px-3 py-2.5">
-            <input
-              type="checkbox"
-              checked={
-                options.length > 0 && draftValues.length === options.length
-              }
-              onChange={handleSelectAll}
-              className="h-4 w-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-2 focus:ring-sky-200 focus:ring-offset-0"
-            />
+    ({ children }) => {
+      const isAllSelected =
+        options.length > 0 && draftValues.length === options.length;
+      const isPartiallySelected =
+        draftValues.length > 0 && draftValues.length < options.length;
 
-            <span className="text-sm font-medium text-slate-600 font-['Nunito',sans-serif]">
-              Select all
-            </span>
+      return (
+        <div>
+          {isMultiSelect && (
+            <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2 bg-slate-50/80 select-none">
+              <label
+                className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 font-['Nunito',sans-serif]"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSelectAll();
+                }}
+              >
+                <HpCheckbox
+                  size="sm"
+                  checked={isAllSelected}
+                  indeterminate={isPartiallySelected}
+                  onChange={handleSelectAll}
+                  className="pointer-events-none shrink-0"
+                />
+                <span>Select all</span>
+              </label>
 
-            {draftValues.length > 0 && (
-              <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500 font-['Nunito',sans-serif]">
-                {draftValues.length} selected
-              </span>
-            )}
-          </div>
-        )}
+              {draftValues.length > 0 && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 font-['Nunito',sans-serif]">
+                  {draftValues.length} selected
+                </span>
+              )}
+            </div>
+          )}
 
-        <div className="max-h-60 overflow-y-auto py-1.5">{children}</div>
+          <div className="max-h-60 overflow-y-auto">{children}</div>
 
-        {isMultiSelect && (
-          <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-3 py-2.5">
-            <button
-              type="button"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={handleApply}
-              className="rounded-md bg-sky-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-sky-700 active:bg-sky-800 font-['Nunito',sans-serif]"
-            >
-              Apply
-            </button>
-          </div>
-        )}
-      </div>
-    ),
+          {isMultiSelect && (
+            <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-3 py-2 bg-slate-50/50">
+              <button
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={handleMenuClose}
+                className="px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded hover:bg-slate-200/60 transition-colors font-['Nunito',sans-serif]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={handleApply}
+                className="px-3.5 py-1.5 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 active:bg-sky-800 rounded shadow-xs transition-colors font-['Nunito',sans-serif]"
+              >
+                Apply
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    },
     [
       draftValues.length,
       handleApply,
+      handleMenuClose,
       handleSelectAll,
       isMultiSelect,
       options.length,
@@ -572,6 +665,8 @@ export default function SelectWrapper({ field, form }) {
             ? {
                 Option: renderOption,
                 MenuList: renderMenuList,
+                MultiValue: MultiValue,
+                ValueContainer: MultiValueContainer,
               }
             : {
                 Option: renderSingleOption,

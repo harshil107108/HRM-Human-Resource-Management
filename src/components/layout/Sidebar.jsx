@@ -76,9 +76,10 @@ const ParentMenuItem = ({
 }) => {
   const content = (
     <button
+      type="button"
       onClick={onClick}
       title={isCollapsed ? label : undefined}
-      className={`group w-full flex items-center rounded-md text-[13px] transition-all duration-150 font-medium ${
+      className={`group w-full flex items-center rounded-md text-[13px] transition-all duration-150 font-medium select-none outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 ${
         isCollapsed ? "justify-center p-2" : "gap-2.5 px-2.5 py-1.5"
       } ${
         isActive && !hasChildren
@@ -110,7 +111,7 @@ const ParentMenuItem = ({
 
   if (!hasChildren && path) {
     return (
-      <NavLink to={path} className="block">
+      <NavLink to={path} className="block outline-none focus:outline-none focus-visible:outline-none">
         {() => content}
       </NavLink>
     );
@@ -128,7 +129,7 @@ const NestedSubMenu = ({ children, isCollapsed }) => {
           <NavLink
             to={sub.path}
             className={({ isActive }) =>
-              `block px-3 py-1 text-[12px] font-medium rounded-md transition-all duration-150 ${
+              `block px-3 py-1 text-[12px] font-medium rounded-md transition-all duration-150 outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 ${
                 isActive
                   ? "bg-blue-50 text-blue-700 font-semibold"
                   : "text-slate-500 hover:text-blue-700 hover:bg-blue-50/60"

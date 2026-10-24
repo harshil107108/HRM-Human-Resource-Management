@@ -1,25 +1,36 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import useApiCall from "../hooks/useApiCall";
+import { useAuth } from "@/context/AuthContext";
 import { api, apiEndpoints } from "../api/api";
 import { getUploadUrl } from "../utils/fileUpload";
 import { HpCommonModal } from "@/hp-common-modal";
+import { HpImagePreview } from "@/components/feedback";
+import { formMethod, FormRenderer, useFormStore } from "@/form-engine";
 import {
   Users,
   CreditCard,
   Briefcase,
   UserPlus,
+  UserMinus,
   UserCheck,
   Filter,
   MoreVertical,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Building2,
   CheckCircle2,
+  XCircle,
   AlertCircle,
   Clock,
   Activity,
   RefreshCw,
+  CalendarDays,
+  Inbox,
+  Search,
+  X,
+  RotateCcw,
 } from "lucide-react";
 
 // ==========================================
@@ -128,19 +139,87 @@ const Card = ({ children, className = "" }) => (
 );
 
 const Badge = ({ status }) => {
-  const styles = {
-    Active: "bg-green-50 text-green-700 border-green-200/60",
-    Remote: "bg-blue-50 text-blue-700 border-blue-200/60",
-    "On Leave": "bg-amber-50 text-amber-700 border-amber-200/60",
-    "Notice Period": "bg-orange-50 text-orange-700 border-orange-200/60",
-    Inactive: "bg-gray-50 text-gray-600 border-gray-200/60",
+  const normalized = (status || "Active").trim();
+  const lower = normalized.toLowerCase();
+
+  let config = {
+    bg: "bg-emerald-50 text-emerald-700 border-emerald-200/80",
+    dot: "bg-emerald-500",
+    pulse: true,
   };
+
+  if (lower.includes("lunch")) {
+    config = {
+      bg: "bg-amber-50 text-amber-700 border-amber-200/80",
+      dot: "bg-amber-500",
+      pulse: false,
+    };
+  } else if (lower.includes("meeting")) {
+    config = {
+      bg: "bg-blue-50 text-blue-700 border-blue-200/80",
+      dot: "bg-blue-500",
+      pulse: false,
+    };
+  } else if (lower.includes("discussion")) {
+    config = {
+      bg: "bg-indigo-50 text-indigo-700 border-indigo-200/80",
+      dot: "bg-indigo-500",
+      pulse: false,
+    };
+  } else if (lower.includes("tea") || lower.includes("coffee")) {
+    config = {
+      bg: "bg-amber-50 text-amber-800 border-amber-300/80",
+      dot: "bg-amber-600",
+      pulse: false,
+    };
+  } else if (lower.includes("formal break") || lower.includes("evening break") || lower.includes("break")) {
+    config = {
+      bg: "bg-orange-50 text-orange-700 border-orange-200/80",
+      dot: "bg-orange-500",
+      pulse: false,
+    };
+  } else if (lower.includes("focus")) {
+    config = {
+      bg: "bg-sky-50 text-sky-700 border-sky-200/80",
+      dot: "bg-sky-500",
+      pulse: false,
+    };
+  } else if (lower.includes("leave")) {
+    config = {
+      bg: "bg-rose-50 text-rose-700 border-rose-200/80",
+      dot: "bg-rose-500",
+      pulse: false,
+    };
+  } else if (lower.includes("remote") || lower.includes("wfh")) {
+    config = {
+      bg: "bg-violet-50 text-violet-700 border-violet-200/80",
+      dot: "bg-violet-500",
+      pulse: false,
+    };
+  } else if (lower.includes("notice")) {
+    config = {
+      bg: "bg-orange-50 text-orange-700 border-orange-200/80",
+      dot: "bg-orange-500",
+      pulse: false,
+    };
+  } else if (lower.includes("inactive") || lower.includes("absent")) {
+    config = {
+      bg: "bg-slate-100 text-slate-600 border-slate-200/80",
+      dot: "bg-slate-400",
+      pulse: false,
+    };
+  }
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${styles[status]}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${config.bg}`}
     >
-      {status}
+      <span
+        className={`w-1.5 h-1.5 rounded-full shrink-0 ${config.dot} ${
+          config.pulse ? "animate-pulse" : ""
+        }`}
+      />
+      <span>{normalized}</span>
     </span>
   );
 };
@@ -151,39 +230,60 @@ const ActivityItem = ({ activity }) => {
     switch (activity.type) {
       case "join":
         return {
-          element: <UserPlus className="w-3.5 h-3.5 text-green-600" />,
-          bg: "bg-green-50 border-green-200",
+          element: <UserPlus className="w-3.5 h-3.5 text-emerald-600" />,
+          bg: "bg-emerald-50 border-emerald-200",
         };
       case "payroll":
         return {
           element: <CreditCard className="w-3.5 h-3.5 text-blue-600" />,
           bg: "bg-blue-50 border-blue-200",
         };
-      default:
+      case "exit":
         return {
-          element: <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />,
+          element: <UserMinus className="w-3.5 h-3.5 text-rose-600" />,
+          bg: "bg-rose-50 border-rose-200",
+        };
+      case "leave":
+      default: {
+        const titleLower = (activity.title || "").toLowerCase();
+        if (titleLower.includes("reject")) {
+          return {
+            element: <XCircle className="w-3.5 h-3.5 text-amber-600" />,
+            bg: "bg-amber-50 border-amber-200",
+          };
+        }
+        if (titleLower.includes("approv")) {
+          return {
+            element: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />,
+            bg: "bg-emerald-50 border-emerald-200",
+          };
+        }
+        return {
+          element: <CalendarDays className="w-3.5 h-3.5 text-amber-600" />,
           bg: "bg-amber-50 border-amber-200",
         };
+      }
     }
   };
 
   const cfg = getIconConfig();
 
   return (
-    <div className="relative flex gap-4 pl-8">
+    <div className="relative flex gap-4 pl-8 group">
       <div
-        className={`absolute left-0 w-7 h-7 ${cfg.bg} border rounded-full flex items-center justify-center ring-4 ring-white z-10`}
+        className={`absolute left-0 w-7 h-7 ${cfg.bg} border rounded-full flex items-center justify-center ring-4 ring-white z-10 transition-transform duration-200 group-hover:scale-105`}
       >
         {cfg.element}
       </div>
-      <div>
-        <p className="text-xs font-bold text-gray-900 leading-none">
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-bold text-gray-900 leading-snug">
           {activity.title}
         </p>
-        <p className="text-xs text-gray-500 mt-1 font-medium leading-relaxed">
+        <p className="text-xs text-gray-500 mt-0.5 font-medium leading-relaxed">
           {activity.description}
         </p>
-        <span className="inline-block text-[9px] text-gray-400 font-semibold tracking-wider mt-1 uppercase">
+        <span className="inline-flex items-center gap-1 text-[10px] text-gray-400 font-semibold tracking-wider mt-1 uppercase">
+          <Clock className="w-3 h-3 text-gray-400/80" />
           {timeAgo(activity.time)}
         </span>
       </div>
@@ -192,11 +292,11 @@ const ActivityItem = ({ activity }) => {
 };
 
 const ACTIVITY_FILTERS = [
-  { key: "all", label: "All" },
-  { key: "join", label: "Employees" },
-  { key: "payroll", label: "Payroll" },
-  { key: "leave", label: "Leave" },
-  { key: "exit", label: "Exit" },
+  { key: "all", label: "All", icon: Activity },
+  { key: "join", label: "Employees", icon: Users },
+  { key: "payroll", label: "Payroll", icon: CreditCard },
+  { key: "leave", label: "Leave", icon: CalendarDays },
+  { key: "exit", label: "Exit", icon: UserMinus },
 ];
 
 // "View All" popup: loads the full activity feed when opened.
@@ -221,6 +321,8 @@ const AllActivitiesModal = ({ open, onClose }) => {
   const visible =
     filter === "all" ? activities : activities.filter((a) => a.type === filter);
   const loading = isPending("getAllActivities");
+  const activeFilterObj =
+    ACTIVITY_FILTERS.find((f) => f.key === filter) || ACTIVITY_FILTERS[0];
 
   return (
     <HpCommonModal
@@ -233,53 +335,113 @@ const AllActivitiesModal = ({ open, onClose }) => {
       showSaveButton={false}
       showClearButton={false}
       cancelText="Close"
+      scrollable={false}
+      className="!h-[600px] max-h-[88vh] flex flex-col"
+      bodyClassName="!p-0 flex flex-col flex-1 h-full min-h-0 overflow-hidden [&>.hp-modal-fieldset]:flex [&>.hp-modal-fieldset]:flex-col [&>.hp-modal-fieldset]:flex-1 [&>.hp-modal-fieldset]:h-full [&>.hp-modal-fieldset]:min-h-0"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
-        <div className="flex flex-wrap gap-1.5">
-          {ACTIVITY_FILTERS.map((f) => {
-            const count =
-              f.key === "all"
-                ? activities.length
-                : activities.filter((a) => a.type === f.key).length;
-            return (
-              <button
-                key={f.key}
-                type="button"
-                onClick={() => setFilter(f.key)}
-                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
-                  filter === f.key
-                    ? "bg-blue-50 text-blue-700 border-blue-200"
-                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                }`}
-              >
-                {f.label} <span className="text-gray-400">{count}</span>
-              </button>
-            );
-          })}
-        </div>
-        <button
-          type="button"
-          onClick={loadActivities}
-          disabled={loading}
-          className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 disabled:opacity-50"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </button>
-      </div>
+      <div className="flex flex-col h-full min-h-0">
+        {/* Navigation & Action Header */}
+        <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/70 shrink-0 flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+            {ACTIVITY_FILTERS.map((f) => {
+              const Icon = f.icon;
+              const count =
+                f.key === "all"
+                  ? activities.length
+                  : activities.filter((a) => a.type === f.key).length;
+              const isActive = filter === f.key;
 
-      {loading && activities.length === 0 ? (
-        <p className="text-xs text-gray-400">Loading activity…</p>
-      ) : visible.length === 0 ? (
-        <p className="text-xs text-gray-400">No activity to show.</p>
-      ) : (
-        <div className="space-y-6 relative">
-          <div className="absolute left-[13px] top-1.5 bottom-1.5 w-[1.5px] bg-gray-200" />
-          {visible.map((act) => (
-            <ActivityItem key={act.id} activity={act} />
-          ))}
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setFilter(f.key)}
+                  className={`group inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 select-none ${
+                    isActive
+                      ? "bg-teal-700 text-white shadow-xs shadow-teal-700/25 ring-1 ring-teal-700"
+                      : "bg-white text-slate-600 border border-slate-200/90 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 shadow-2xs"
+                  }`}
+                >
+                  <Icon
+                    className={`w-3.5 h-3.5 transition-colors ${
+                      isActive
+                        ? "text-teal-100"
+                        : "text-slate-400 group-hover:text-slate-600"
+                    }`}
+                  />
+                  <span>{f.label}</span>
+                  <span
+                    className={`inline-flex items-center justify-center px-1.5 py-0.5 min-w-[20px] rounded-full text-[10px] font-bold transition-colors ${
+                      isActive
+                        ? "bg-teal-800/80 text-teal-100 border border-teal-600/40"
+                        : "bg-slate-100 text-slate-500 group-hover:bg-slate-200/70 group-hover:text-slate-700 border border-slate-200/50"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={loadActivities}
+            disabled={loading}
+            title="Refresh activity feed"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200/90 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 shadow-2xs active:scale-95 disabled:opacity-50 transition-all shrink-0 ml-auto"
+          >
+            <RefreshCw
+              className={`w-3.5 h-3.5 text-teal-600 ${loading ? "animate-spin" : ""}`}
+            />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
         </div>
-      )}
+
+        {/* Timeline Content Area (Constant Fixed/Stable Height) */}
+        <div className="flex-1 min-h-[400px] overflow-y-auto px-6 py-5 relative">
+          {loading && activities.length === 0 ? (
+            <div className="h-full min-h-[340px] flex flex-col items-center justify-center text-center p-6 my-auto">
+              <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 shadow-xs mb-3">
+                <RefreshCw className="w-5 h-5 animate-spin" />
+              </div>
+              <p className="text-xs font-semibold text-slate-700">Loading activity…</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Fetching latest event updates across all modules</p>
+            </div>
+          ) : visible.length === 0 ? (
+            <div className="h-full min-h-[340px] flex flex-col items-center justify-center text-center p-6 my-auto">
+              <div className="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 shadow-xs mb-3.5">
+                <Inbox className="w-7 h-7 stroke-[1.75]" />
+              </div>
+              <h4 className="text-sm font-bold text-slate-800">
+                No {activeFilterObj.label} Activity Found
+              </h4>
+              <p className="text-xs text-slate-500 max-w-xs mt-1 leading-relaxed">
+                {filter === "all"
+                  ? "There are currently no activities recorded in the timeline."
+                  : `There are currently no ${activeFilterObj.label.toLowerCase()} updates recorded in the timeline.`}
+              </p>
+              {filter !== "all" && (
+                <button
+                  type="button"
+                  onClick={() => setFilter("all")}
+                  className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-semibold rounded-lg transition-colors"
+                >
+                  <Activity className="w-3.5 h-3.5 text-slate-500" />
+                  View All Activities ({activities.length})
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-6 relative pb-2">
+              <div className="absolute left-[13px] top-2 bottom-2 w-[1.5px] bg-slate-200" />
+              {visible.map((act) => (
+                <ActivityItem key={act.id} activity={act} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </HpCommonModal>
   );
 };
@@ -354,12 +516,153 @@ export default function EnterpriseDashboard() {
   const [activeMenu, setActiveMenu] = useState("Dashboard");
   const [searchQuery, setSearchQuery] = useState("");
   const [employeeSearch, setEmployeeSearch] = useState("");
-  const [selectedDuration, setSelectedDuration] = useState("Last 7 Days");
   const [liveStats, setLiveStats] = useState(null);
   const [directoryPage, setDirectoryPage] = useState(1);
   const [showAllActivities, setShowAllActivities] = useState(false);
 
+  // Attendance Trend duration form using FormMethod SelectWrapper
+  const attendanceForm = useMemo(() => {
+    return formMethod.createForm({
+      schema: [
+        {
+          id: "duration",
+          type: "selectWrapper",
+          placeHolder: "Select Duration",
+          options: [
+            { label: "Last 7 Days", value: "Last 7 Days" },
+            { label: "Last 30 Days", value: "Last 30 Days" },
+          ],
+          className: "col-span-12",
+          gridCols: 12,
+          skipConfirm: true,
+          confirmChange: false,
+        },
+      ],
+      initialValue: {
+        duration: "Last 7 Days",
+      },
+    });
+  }, []);
+
+  const selectedDuration = useFormStore(
+    attendanceForm,
+    (state) => state.values.duration || "Last 7 Days"
+  );
+
+  // Filter state for Employee Directory using formMethod
+  // appliedFilters only updates when user clicks "Apply"
+  const [appliedFilters, setAppliedFilters] = useState({
+    department: "all",
+    status: "all",
+  });
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterDropdownRef = useRef(null);
+
+  const filterForm = useMemo(() => {
+    return formMethod.createForm({
+      schema: [],
+      initialValue: {
+        department: "all",
+        status: "all",
+      },
+    });
+  }, []);
+
+  const handleToggleFilter = () => {
+    setIsFilterOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        // Sync draft inputs with currently applied filters upon opening
+        filterForm.methods.setValues(appliedFilters);
+      }
+      return next;
+    });
+  };
+
+  const handleCloseFilter = () => {
+    // Revert draft changes upon closing without applying
+    filterForm.methods.setValues(appliedFilters);
+    setIsFilterOpen(false);
+  };
+
+  const handleApplyFilters = () => {
+    const draftValues = filterForm.methods.getValues() || {};
+    setAppliedFilters({
+      department: draftValues.department || "all",
+      status: draftValues.status || "all",
+    });
+    setDirectoryPage(1);
+    setIsFilterOpen(false);
+  };
+
+  // Full-screen circular image preview for Employee Directory avatars
+  const [previewImage, setPreviewImage] = useState(null);
+
+  const handleAvatarClick = useCallback((emp) => {
+    if (!emp) return;
+    if (emp.profileImage) {
+      setPreviewImage({
+        src: getUploadUrl(emp.profileImage),
+        alt: emp.name ? `${emp.name}'s profile photo` : "Employee Profile",
+      });
+    } else {
+      const initials = initialsOf(emp.name) || "EMP";
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500">
+        <defs>
+          <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2563eb" />
+            <stop offset="50%" stop-color="#4f46e5" />
+            <stop offset="100%" stop-color="#7c3aed" />
+          </linearGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grad)" />
+        <text x="50%" y="54%" font-family="system-ui, -apple-system, sans-serif" font-weight="bold" font-size="180" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">${initials}</text>
+      </svg>`;
+      setPreviewImage({
+        src: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
+        alt: emp.name ? `${emp.name}'s avatar` : "Employee Avatar",
+      });
+    }
+  }, []);
+
+  const { user } = useAuth();
   const { apiCall } = useApiCall();
+
+  // Active task listener for live break status (e.g. Lunch Break, Discussion, Meeting, etc.)
+  const [myActiveTask, setMyActiveTask] = useState(() => {
+    try {
+      const raw = localStorage.getItem("hrm.activeTask");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    const handler = (e) => setMyActiveTask(e.detail);
+    window.addEventListener("hrmActiveTaskChanged", handler);
+    return () => window.removeEventListener("hrmActiveTaskChanged", handler);
+  }, []);
+
+  // Close filter dropdown on outside click (reverting draft and ignoring clicks inside react-select portalled menu)
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        filterDropdownRef.current &&
+        !filterDropdownRef.current.contains(event.target) &&
+        !event.target.closest?.("[class*='form-select']")
+      ) {
+        filterForm.methods.setValues(appliedFilters);
+        setIsFilterOpen(false);
+      }
+    };
+    if (isFilterOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isFilterOpen, appliedFilters, filterForm]);
 
   const fetchDashboardStats = useCallback(async () => {
     const res = await apiCall({
@@ -374,6 +677,16 @@ export default function EnterpriseDashboard() {
 
   useEffect(() => {
     fetchDashboardStats();
+
+    // Auto-refresh stats every 15s so any user going on lunch or break updates live for all viewers
+    const interval = setInterval(fetchDashboardStats, 15000);
+    const onFocus = () => fetchDashboardStats();
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [fetchDashboardStats]);
 
   const sparklines = liveStats?.sparklines || {};
@@ -420,20 +733,166 @@ export default function EnterpriseDashboard() {
     }));
   }, [liveStats]);
 
-  // Employee directory: search + client-side pagination.
-  const allEmployees = liveStats?.employees || [];
-  const query = employeeSearch.trim().toLowerCase();
-  const filteredEmployees = allEmployees.filter(
-    (emp) =>
-      emp.name.toLowerCase().includes(query) ||
-      emp.department.toLowerCase().includes(query) ||
-      emp.designation.toLowerCase().includes(query),
+  // Determine current live status for an employee (syncing logged-in user breaks / leave)
+  const getEmployeeCurrentStatus = useCallback(
+    (emp) => {
+      const isMe =
+        (user?.id && (emp.id === user.id || emp._id === user.id)) ||
+        (user?.email &&
+          emp.email &&
+          emp.email.toLowerCase() === user.email.toLowerCase()) ||
+        (user?.employeeCode &&
+          emp.employeeCode &&
+          emp.employeeCode === user.employeeCode);
+
+      if (isMe && myActiveTask?.label) {
+        return myActiveTask.label;
+      }
+
+      if (isMe && (user?.isOnLeave || user?.status === "On Leave")) {
+        return "On Leave";
+      }
+
+      return emp.status || "Active";
+    },
+    [user, myActiveTask]
   );
-  const totalPages = Math.max(1, Math.ceil(filteredEmployees.length / DIRECTORY_PAGE_SIZE));
+
+  // Employee directory: search + filter + client-side pagination.
+  const allEmployees = liveStats?.employees || [];
+
+  const departmentOptions = useMemo(() => {
+    const depts = new Set();
+    allEmployees.forEach((emp) => {
+      if (emp.department) depts.add(emp.department);
+    });
+    return Array.from(depts).sort();
+  }, [allEmployees]);
+
+  const statusOptions = useMemo(() => {
+    const statuses = new Set([
+      "Active",
+      "Lunch Break",
+      "Meeting",
+      "Discussion",
+      "Tea / Coffee Break",
+      "On Leave",
+      "Remote",
+      "Notice Period",
+      "Inactive",
+    ]);
+    allEmployees.forEach((emp) => {
+      const st = getEmployeeCurrentStatus(emp);
+      if (st) statuses.add(st);
+    });
+    return Array.from(statuses);
+  }, [allEmployees, getEmployeeCurrentStatus]);
+
+  // Schema for FormMethod SelectWrapper in Filter popover
+  const filterSchema = useMemo(
+    () => [
+      {
+        id: "department",
+        type: "selectWrapper",
+        label: "Department",
+        placeHolder: "All Departments",
+        options: [
+          { label: "All Departments", value: "all" },
+          ...departmentOptions.map((dept) => ({ label: dept, value: dept })),
+        ],
+        className: "col-span-12",
+        gridCols: 12,
+        skipConfirm: true,
+        confirmChange: false,
+      },
+      {
+        id: "status",
+        type: "selectWrapper",
+        label: "Status",
+        placeHolder: "All Statuses",
+        options: [
+          { label: "All Statuses", value: "all" },
+          ...statusOptions.map((st) => ({ label: st, value: st })),
+        ],
+        className: "col-span-12",
+        gridCols: 12,
+        skipConfirm: true,
+        confirmChange: false,
+      },
+    ],
+    [departmentOptions, statusOptions]
+  );
+
+  useEffect(() => {
+    filterForm.methods.setSchema(filterSchema);
+  }, [filterForm, filterSchema]);
+
+  useEffect(() => {
+    setDirectoryPage(1);
+  }, [appliedFilters]);
+
+  const query = employeeSearch.trim().toLowerCase();
+  const filteredEmployees = useMemo(() => {
+    return allEmployees.filter((emp) => {
+      const currentStatus = getEmployeeCurrentStatus(emp);
+
+      // Search query filter
+      if (query) {
+        const matchesQuery =
+          emp.name?.toLowerCase().includes(query) ||
+          emp.department?.toLowerCase().includes(query) ||
+          emp.designation?.toLowerCase().includes(query) ||
+          emp.email?.toLowerCase().includes(query) ||
+          emp.employeeCode?.toLowerCase().includes(query) ||
+          currentStatus?.toLowerCase().includes(query);
+        if (!matchesQuery) return false;
+      }
+
+      // Department filter (only applied when "Apply" is clicked)
+      if (
+        appliedFilters.department !== "all" &&
+        emp.department !== appliedFilters.department
+      ) {
+        return false;
+      }
+
+      // Status filter (only applied when "Apply" is clicked)
+      if (appliedFilters.status !== "all") {
+        if (appliedFilters.status.toLowerCase() !== currentStatus.toLowerCase()) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [
+    allEmployees,
+    query,
+    appliedFilters,
+    getEmployeeCurrentStatus,
+  ]);
+
+  const activeFilterCount =
+    (appliedFilters.department !== "all" ? 1 : 0) +
+    (appliedFilters.status !== "all" ? 1 : 0);
+  const isFilterActive = activeFilterCount > 0;
+
+  const resetFilters = useCallback(() => {
+    const reset = { department: "all", status: "all" };
+    filterForm.methods.setValues(reset);
+    setAppliedFilters(reset);
+    setEmployeeSearch("");
+    setDirectoryPage(1);
+  }, [filterForm]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredEmployees.length / DIRECTORY_PAGE_SIZE)
+  );
   const currentPage = Math.min(directoryPage, totalPages);
   const pagedEmployees = filteredEmployees.slice(
     (currentPage - 1) * DIRECTORY_PAGE_SIZE,
-    currentPage * DIRECTORY_PAGE_SIZE,
+    currentPage * DIRECTORY_PAGE_SIZE
   );
 
   const recentActivities = liveStats?.recentActivities || [];
@@ -538,14 +997,12 @@ export default function EnterpriseDashboard() {
                         Average weekly status
                       </p>
                     </div>
-                    <select
-                      className="bg-gray-50 border border-gray-200 text-xs rounded-lg py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                      value={selectedDuration}
-                      onChange={(e) => setSelectedDuration(e.target.value)}
-                    >
-                      <option>Last 7 Days</option>
-                      <option>Last 30 Days</option>
-                    </select>
+                    <div className="w-36 sm:w-44 shrink-0">
+                      <FormRenderer
+                        formMethod={attendanceForm}
+                        className="!gap-0"
+                      />
+                    </div>
                   </div>
 
                   {/* Dynamic Custom Bar Chart */}
@@ -692,37 +1149,176 @@ export default function EnterpriseDashboard() {
               </div>
 
               <Card className="overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-3">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 text-sm">
-                      Employee Directory
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      Manage and view team details
-                    </p>
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 text-sm">
+                        Employee Directory
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Manage and view team details
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      {/* Search Bar with Search and Clear icons */}
+                      <div className="relative flex-1 sm:w-60">
+                        <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <input
+                          className="w-full bg-gray-50 border border-gray-200 rounded-lg py-1.5 pl-8 pr-7 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-teal-600 focus:border-teal-600 focus:bg-white transition-all"
+                          placeholder="Filter by name, design..."
+                          type="text"
+                          value={employeeSearch}
+                          onChange={(e) => {
+                            setEmployeeSearch(e.target.value);
+                            setDirectoryPage(1);
+                          }}
+                        />
+                        {employeeSearch && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEmployeeSearch("");
+                              setDirectoryPage(1);
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Filter Popover Button - matches website signature button style */}
+                      <div className="relative" ref={filterDropdownRef}>
+                        <button
+                          type="button"
+                          onClick={handleToggleFilter}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-150 select-none shadow-2xs active:scale-95 ${
+                            isFilterActive
+                              ? "bg-teal-50 text-teal-700 border-teal-300 ring-2 ring-teal-500/10"
+                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300"
+                          }`}
+                        >
+                          <Filter
+                            className={`w-3.5 h-3.5 ${
+                              isFilterActive ? "text-teal-600" : "text-slate-400"
+                            }`}
+                          />
+                          <span>Filter</span>
+                          {activeFilterCount > 0 && (
+                            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold bg-teal-600 text-white">
+                              {activeFilterCount}
+                            </span>
+                          )}
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                              isFilterOpen ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+
+                        {/* Filter Dropdown Popover */}
+                        {isFilterOpen && (
+                          <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 z-30 p-4 animate-in fade-in zoom-in-95 duration-150">
+                            <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                              <span className="text-xs font-bold text-slate-800">
+                                Filter Directory
+                              </span>
+                              {isFilterActive && (
+                                <button
+                                  type="button"
+                                  onClick={resetFilters}
+                                  className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 transition-colors"
+                                >
+                                  Reset All
+                                </button>
+                              )}
+                            </div>
+
+                            {/* FormMethod SelectWrapper Filter Inputs */}
+                            <div className="mt-3">
+                              <FormRenderer
+                                formMethod={filterForm}
+                                formSchema={filterSchema}
+                                className="!gap-x-0 !gap-y-3"
+                              />
+                            </div>
+
+                            <div className="mt-4 pt-2.5 border-t border-slate-100 flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={handleCloseFilter}
+                                className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors"
+                              >
+                                Close
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleApplyFilters}
+                                className="px-3.5 py-1.5 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg shadow-xs transition-colors"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-2 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-60">
-                      <input
-                        className="w-full bg-gray-50 border border-gray-200 rounded-lg py-1.5 pl-8 pr-3 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white"
-                        placeholder="Filter by name, design..."
-                        type="text"
-                        value={employeeSearch}
-                        onChange={(e) => {
-                          setEmployeeSearch(e.target.value);
-                          setDirectoryPage(1);
-                        }}
-                      />
+                  {/* Active Filter Chips */}
+                  {isFilterActive && (
+                    <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-2.5 border-t border-gray-100 text-xs">
+                      <span className="text-[11px] font-medium text-slate-400">
+                        Active filters:
+                      </span>
+                      {appliedFilters.department !== "all" && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-semibold border border-slate-200">
+                          Dept: {appliedFilters.department}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAppliedFilters((prev) => ({
+                                ...prev,
+                                department: "all",
+                              }));
+                              filterForm.methods.setValue("department", "all");
+                              setDirectoryPage(1);
+                            }}
+                            className="hover:text-rose-600 ml-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      )}
+                      {appliedFilters.status !== "all" && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-semibold border border-slate-200">
+                          Status: {appliedFilters.status}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAppliedFilters((prev) => ({
+                                ...prev,
+                                status: "all",
+                              }));
+                              filterForm.methods.setValue("status", "all");
+                              setDirectoryPage(1);
+                            }}
+                            className="hover:text-rose-600 ml-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={resetFilters}
+                        className="text-[11px] text-teal-600 hover:text-teal-700 font-semibold ml-1"
+                      >
+                        Clear All
+                      </button>
                     </div>
-                    <Button
-                      variant="secondary"
-                      className="px-3 py-1.5 !text-xs"
-                    >
-                      <Filter className="w-3.5 h-3.5 text-gray-400" />
-                      <span>Filter</span>
-                    </Button>
-                  </div>
+                  )}
                 </div>
 
                 <div className="overflow-x-auto">
@@ -733,58 +1329,66 @@ export default function EnterpriseDashboard() {
                         <th className="px-6 py-3.5">Department</th>
                         <th className="px-6 py-3.5">Designation</th>
                         <th className="px-6 py-3.5">Status</th>
-                        <th className="px-6 py-3.5 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-sm">
-                      {pagedEmployees.map((emp) => (
-                        <tr
-                          key={emp.id}
-                          className="hover:bg-gray-50/50 transition-colors"
-                        >
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              {emp.profileImage ? (
-                                <img
-                                  className="w-9 h-9 rounded-full object-cover border border-gray-100"
-                                  alt={emp.name}
-                                  src={getUploadUrl(emp.profileImage)}
-                                />
-                              ) : (
-                                <div className="w-9 h-9 rounded-full border border-gray-100 bg-blue-50 text-blue-700 flex items-center justify-center text-xs font-bold">
-                                  {initialsOf(emp.name)}
+                      {pagedEmployees.map((emp) => {
+                        const currentStatus = getEmployeeCurrentStatus(emp);
+                        return (
+                          <tr
+                            key={emp.id}
+                            className="hover:bg-gray-50/50 transition-colors"
+                          >
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAvatarClick(emp);
+                                  }}
+                                  className="relative shrink-0 rounded-full cursor-pointer group focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                                  title={`Click to preview ${emp.name}'s photo`}
+                                  aria-label={`Preview photo of ${emp.name}`}
+                                >
+                                  {emp.profileImage ? (
+                                    <img
+                                      className="w-9 h-9 rounded-full object-cover border border-gray-100 group-hover:ring-2 group-hover:ring-teal-500/50 group-hover:scale-105 transition-all shadow-2xs"
+                                      alt={emp.name}
+                                      src={getUploadUrl(emp.profileImage)}
+                                    />
+                                  ) : (
+                                    <div className="w-9 h-9 rounded-full border border-gray-100 bg-blue-50 text-blue-700 flex items-center justify-center text-xs font-bold group-hover:ring-2 group-hover:ring-teal-500/50 group-hover:scale-105 transition-all shadow-2xs">
+                                      {initialsOf(emp.name)}
+                                    </div>
+                                  )}
+                                </button>
+                                <div>
+                                  <p className="font-semibold text-gray-900 leading-tight">
+                                    {emp.name}
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-0.5">
+                                    {emp.email || emp.employeeCode}
+                                  </p>
                                 </div>
-                              )}
-                              <div>
-                                <p className="font-semibold text-gray-900 leading-tight">
-                                  {emp.name}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-0.5">
-                                  {emp.email || emp.employeeCode}
-                                </p>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-gray-600 font-medium">
-                            {emp.department}
-                          </td>
-                          <td className="px-6 py-4 text-gray-500 font-medium">
-                            {emp.designation}
-                          </td>
-                          <td className="px-6 py-4">
-                            <Badge status={emp.status} />
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <button className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-50 transition-colors">
-                              <MoreVertical className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                            <td className="px-6 py-4 text-gray-600 font-medium">
+                              {emp.department}
+                            </td>
+                            <td className="px-6 py-4 text-gray-500 font-medium">
+                              {emp.designation}
+                            </td>
+                            <td className="px-6 py-4">
+                              <Badge status={currentStatus} />
+                            </td>
+                          </tr>
+                        );
+                      })}
                       {filteredEmployees.length === 0 && (
                         <tr>
                           <td
-                            colSpan={5}
+                            colSpan={4}
                             className="text-center py-8 text-gray-400 text-sm"
                           >
                             {allEmployees.length === 0
@@ -982,6 +1586,17 @@ export default function EnterpriseDashboard() {
         <AllActivitiesModal
           open={showAllActivities}
           onClose={() => setShowAllActivities(false)}
+        />
+      )}
+
+      {/* Full-screen Circular Image Preview (Same as Employee Directory) */}
+      {previewImage && (
+        <HpImagePreview
+          open={Boolean(previewImage)}
+          src={previewImage.src}
+          alt={previewImage.alt}
+          shape="circle"
+          onClose={() => setPreviewImage(null)}
         />
       )}
     </div>

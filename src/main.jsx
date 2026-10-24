@@ -3,9 +3,12 @@ import "./index.css";
 import { RouterProvider } from "react-router-dom";
 import router from "./router/router.jsx";
 import { AuthProvider } from "./context/AuthContext";
+import { ChatProvider } from "./context/ChatContext";
 
 createRoot(document.getElementById("root")).render(
   <AuthProvider>
-    <RouterProvider router={router} />
+    <ChatProvider>
+      <RouterProvider router={router} />
+    </ChatProvider>
   </AuthProvider>,
 );

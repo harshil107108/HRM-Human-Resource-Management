@@ -121,18 +121,19 @@ const StatusCard = ({
         group
         relative
         flex
-        h-[76px]
+        h-[74px] sm:h-[76px]
         w-full
         items-center
         rounded-xl
         border
-        px-3.5
+        px-3 sm:px-3.5
         py-2
         select-none
         cursor-pointer
         transition-all
         duration-200
         ease-out
+        hover:-translate-y-0.5 hover:shadow-md active:translate-y-0
         ${getCardClasses()}
       `}
       title={
@@ -145,39 +146,28 @@ const StatusCard = ({
           : `Click to filter by ${title}`
       }
     >
-      {/* Top right status badge / indicator */}
-      <div className="absolute right-2.5 top-2 z-10 flex items-center gap-1 pointer-events-none">
-        {isDropTarget && !isDisabled ? (
-          <span className="flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[9px] font-bold text-slate-700 shadow-xs backdrop-blur-xs animate-pulse">
+      {/* Drop indicator (only active when dragging an item over this card) */}
+      {isDropTarget && !isDisabled && (
+        <div className="absolute right-2 top-2 z-10 flex items-center gap-1 pointer-events-none">
+          <span className="flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[9px] font-bold text-slate-700 shadow-xs border border-slate-200/80 animate-pulse">
             <span className={`h-1.5 w-1.5 rounded-full ${currentTheme.dot}`} />
             Drop here
           </span>
-        ) : isSelectedFilter ? (
-          <span className="flex items-center gap-1 rounded-full bg-white/80 px-1.5 py-0.5 text-[9px] font-semibold text-slate-600 shadow-2xs">
-            <span className={`h-1.5 w-1.5 rounded-full ${currentTheme.dot}`} />
-            Filtered
-          </span>
-        ) : isDisabled ? (
-          <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-slate-400">
-            All
-          </span>
-        ) : null}
-      </div>
+        </div>
+      )}
 
-      <div className="flex w-full items-center gap-3">
+      <div className="flex w-full items-center gap-2.5 sm:gap-3">
         {/* Modern Icon Box */}
         <div
           className={`
             flex
-            h-10
-            w-10
+            h-9 w-9 sm:h-10 sm:w-10
             shrink-0
             items-center
             justify-center
             rounded-xl
-            transition-transform
+            transition-colors
             duration-200
-            group-hover:scale-105
             ${currentTheme.iconWrapper}
           `}
         >
@@ -189,13 +179,16 @@ const StatusCard = ({
         </div>
 
         {/* Text & Count Info */}
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[11px] font-semibold tracking-wide text-slate-500">
+        <div className="min-w-0 flex-1 pr-0.5">
+          <div
+            className="truncate text-[11px] sm:text-[11.5px] font-semibold tracking-wide text-slate-500 group-hover:text-slate-700 transition-colors"
+            title={title}
+          >
             {title}
           </div>
 
           <div className="mt-0.5 flex items-baseline gap-1.5">
-            <span className="text-[21px] font-bold tracking-tight text-slate-900 leading-tight">
+            <span className="text-[20px] sm:text-[21px] font-bold tracking-tight text-slate-900 leading-tight">
               {value}
             </span>
           </div>

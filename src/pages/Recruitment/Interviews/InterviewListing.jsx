@@ -13,12 +13,13 @@ import StatusCard from "@/components/common/StatusCard";
 import useDragAndDrop from "@/hooks/useDragAndDrop";
 import { confirmStatusChange } from "@/utils/confirmStatusChange";
 import {
-  Calendar,
-  Code,
+  CalendarDays,
+  Code2,
   Terminal,
   Briefcase,
+  HeartHandshake,
   Award,
-  CheckCircle2,
+  BadgeCheck,
   XCircle,
 } from "lucide-react";
 
@@ -269,7 +270,7 @@ const InterviewListing = () => {
         id: "totalInterviews",
         title: "Total Interviews",
         value: interviewListingData.length.toLocaleString(),
-        icon: <Calendar size={18} className="stroke-[2.2]" />,
+        icon: <CalendarDays size={20} className="stroke-[2]" />,
         type: "blue",
         status: "",
         isDisabled: true,
@@ -278,7 +279,7 @@ const InterviewListing = () => {
         id: "techRound1",
         title: "Technical Round 1",
         value: getRoundCount("Technical Round 1").toLocaleString(),
-        icon: <Code size={18} className="stroke-[2.2]" />,
+        icon: <Code2 size={20} className="stroke-[2]" />,
         type: "purple",
         status: "Technical Round 1",
         isDisabled: false,
@@ -287,7 +288,7 @@ const InterviewListing = () => {
         id: "techRound2",
         title: "Technical Round 2",
         value: getRoundCount("Technical Round 2").toLocaleString(),
-        icon: <Terminal size={18} className="stroke-[2.2]" />,
+        icon: <Terminal size={20} className="stroke-[2]" />,
         type: "orange",
         status: "Technical Round 2",
         isDisabled: false,
@@ -296,7 +297,7 @@ const InterviewListing = () => {
         id: "managerialRound",
         title: "Managerial Round",
         value: getRoundCount("Managerial Round").toLocaleString(),
-        icon: <Briefcase size={18} className="stroke-[2.2]" />,
+        icon: <Briefcase size={20} className="stroke-[2]" />,
         type: "blue",
         status: "Managerial Round",
         isDisabled: false,
@@ -305,7 +306,7 @@ const InterviewListing = () => {
         id: "hrRound",
         title: "HR Round",
         value: getRoundCount("HR Round").toLocaleString(),
-        icon: <Award size={18} className="stroke-[2.2]" />,
+        icon: <HeartHandshake size={20} className="stroke-[2]" />,
         type: "cyan",
         status: "HR Round",
         isDisabled: false,
@@ -314,7 +315,7 @@ const InterviewListing = () => {
         id: "finalDiscussion",
         title: "Final Round",
         value: getRoundCount("Final Discussion").toLocaleString(),
-        icon: <CheckCircle2 size={18} className="stroke-[2.2]" />,
+        icon: <Award size={20} className="stroke-[2]" />,
         type: "purple",
         status: "Final Discussion",
         isDisabled: false,
@@ -323,7 +324,7 @@ const InterviewListing = () => {
         id: "hired",
         title: "Hired",
         value: interviewListingData.filter(isInterviewHired).length.toLocaleString(),
-        icon: <CheckCircle2 size={18} className="stroke-[2.2]" />,
+        icon: <BadgeCheck size={20} className="stroke-[2]" />,
         type: "green",
         status: "Hired",
         isDisabled: false,
@@ -332,7 +333,7 @@ const InterviewListing = () => {
         id: "rejected",
         title: "Rejected",
         value: interviewListingData.filter(isInterviewRejected).length.toLocaleString(),
-        icon: <XCircle size={18} className="stroke-[2.2]" />,
+        icon: <XCircle size={20} className="stroke-[2]" />,
         type: "red",
         status: "Rejected",
         isDisabled: false,
@@ -410,7 +411,7 @@ const InterviewListing = () => {
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
       {/* 8 Round Status Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 mt-3 mr-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 2xl:grid-cols-8 gap-2.5 mt-3 mr-2">
         {interviewSummary.map((item) => (
           <div key={item.id}>
             <StatusCard

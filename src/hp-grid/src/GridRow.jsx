@@ -72,6 +72,8 @@ const GridRow = React.memo(function GridRow({
     }
   };
 
+  const hasLeftSticky = colDef.some((c) => c._stickySide === "left");
+
   return (
     <div
       className={[
@@ -94,7 +96,10 @@ const GridRow = React.memo(function GridRow({
       onContextMenu={handleContextMenu}
     >
       {selectable && (
-        <div className="hp-grid-cell hp-grid-cell--select-col">
+        <div
+          className={`hp-grid-cell hp-grid-cell--select-col ${hasLeftSticky ? "hp-grid-sticky-left" : ""}`}
+          style={hasLeftSticky ? { position: "sticky", left: 0 } : undefined}
+        >
           <input
             type="checkbox"
             checked={!!isSelected}
@@ -106,7 +111,12 @@ const GridRow = React.memo(function GridRow({
       {colDef.map((col, colIndex) => (
         <div
           key={col.id || col.field}
-          className="hp-grid-cell-outer"
+          className={[
+            "hp-grid-cell-outer",
+            col._stickySide ? `hp-grid-sticky-${col._stickySide}` : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           style={getColumnStyle(col)}
         >
           <GridCell

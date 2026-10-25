@@ -34,7 +34,7 @@ const useDepatmentConfig = ({ handleDelete } = {}) => {
       id: "branchname",
       field: "branchname",
       headerName: "Branch",
-      width: 180,
+      width: 280,
     },
     {
       id: "parentdepartment",

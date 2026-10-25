@@ -6,7 +6,7 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
       id: "designationname",
       field: "designationname",
       headerName: "Designation Name",
-      width: 160,
+      width: 220,
     },
     {
       id: "designationcode",
@@ -33,14 +33,14 @@ const useDesignationConfig = ({ handleDelete, EmployeeData } = {}) => {
       id: "branchname",
       field: "branchname",
       headerName: "Branch",
-      width: 180,
+      width: 280,
     },
 
     {
       id: "departmentname",
       field: "departmentname",
       headerName: "Department",
-      width: 160,
+      width: 180,
     },
 
     {

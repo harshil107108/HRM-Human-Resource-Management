@@ -55,6 +55,7 @@ import LeaveBalanceListing from "@/pages/Leave/Balance/LeaveBalanceListing";
 import SalaryStructureListing from "@/pages/Payroll/SalaryStructure/SalaryStructureListing";
 import PayrollProcessListing from "@/pages/Payroll/Process/PayrollProcessListing";
 import PayslipListing from "@/pages/Payroll/Payslips/PayslipListing";
+import PayrollCalendarListing from "@/pages/Payroll/Calendar/PayrollCalendarListing";
 import LoanListing from "@/pages/Payroll/Loans/LoanListing";
 import ReimbursementListing from "@/pages/Payroll/Reimbursements/ReimbursementListing";
 import TaxListing from "@/pages/Payroll/Taxes/TaxListing";
@@ -498,6 +499,10 @@ const router = createBrowserRouter([
       {
         path: "payroll/payslips",
         element: <PayslipListing />,
+      },
+      {
+        path: "payroll/calendar",
+        element: <PayrollCalendarListing />,
       },
       {
         path: "payroll/loans",

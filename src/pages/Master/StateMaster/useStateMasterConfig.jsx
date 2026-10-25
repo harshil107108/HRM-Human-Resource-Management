@@ -40,6 +40,7 @@ const useStateMasterConfig = ({ handleDelete } = {}) => {
       headerName: "Action",
       width: 80,
       type: "actions",
+      stickyPos: "last",
       onClick: (data) => {
         handleDelete(data._id);
       },

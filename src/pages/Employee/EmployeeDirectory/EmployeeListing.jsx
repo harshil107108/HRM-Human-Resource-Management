@@ -95,6 +95,7 @@ const EmployeeListing = () => {
 
         employmentType: item?.employmentType || "",
         employeeStatus: item?.employeeStatus || "",
+        primaryRole: item?.primaryRole || "EMPLOYEE",
 
         joiningDate: formatDateForInput(item?.joiningDate) || "",
         confirmationDate: formatDateForInput(item?.confirmationDate) || "",

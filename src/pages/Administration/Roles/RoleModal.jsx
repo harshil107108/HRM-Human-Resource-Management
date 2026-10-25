@@ -178,7 +178,7 @@ const RoleModal = ({
     return Boolean(permissionsMap[menuCode]?.includes(action));
   };
 
-  const toggleAction = (menuCode, action) => {
+  const toggleAction = (menuCode, action, parentCode) => {
     if (isSuperAdminRole) return;
     setPermissionsMap((prev) => {
       const current = prev[menuCode] || [];
@@ -192,6 +192,33 @@ const RoleModal = ({
       } else {
         delete next[menuCode];
       }
+
+      if (parentCode) {
+        const parentGroup = menuTree.find((g) => g.menuCode === parentCode);
+        const siblingKids = parentGroup?.children || [];
+        const anyKidHasAction = siblingKids.some((k) => {
+          const kActs = k.menuCode === menuCode ? updated : (next[k.menuCode] || []);
+          return kActs.includes(action);
+        });
+        const anyKidHasAnyAction = siblingKids.some((k) => {
+          const kActs = k.menuCode === menuCode ? updated : (next[k.menuCode] || []);
+          return kActs.length > 0;
+        });
+
+        const parentActs = next[parentCode] || [];
+        if (anyKidHasAction) {
+          next[parentCode] = Array.from(new Set([...parentActs, action, "view"]));
+        } else {
+          const filteredParent = parentActs.filter((a) => a !== action);
+          if (!anyKidHasAnyAction) {
+            delete next[parentCode];
+          } else {
+            if (!filteredParent.includes("view")) filteredParent.push("view");
+            next[parentCode] = filteredParent;
+          }
+        }
+      }
+
       return next;
     });
   };
@@ -306,9 +333,23 @@ const RoleModal = ({
     if (!isValid) return;
     const formData = formInstance.methods.getValues();
 
+    const finalPermissions = { ...permissionsMap };
+    menuTree.forEach((group) => {
+      const kids = group.children || [];
+      const activeActions = new Set(finalPermissions[group.menuCode] || []);
+      kids.forEach((k) => {
+        const kActs = finalPermissions[k.menuCode] || [];
+        kActs.forEach((a) => activeActions.add(a));
+      });
+      if (activeActions.size > 0) {
+        activeActions.add("view");
+        finalPermissions[group.menuCode] = Array.from(activeActions);
+      }
+    });
+
     const payload = {
       ...formData,
-      permissions: permissionsMap,
+      permissions: finalPermissions,
       ...(roleId ? { _id: roleId } : {}),
     };
 
@@ -424,7 +465,9 @@ const RoleModal = ({
         <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
           {filteredTree.map((group) => {
             const GroupIcon = getMenuIcon(group.icon);
-            const isGroupVisible = isActionChecked(group.menuCode, "view");
+            const isGroupVisible =
+              isActionChecked(group.menuCode, "view") ||
+              (group.children || []).some((c) => (permissionsMap[c.menuCode] || []).length > 0);
             const isExpanded = !!expandedGroups[group._id];
             const children = group.children || [];
 
@@ -554,7 +597,7 @@ const RoleModal = ({
                                       key={action.key}
                                       type="button"
                                       disabled={isSuperAdminRole}
-                                      onClick={() => toggleAction(child.menuCode, action.key)}
+                                      onClick={() => toggleAction(child.menuCode, action.key, group.menuCode)}
                                       className={`text-[11px] px-2 py-0.5 rounded border font-medium inline-flex items-center gap-1 transition-all select-none ${
                                         checked
                                           ? action.activeBg + " shadow-2xs"

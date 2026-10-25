@@ -24,30 +24,43 @@ const toNavigation = (menus = [], user) =>
       );
 
     const isEmployeeGroup =
+      group.menuCode === "EMPLOYEES" ||
       group.menuCode === "EMPLOYEE" ||
       group.menuName === "Employees" ||
       group.menuName === "Employee" ||
+      group.path === "/employees" ||
       group.path === "/employee";
 
-    if (isEmployeeGroup && isSupervisor) {
+    if (isEmployeeGroup) {
       children = children ? [...children] : [];
-      const hasUnlock = children.some(
+
+      // 1. Ensure Day Report is present for all employees
+      const hasDayReport = children.some(
         (c) =>
-          c.path === "/employee/day-report-unlock" ||
-          c.path === "/employees/day-report-unlock"
+          c.path === "/employees/day-report" ||
+          c.path === "/employee/day-report" ||
+          c.label === "Day Report"
       );
-      if (!hasUnlock) {
-        const dayReportIndex = children.findIndex((c) =>
-          c.path?.includes("day-report")
+      if (!hasDayReport) {
+        children.push({
+          label: "Day Report",
+          path: "/employees/day-report",
+        });
+      }
+
+      // 2. Ensure Day Report Unlock is present for supervisors / management
+      if (isSupervisor) {
+        const hasUnlock = children.some(
+          (c) =>
+            c.path === "/employees/day-report-unlock" ||
+            c.path === "/employee/day-report-unlock" ||
+            c.label === "Day Report Unlock"
         );
-        const unlockItem = {
-          label: "Day Report Unlock",
-          path: "/employee/day-report-unlock",
-        };
-        if (dayReportIndex >= 0) {
-          children.splice(dayReportIndex + 1, 0, unlockItem);
-        } else {
-          children.push(unlockItem);
+        if (!hasUnlock) {
+          children.push({
+            label: "Day Report Unlock",
+            path: "/employees/day-report-unlock",
+          });
         }
       }
     }

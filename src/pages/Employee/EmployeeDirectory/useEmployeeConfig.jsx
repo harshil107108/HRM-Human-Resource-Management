@@ -6,7 +6,7 @@ const useEmployeeConfig = ({ handleDelete, isEditing = false } = {}) => {
       id: "firstName",
       field: "firstName",
       headerName: "Employee Name",
-      width: 180,
+      width: 140,
     },
     {
       id: "lastName",
@@ -24,19 +24,30 @@ const useEmployeeConfig = ({ handleDelete, isEditing = false } = {}) => {
       id: "branchName",
       field: "branchName",
       headerName: "Branch",
-      width: 120,
+      width: 280,
     },
     {
       id: "departmentname",
       field: "departmentname",
       headerName: "Department",
-      width: 160,
+      width: 200,
     },
     {
       id: "designationName",
       field: "designationName",
       headerName: "Designation",
-      width: 180,
+      width: 200,
+    },
+    {
+      id: "primaryRole",
+      field: "primaryRole",
+      headerName: "Role",
+      width: 130,
+      render: (val, row) => (
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+          {val || row.roleName || "EMPLOYEE"}
+        </span>
+      ),
     },
     {
       id: "reportingManagerName",
@@ -123,6 +134,7 @@ const useEmployeeConfig = ({ handleDelete, isEditing = false } = {}) => {
       headerName: "Action",
       width: 80,
       type: "actions",
+      stickyPos: "last",
       onClick: (data) => {
         handleDelete(data._id);
       },
@@ -687,7 +699,9 @@ const useEmployeeConfig = ({ handleDelete, isEditing = false } = {}) => {
       type: "text",
       inputType: "password",
       label: isEditing ? "New Password" : "Password",
-      placeHolder: isEditing ? "Leave blank to keep current password" : "Enter password",
+      placeHolder: isEditing
+        ? "Leave blank to keep current password"
+        : "Enter password",
       required: !isEditing,
       className: "col-span-4",
       isGeneratePassword: true,

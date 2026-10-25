@@ -14,7 +14,7 @@ import { PlusIcon, SearchIcon } from "./icons";
 import { LayoutGrid, List, ChevronRight, ChevronDown, ChevronsUpDown, ChevronsDownUp, Folder, FolderOpen, CornerDownRight, Eye, Lock } from "lucide-react";
 import { useRouteAccess } from "@/context/RouteAccessContext";
 import NoPermission from "@/components/common/NoPermission";
-import { generateUUID, ensureRowIds, getColumnStyle } from "./utils";
+import { generateUUID, ensureRowIds, getColumnStyle, computeStickyColumnStyles } from "./utils";
 import { Lottie } from "lottie-react";
 import loadingAnimation from "../../assets/images/Animation.json";
 import noDataImage from "../../assets/images/Nodata.avif";
@@ -144,14 +144,15 @@ function matchesColumnFilter(value, filterValue, filterType, col) {
   }
 }
 
-function normalizeColDef(cols) {
+function normalizeColDef(cols, selectable = false) {
   if (!Array.isArray(cols)) return [];
-  return cols.map((col, idx) => ({
+  const base = cols.map((col, idx) => ({
     ...col,
     id: col.id || col.field || col.key || `col_${idx}`,
     field: col.field || col.key || col.id,
     headerName: col.headerName || col.label || col.header || "",
   }));
+  return computeStickyColumnStyles(base, selectable);
 }
 
 function getCardStatusTone(status) {
@@ -191,6 +192,8 @@ function HpGridBase(props) {
     title, // e.g. "Database & Branch"
     icon, // any ReactNode - rendered in a small teal square before the title
     toolbarRight, // custom elements (e.g. DateField, Today button)
+    beforeAddButton, // custom element rendered right before the Add button
+    afterAddButton, // custom element rendered right after the Add button
     searchable = false,
     searchPlaceholder = "Search here...",
     onSearchChange, // (term) => void -- optional external listener
@@ -259,7 +262,9 @@ function HpGridBase(props) {
   const [rowData, setRowDataState] = useState(() =>
     ensureRowIds(initialRowData),
   );
-  const [colDef, setColDefState] = useState(() => normalizeColDef(initialColDef));
+  const [colDef, setColDefState] = useState(() =>
+    normalizeColDef(initialColDef, selectable),
+  );
   const [selectedIndices, setSelectedIndices] = useState(() => new Set());
   const [focusedCell, setFocusedCell] = useState({
     rowIndex: null,
@@ -410,8 +415,8 @@ function HpGridBase(props) {
   }, [initialRowData]);
 
   useEffect(() => {
-    setColDefState(normalizeColDef(initialColDef));
-  }, [initialColDef]);
+    setColDefState(normalizeColDef(initialColDef, selectable));
+  }, [initialColDef, selectable]);
 
   // Keep latest state in refs so imperative API methods (which are only
   // created once) always read fresh data instead of a stale closure.
@@ -1259,14 +1264,15 @@ function HpGridBase(props) {
   };
 
   const updateColumnWidth = useCallback((colIndex, nextWidth) => {
-    setColDefState((prev) =>
-      prev.map((col, index) => {
+    setColDefState((prev) => {
+      const updated = prev.map((col, index) => {
         if (index !== colIndex) return col;
         const width = Math.max(80, Number.isFinite(nextWidth) ? nextWidth : 80);
         return { ...col, width };
-      }),
-    );
-  }, []);
+      });
+      return computeStickyColumnStyles(updated, selectable);
+    });
+  }, [selectable]);
 
   useEffect(() => {
     if (!columnResize) return undefined;
@@ -1516,6 +1522,7 @@ function HpGridBase(props) {
                 </button>
               </div>
             )}
+            {beforeAddButton}
             {typeof onAddClick === "function" && (
               <button
                 type="button"
@@ -1529,6 +1536,7 @@ function HpGridBase(props) {
                 {addButtonLabel}
               </button>
             )}
+            {afterAddButton}
           </div>
         </div>
       )}
@@ -1541,7 +1549,10 @@ function HpGridBase(props) {
             {!isCardView && (
               <div className="hp-grid-header" style={{ height: headerHeight }}>
                 {selectable && (
-                  <div className="hp-grid-cell hp-grid-cell--select-col hp-grid-header-cell">
+                  <div
+                    className={`hp-grid-cell hp-grid-cell--select-col hp-grid-header-cell ${colDef.some((c) => c._stickySide === "left") ? "hp-grid-sticky-left" : ""}`}
+                    style={colDef.some((c) => c._stickySide === "left") ? { position: "sticky", left: 0 } : undefined}
+                  >
                     <input
                       type="checkbox"
                       checked={allSelected}
@@ -1554,7 +1565,12 @@ function HpGridBase(props) {
                 {colDef.map((col, index) => (
                   <div
                     key={col.id || col.field}
-                    className="hp-grid-header-cell"
+                    className={[
+                      "hp-grid-header-cell",
+                      col._stickySide ? `hp-grid-sticky-${col._stickySide}` : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                     style={getColumnStyle(col)}
                   >
                     <span className="hp-grid-header-label">
@@ -1575,14 +1591,25 @@ function HpGridBase(props) {
             )}
 
             {columnFilterable && !isCardView && (
-              <div className="hp-grid-header-filters">
+              <div
+                className="hp-grid-header-filters"
+                style={{ top: headerHeight }}
+              >
                 {selectable && (
-                  <div className="hp-grid-cell hp-grid-cell--select-col hp-grid-filter-cell hp-grid-filter-cell--empty" />
+                  <div
+                    className={`hp-grid-cell hp-grid-cell--select-col hp-grid-filter-cell hp-grid-filter-cell--empty ${colDef.some((c) => c._stickySide === "left") ? "hp-grid-sticky-left" : ""}`}
+                    style={colDef.some((c) => c._stickySide === "left") ? { position: "sticky", left: 0 } : undefined}
+                  />
                 )}
                 {colDef.map((col) => (
                   <div
                     key={col.id || col.field}
-                    className="hp-grid-filter-cell-outer"
+                    className={[
+                      "hp-grid-filter-cell-outer",
+                      col._stickySide ? `hp-grid-sticky-${col._stickySide}` : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                     style={getColumnStyle(col)}
                   >
                     {renderFilterControl(col) || (

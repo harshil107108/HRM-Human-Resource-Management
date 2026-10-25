@@ -200,8 +200,9 @@ calls - it preserves object identity for every row it doesn't touch, so
   headerName: 'Name',    // header label (falls back to `field`)
   type: 'text',          // 'text' | 'number' | 'select' | 'checkbox' | 'date' | 'textarea' | 'custom' | 'actions' | 'status'
   editable: true,        // boolean, OR (row, rowIndex) => boolean
+  stickyPos: 'last',     // 'first' | 'left' (pin to start) or 'last' | 'right' (pin to end)
   skipFocusTrue: true,   // excludes this column from Enter/Arrow keyboard navigation
-  width: 160,            // px; omit for flexible width
+  width: 160,            // px; omit for flexible width (sticky columns should specify width)
   className: 'my-cell',  // string, OR (value, row, rowIndex) => string
   options: [...],        // required for type: 'select' -> ['A','B'] or [{value,label}]
   placeholder: '...',    // text/select placeholder
@@ -213,6 +214,15 @@ calls - it preserves object identity for every row it doesn't touch, so
   onBlur: (value, row, rowIndex) => void,             // fires on every blur, whether or not the value changed
 }
 ```
+
+### Sticky / Pinned Columns (`stickyPos`)
+
+Pin columns so they remain visible while the table is horizontally scrolled:
+
+- **Pin to right / last**: `stickyPos: 'last'` (or `'right'`) — ideal for Action or Status columns.
+- **Pin to left / first**: `stickyPos: 'first'` (or `'left'`) — ideal for Name, Code, or ID columns.
+- Multiple sticky columns are automatically stacked side-by-side with accurate cumulative offsets.
+- Seamlessly integrates with row hover, zebra striping, row selection, and the checkbox column.
 
 ## Built-in special column types
 

@@ -109,6 +109,14 @@ export const NAVIGATION_SCHEMA = [
         label: "Task Creation",
         path: "/employees/task-creation",
       },
+      {
+        label: "Day Report",
+        path: "/employees/day-report",
+      },
+      {
+        label: "Day Report Unlock",
+        path: "/employees/day-report-unlock",
+      },
     ],
   },
 
@@ -193,6 +201,10 @@ export const NAVIGATION_SCHEMA = [
       {
         label: "Payslips",
         path: "/payroll/payslips",
+      },
+      {
+        label: "Payroll Calendar",
+        path: "/payroll/calendar",
       },
       {
         label: "Loans",

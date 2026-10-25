@@ -233,6 +233,13 @@ const apiEndpoints = {
             PayslipGetData: "/payroll/payslip/getPayslips",
             PayslipDeleteByID: "/payroll/payslip/deletePayslipById",
             PayslipGetByID: "/payroll/payslip/getPayslipById",
+            SalarySettingsGet: "/payroll/payslip/getSalarySettings",
+            SalarySettingsSave: "/payroll/payslip/saveSalarySettings",
+            EmployeeLeaveDeduction: "/payroll/payslip/getEmployeeLeaveDeduction",
+            PayrollCalendarData: "/payroll/payslip/getPayrollCalendarData",
+        },
+        calendar: {
+            getData: "/payroll/payslip/getPayrollCalendarData",
         },
         loan: {
             LoanAddEdit: "/payroll/loan/addEditLoan",

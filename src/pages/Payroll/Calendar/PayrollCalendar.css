@@ -1,0 +1,522 @@
+/* Enterprise Professional Payroll Attendance & Leave Calendar Styles */
+
+.payroll-cal-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 20px 32px 20px;
+  background-color: #f8fafc;
+  min-height: 100%;
+  color: #0f172a;
+  font-family: inherit;
+}
+
+/* 1. Header Bar */
+.payroll-header-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.payroll-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.payroll-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.payroll-header-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0f766e;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.payroll-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Button with exact website hover: slightly moves up on hover */
+.hp-hover-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.hp-hover-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.09);
+  border-color: #94a3b8;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.hp-hover-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.hp-hover-btn.primary {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.25);
+}
+
+.hp-hover-btn.primary:hover {
+  background: #115e59;
+  border-color: #115e59;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.35);
+}
+
+/* Native Employee Dropdown for Privileged users */
+.payroll-employee-select {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.payroll-employee-select:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.15);
+}
+
+/* 2. Top Metric Cards Row (Clean & High-Density) */
+.payroll-stats-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 1024px) {
+  .payroll-stats-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .payroll-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.payroll-stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-top-width: 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.payroll-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.payroll-stat-card.present { border-top-color: #10b981; }
+.payroll-stat-card.weekend { border-top-color: #64748b; }
+.payroll-stat-card.holiday { border-top-color: #8b5cf6; }
+.payroll-stat-card.lwp { border-top-color: #ea580c; }
+.payroll-stat-card.absent { border-top-color: #ef4444; }
+.payroll-stat-card.deduction {
+  border-top-color: #dc2626;
+  background: #fff5f5;
+  border-color: #fecdd3;
+}
+
+.payroll-stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.payroll-stat-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.payroll-stat-sub {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+/* 3. Middle Section: Small Calendar + Day Detail Inspector */
+.payroll-middle-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .payroll-middle-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Proper Small Calendar Widget */
+.payroll-small-calendar {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.payroll-cal-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 4px 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.payroll-cal-nav-selectors {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.payroll-cal-month-select,
+.payroll-cal-year-select {
+  padding: 3px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.payroll-cal-month-select:hover,
+.payroll-cal-year-select:hover {
+  background: #ffffff;
+  border-color: #0f766e;
+}
+
+.payroll-cal-month-select:focus,
+.payroll-cal-year-select:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.15);
+}
+
+.payroll-nav-arrow-btn {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 3px 5px;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.payroll-nav-arrow-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+/* Weekday header */
+.payroll-weekdays-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.payroll-weekday-cell {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  padding: 2px 0;
+}
+
+/* Day tiles grid */
+.payroll-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.payroll-day-tile {
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.payroll-day-tile:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.96);
+}
+
+.payroll-day-tile.empty {
+  cursor: default;
+  background: transparent !important;
+}
+
+.payroll-day-tile:focus,
+.payroll-day-tile:focus-visible,
+.payroll-day-tile:active {
+  outline: none !important;
+  outline-offset: 0 !important;
+}
+
+.payroll-day-tile.active-day {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  font-weight: 800;
+  transform: translateY(-1px);
+}
+
+.payroll-day-number {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.payroll-day-indicator-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  margin-top: 2px;
+}
+
+/* Day Tile Color Schemes */
+.tile-color-present {
+  background-color: #ecfdf5;
+  border-color: #a7f3d0;
+}
+.tile-color-present .payroll-day-number { color: #047857; }
+
+.tile-color-holiday {
+  background-color: #f5f3ff;
+  border-color: #ddd6fe;
+}
+.tile-color-holiday .payroll-day-number { color: #7c3aed; }
+
+.tile-color-lwp {
+  background-color: #fff7ed;
+  border-color: #fed7aa;
+}
+.tile-color-lwp .payroll-day-number { color: #ea580c; }
+
+.tile-color-absent {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+}
+.tile-color-absent .payroll-day-number { color: #dc2626; }
+
+.tile-color-weekend {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+}
+.tile-color-weekend .payroll-day-number { color: #64748b; }
+
+.tile-color-today {
+  background-color: #f0fdfa;
+  border-color: #5eead4;
+}
+
+.tile-color-blank {
+  background-color: #ffffff;
+  border-color: #f1f5f9;
+}
+.tile-color-blank .payroll-day-number {
+  color: #334155;
+}
+.tile-color-blank .payroll-day-indicator-dot {
+  visibility: hidden;
+}
+
+/* Legend beneath small calendar */
+.payroll-legend-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.payroll-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.payroll-legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* Selected Day Detail Card */
+.payroll-day-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.payroll-day-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 12px;
+}
+
+.payroll-day-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.payroll-day-card-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.payroll-day-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 1024px) {
+  .payroll-day-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.payroll-info-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.payroll-info-box span {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.payroll-info-box strong {
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.payroll-notes-callout {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #0f766e;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 4. HpGrid Card */
+.payroll-grid-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  height: 520px;
+}

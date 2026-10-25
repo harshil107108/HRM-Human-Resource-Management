@@ -47,7 +47,8 @@ export function PublicOnly({ children }) {
 
 // "/" -> the user's first permitted page.
 export function HomeRedirect() {
-  const { menus, can } = useAuth();
+  const { menus, can, restoring } = useAuth();
+  if (restoring) return <SessionLoader />;
   const target = firstAllowedPath(menus, can);
   if (!target) {
     return (

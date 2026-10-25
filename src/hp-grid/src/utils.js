@@ -66,20 +66,107 @@ export function parseColumnWidth(value, fallback = 120) {
   return fallback;
 }
 
-export function getColumnStyle(column) {
-  if (column.width === undefined || column.width === null) {
-    return { flex: "1 1 0", minWidth: 0 };
+export function normalizeStickyPos(col) {
+  if (!col) return null;
+  const raw =
+    col.stickyPos ??
+    col.stickPos ??
+    col.stickpos ??
+    col.sticky ??
+    col.pinned;
+
+  if (raw === false || raw === "none" || raw === "false") return null;
+
+  if (raw === undefined || raw === null || raw === "") {
+    // Automatically make action columns sticky to the right edge across all modules
+    if (col.type === "actions") return "right";
+    return null;
   }
 
-  const widthPx = `${parseColumnWidth(column.width, 120)}px`;
+  if (raw === true) {
+    return col.type === "actions" ? "right" : "left";
+  }
+  const s = String(raw).toLowerCase().trim();
+  if (s === "last" || s === "right" || s === "end") return "right";
+  if (s === "first" || s === "left" || s === "start") return "left";
+  return null;
+}
 
-  return {
-    width: widthPx,
-    minWidth: widthPx,
-    maxWidth: widthPx,
-    flex: `0 0 ${widthPx}`,
-    boxSizing: "border-box",
-  };
+export function computeStickyColumnStyles(columns, selectable = false) {
+  if (!Array.isArray(columns) || columns.length === 0) return [];
+
+  const leftCols = [];
+  const middleCols = [];
+  const rightCols = [];
+
+  for (const col of columns) {
+    const side = normalizeStickyPos(col);
+    if (side === "left") {
+      leftCols.push({ ...col, _stickySide: "left" });
+    } else if (side === "right") {
+      rightCols.push({ ...col, _stickySide: "right" });
+    } else {
+      middleCols.push({ ...col, _stickySide: null, _stickyStyle: undefined });
+    }
+  }
+
+  // Preserve stable AG-Grid style order: [ ...leftPinned, ...unpinned, ...rightPinned ]
+  const ordered = [...leftCols, ...middleCols, ...rightCols];
+
+  // 1. Calculate left offsets for left-pinned columns
+  let currentLeft = selectable ? 40 : 0;
+  const withLeftOffsets = ordered.map((col) => {
+    if (col._stickySide === "left") {
+      const fallback = col.type === "actions" ? 80 : 120;
+      const colWidth = parseColumnWidth(col.width, fallback);
+      const style = {
+        position: "sticky",
+        left: `${currentLeft}px`,
+      };
+      currentLeft += colWidth;
+      return { ...col, _stickyStyle: style };
+    }
+    return col;
+  });
+
+  // 2. Calculate right offsets for right-pinned columns (from rightmost to innermost)
+  let currentRight = 0;
+  for (let i = withLeftOffsets.length - 1; i >= 0; i--) {
+    const col = withLeftOffsets[i];
+    if (col._stickySide === "right") {
+      const fallback = col.type === "actions" ? 80 : 120;
+      const colWidth = parseColumnWidth(col.width, fallback);
+      col._stickyStyle = {
+        position: "sticky",
+        right: `${currentRight}px`,
+      };
+      currentRight += colWidth;
+    }
+  }
+
+  return withLeftOffsets;
+}
+
+export function getColumnStyle(column) {
+  const baseStyle =
+    column.width === undefined || column.width === null
+      ? { flex: "1 1 0", minWidth: 0 }
+      : (() => {
+          const widthPx = `${parseColumnWidth(column.width, 120)}px`;
+          return {
+            width: widthPx,
+            minWidth: widthPx,
+            maxWidth: widthPx,
+            flex: `0 0 ${widthPx}`,
+            boxSizing: "border-box",
+          };
+        })();
+
+  if (column && column._stickyStyle) {
+    return { ...baseStyle, ...column._stickyStyle };
+  }
+
+  return baseStyle;
 }
 
 

@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import useApiCall from "../hooks/useApiCall";
 import { useAuth } from "@/context/AuthContext";
+import { firstAllowedPath } from "@/router/RouteGuards";
+import NoPermission from "@/components/common/NoPermission";
 import { api, apiEndpoints } from "../api/api";
 import { getUploadUrl } from "../utils/fileUpload";
 import { HpCommonModal } from "@/hp-common-modal";
@@ -513,6 +516,25 @@ const StatCard = ({
 // ==========================================
 
 export default function EnterpriseDashboard() {
+  const { user, can, menus } = useAuth();
+
+  // If user does not have view permission for Dashboard, redirect to first permitted route
+  if (!can("DASHBOARD", "view")) {
+    const target = firstAllowedPath(menus, can);
+    if (target && target !== "/dashboard") {
+      return <Navigate to={target} replace />;
+    }
+    return (
+      <div className="p-8">
+        <NoPermission
+          title="Dashboard Access Restricted"
+          message="Your role does not have permission to view the Dashboard. Please navigate to an authorized module from the sidebar."
+          showActions={false}
+        />
+      </div>
+    );
+  }
+
   const [activeMenu, setActiveMenu] = useState("Dashboard");
   const [searchQuery, setSearchQuery] = useState("");
   const [employeeSearch, setEmployeeSearch] = useState("");
@@ -625,7 +647,6 @@ export default function EnterpriseDashboard() {
     }
   }, []);
 
-  const { user } = useAuth();
   const { apiCall } = useApiCall();
 
   // Active task listener for live break status (e.g. Lunch Break, Discussion, Meeting, etc.)

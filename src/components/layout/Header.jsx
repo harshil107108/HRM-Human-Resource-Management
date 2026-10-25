@@ -704,8 +704,10 @@ export const Header = ({
               <p className="text-[12px] font-semibold text-slate-900 leading-none">
                 {user?.name || "User"}
               </p>
-              <p className="text-[10px] text-slate-400 font-medium mt-0.5 leading-none">
-                {user?.roleName || ""}
+              <p className="text-[10px] text-slate-500 font-medium mt-0.5 leading-none">
+                {user?.designationName
+                  ? `${user?.roleName || "Employee"} • ${user?.designationName}`
+                  : user?.roleName || "Employee"}
               </p>
             </div>
             {user?.profileImage ? (
@@ -738,15 +740,22 @@ export const Header = ({
           {profileOpen && (
             <div
               role="menu"
-              className="absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
+              className="absolute right-0 top-full mt-2 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg z-50"
             >
               <div className="border-b border-slate-100 bg-slate-50/60 px-4 py-3">
                 <p className="truncate text-sm font-semibold text-slate-800">{user?.name}</p>
                 <p className="truncate text-xs text-slate-500">@{user?.username}</p>
-                <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                  <ShieldCheck className="h-3 w-3" />
-                  {user?.roleName}
-                </span>
+                <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">
+                    <ShieldCheck className="h-3 w-3" />
+                    {user?.roleName || "Employee"}
+                  </span>
+                  {user?.designationName && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700 border border-slate-200">
+                      {user?.designationName}
+                    </span>
+                  )}
+                </div>
               </div>
               <button
                 type="button"

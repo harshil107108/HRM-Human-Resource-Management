@@ -234,6 +234,44 @@
   box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.25);
 }
 
+.hp-grid-setting-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  margin: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.hp-grid-setting-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+.hp-grid-setting-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.hp-grid-setting-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.25);
+}
+
 /* ---------------------------- header ---------------------------- */
 .hp-grid-scroll-area {
   flex: 1;
@@ -277,7 +315,7 @@
   flex-shrink: 0;
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 30;
   min-width: max-content;
 }
 
@@ -342,6 +380,9 @@
   border-bottom: 1px solid var(--hpg-border);
   flex-shrink: 0;
   min-width: max-content;
+  position: sticky;
+  top: 36px;
+  z-index: 20;
 }
 
 .hp-grid-filter-cell-outer {
@@ -1453,4 +1494,70 @@
   transform: scaleX(1) !important;
   background: #f59e0b !important;
   height: 2.5px !important;
+}
+
+/* ---------------------------- Sticky Columns ---------------------------- */
+.hp-grid-sticky-left {
+  position: sticky !important;
+  z-index: 5;
+  background-color: #ffffff;
+}
+
+.hp-grid-sticky-right {
+  position: sticky !important;
+  z-index: 5;
+  background-color: #ffffff;
+  border-left: 1px solid var(--hpg-border, #e3e8f0);
+  box-shadow: -3px 0 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.hp-grid-header-cell.hp-grid-sticky-left,
+.hp-grid-header-cell.hp-grid-sticky-right {
+  z-index: 35 !important;
+  background-color: var(--hpg-header-bg, #eef3fb) !important;
+}
+
+.hp-grid-filter-cell-outer.hp-grid-sticky-left,
+.hp-grid-filter-cell-outer.hp-grid-sticky-right {
+  z-index: 25 !important;
+  background-color: var(--hpg-header-bg, #eef3fb) !important;
+}
+
+/* Maintain row hover / selection states for sticky cells */
+.hp-grid-row:hover .hp-grid-cell-outer.hp-grid-sticky-left,
+.hp-grid-row:hover .hp-grid-cell-outer.hp-grid-sticky-right {
+  background-color: var(--hpg-row-hover, #f8fafc);
+}
+
+.hp-grid-row:nth-child(even) .hp-grid-cell-outer.hp-grid-sticky-left,
+.hp-grid-row:nth-child(even) .hp-grid-cell-outer.hp-grid-sticky-right {
+  background-color: #f8fafc;
+}
+
+.hp-grid-row:nth-child(even):hover .hp-grid-cell-outer.hp-grid-sticky-left,
+.hp-grid-row:nth-child(even):hover .hp-grid-cell-outer.hp-grid-sticky-right {
+  background-color: var(--hpg-row-hover, #f8fafc);
+}
+
+.hp-grid-row--selected .hp-grid-cell-outer.hp-grid-sticky-left,
+.hp-grid-row--selected .hp-grid-cell-outer.hp-grid-sticky-right {
+  background-color: var(--hpg-row-selected, #e9f4ff) !important;
+}
+
+/* Sticky checkbox selection column if any left sticky column exists */
+.hp-grid-cell--select-col.hp-grid-sticky-left {
+  position: sticky !important;
+  left: 0;
+  z-index: 6;
+  background-color: #ffffff;
+}
+
+.hp-grid-header-cell.hp-grid-cell--select-col.hp-grid-sticky-left {
+  z-index: 36 !important;
+  background-color: var(--hpg-header-bg, #eef3fb) !important;
+}
+
+.hp-grid-filter-cell.hp-grid-cell--select-col.hp-grid-sticky-left {
+  z-index: 26 !important;
+  background-color: var(--hpg-header-bg, #eef3fb) !important;
 }

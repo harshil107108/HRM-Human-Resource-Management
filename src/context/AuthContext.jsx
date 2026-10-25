@@ -186,6 +186,14 @@ export function AuthProvider({ children }) {
     }
   }, [applySession]);
 
+  useEffect(() => {
+    const handleRoleUpdate = () => {
+      refreshSession();
+    };
+    window.addEventListener("rolePermissionsUpdated", handleRoleUpdate);
+    return () => window.removeEventListener("rolePermissionsUpdated", handleRoleUpdate);
+  }, [refreshSession]);
+
   const value = useMemo(() => {
     const permissions = session?.permissions || {};
     const isSuperAdmin = Boolean(session?.user?.isSuperAdmin);

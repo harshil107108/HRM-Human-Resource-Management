@@ -207,7 +207,7 @@ const Employee = () => {
     username: "",
     password: "",
     confirmPassword: "",
-    role: "",
+    primaryRole: "EMPLOYEE",
     allowLogin: true,
     remarks: "",
   };

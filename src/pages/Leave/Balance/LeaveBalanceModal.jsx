@@ -27,10 +27,18 @@ const LeaveBalanceModal = ({
 
     const formattedData = useMemo(() => {
         if (!data) return initialValue;
+        const credited = data.credited !== undefined ? data.credited : (data.totalAllocated !== undefined ? data.totalAllocated : 12);
+        const used = data.used !== undefined ? data.used : (data.usedDays !== undefined ? data.usedDays : 0);
+        const pending = data.pending !== undefined ? data.pending : (data.pendingDays !== undefined ? data.pendingDays : 0);
+        const remaining = data.remaining !== undefined ? data.remaining : (data.balanceDays !== undefined ? data.balanceDays : Math.max(0, Number(credited) - Number(used)));
         return {
             ...data,
             employeeId: data.employeeId?._id || data.employeeId || "",
-            leaveTypeId: data.leaveTypeId?._id || data.leaveTypeId || ""
+            leaveTypeId: data.leaveTypeId?._id || data.leaveTypeId || data.leaveType?._id || data.leaveType || "",
+            credited,
+            used,
+            pending,
+            remaining,
         };
     }, [data, initialValue]);
 
@@ -97,10 +105,18 @@ const LeaveBalanceModal = ({
         });
         if (res?.success && res.data?.data) {
             const d = res.data.data;
+            const credited = d.credited !== undefined ? d.credited : (d.totalAllocated !== undefined ? d.totalAllocated : 12);
+            const used = d.used !== undefined ? d.used : (d.usedDays !== undefined ? d.usedDays : 0);
+            const pending = d.pending !== undefined ? d.pending : (d.pendingDays !== undefined ? d.pendingDays : 0);
+            const remaining = d.remaining !== undefined ? d.remaining : (d.balanceDays !== undefined ? d.balanceDays : Math.max(0, Number(credited) - Number(used)));
             formInstance.methods.setValues({
                 ...d,
                 employeeId: d.employeeId?._id || d.employeeId || "",
-                leaveTypeId: d.leaveTypeId?._id || d.leaveTypeId || "",
+                leaveTypeId: d.leaveTypeId?._id || d.leaveTypeId || d.leaveType?._id || d.leaveType || "",
+                credited,
+                used,
+                pending,
+                remaining,
             });
         }
     };
@@ -129,8 +145,22 @@ const LeaveBalanceModal = ({
             return;
         }
 
+        const credited = Number(formData.credited ?? 12);
+        const used = Number(formData.used ?? 0);
+        const pending = Number(formData.pending ?? 0);
+        const remaining = Math.max(0, credited - used);
+
         const payload = {
             ...formData,
+            credited,
+            used,
+            pending,
+            remaining,
+            totalAllocated: credited,
+            usedDays: used,
+            pendingDays: pending,
+            balanceDays: remaining,
+            leaveType: formData.leaveTypeId,
             ...(balanceId ? { _id: balanceId } : {}),
         };
 

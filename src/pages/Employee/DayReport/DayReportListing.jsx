@@ -1,14 +1,23 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { HpGrid } from "@/hp-grid/src";
 import DateField from "@/form-engine/components/fields/DateField";
-import { Calendar, Lock, Unlock, CheckCircle2 } from "lucide-react";
+import {
+  Calendar,
+  Lock,
+  Unlock,
+  CheckCircle2,
+  Clock,
+} from "lucide-react";
 import useApiCall from "@/hooks/useApiCall";
 import { api, apiEndpoints } from "@/api/api";
 import useAlert from "@/hooks/useAlert";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/context/AuthContext";
-import useDayReportConfig from "./useDayReportConfig";
+import useDayReportConfig, {
+  getActivityDuration,
+  formatDuration,
+} from "./useDayReportConfig";
 import DayReportLockedOverlay from "./DayReportLockedOverlay";
 
 const getTodayDateString = () => {
@@ -38,6 +47,64 @@ const DayReportListing = () => {
     totalWorkMinutes: 0,
     totalBreakMinutes: 0,
   });
+
+  // Working Hours, Tasks, Meetings, Breaks calculation
+  const stats = useMemo(() => {
+    let taskMinutes = 0;
+    let meetingMinutes = 0;
+    let breakMinutes = 0;
+    let celebrationMinutes = 0;
+    let otherMinutes = 0;
+
+    let taskCount = 0;
+    let meetingCount = 0;
+    let breakCount = 0;
+
+    activitiesData.forEach((act) => {
+      const mins = getActivityDuration(act);
+      const rawType = (act.type || "Task").trim().toLowerCase();
+      const rawCat = (act.category || "").trim().toLowerCase();
+
+      if (rawType === "break" || rawCat === "break") {
+        breakMinutes += mins;
+        breakCount++;
+      } else if (rawType === "meeting" || rawCat === "meeting" || rawCat === "collab") {
+        meetingMinutes += mins;
+        meetingCount++;
+      } else if (rawType === "task" || rawCat === "focus" || rawCat === "work") {
+        taskMinutes += mins;
+        taskCount++;
+      } else if (rawType === "celebration") {
+        celebrationMinutes += mins;
+      } else {
+        otherMinutes += mins;
+      }
+    });
+
+    const effectiveBreakMinutes = Math.max(breakMinutes, Number(summary?.totalBreakMinutes) || 0);
+
+    let calculatedWorkMinutes = taskMinutes + meetingMinutes + otherMinutes;
+    if (calculatedWorkMinutes === 0 && Number(summary?.totalWorkMinutes) > 0) {
+      calculatedWorkMinutes = Number(summary.totalWorkMinutes);
+      taskMinutes = calculatedWorkMinutes;
+    }
+
+    const totalWorkMinutes = calculatedWorkMinutes;
+    const totalLoggedMinutes = totalWorkMinutes + effectiveBreakMinutes + celebrationMinutes;
+
+    return {
+      taskMinutes,
+      meetingMinutes,
+      breakMinutes: effectiveBreakMinutes,
+      celebrationMinutes,
+      otherMinutes,
+      totalWorkMinutes,
+      totalLoggedMinutes,
+      taskCount,
+      meetingCount,
+      breakCount,
+    };
+  }, [activitiesData, summary]);
 
   const handleRemarkChange = useCallback(
     (rowIndex, val, updatedRow) => {
@@ -284,6 +351,7 @@ const DayReportListing = () => {
             }
           }}
           summary={summary}
+          stats={stats}
           activitiesCount={activitiesData.length}
           canUnlock={canUnlock}
           onUnlock={handleToggleLock}
@@ -313,21 +381,37 @@ const DayReportListing = () => {
         />
       </div>
 
-      {/* Footer with Save & Lock Button or Submitted (Disabled) */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-white border-t border-slate-200 shrink-0">
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <span>
-            {isUnlockedBySupervisor
-              ? "✓ This day report was unlocked by management and is marked as Submitted."
-              : '💡 Tip: Click on any Remark cell in the grid to edit notes, then click "Lock Report" to finalize and submit for today.'}
-          </span>
+      {/* Footer with Total Working Hours Square & Save/Lock Button */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-white border-t border-slate-200 shrink-0 gap-3">
+        <div className="flex items-center gap-3">
+          {/* Simple Square: Total Working Hours (Break / Lunch Deducted) */}
+          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50/70 text-slate-800 shadow-2xs">
+            <div className="w-7 h-7 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0">
+              <Clock className="w-3.5 h-3.5" />
+            </div>
+            <div>
+              <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider leading-none">
+                Total Working Hours
+              </div>
+              <div className="text-sm font-bold text-slate-900 leading-tight flex items-baseline gap-1 mt-0.5">
+                <span>{formatDuration(stats.totalWorkMinutes)}</span>
+                <span className="text-[11px] font-medium text-slate-500">
+                  ({(stats.totalWorkMinutes / 60).toFixed(1)}h)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="hidden md:flex items-center gap-2 text-xs text-slate-400">
+
+          </div>
         </div>
 
         {isUnlockedBySupervisor ? (
           <button
             type="button"
             disabled={true}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md border border-slate-200 bg-slate-100 text-slate-500 text-sm font-semibold cursor-not-allowed select-none opacity-80"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md border border-slate-200 bg-slate-100 text-slate-500 text-sm font-semibold cursor-not-allowed select-none opacity-80 shrink-0"
             title="Report is submitted"
           >
             <CheckCircle2 size={15} className="text-emerald-600" />
@@ -338,7 +422,7 @@ const DayReportListing = () => {
             type="button"
             onClick={handleToggleLock}
             disabled={isPending("toggleLock")}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md border border-amber-600 bg-white text-amber-600 hover:bg-amber-50 shadow-xs text-sm font-medium transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md border border-amber-600 bg-white text-amber-600 hover:bg-amber-50 shadow-xs text-sm font-medium transition-all cursor-pointer shrink-0"
           >
             <Lock size={15} className="text-amber-600" />
             <span>Lock Report</span>

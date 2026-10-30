@@ -725,7 +725,7 @@ const PayslipModal = ({ onModalClose, onSaved, open, extraParams }) => {
     <HpCommonModal
       open={open}
       title={renderTitle()}
-      size="2xl"
+      size="lg"
       icon={<FileText size={20} />}
       onClose={onModalClose}
       footer={renderCustomFooter}
@@ -1197,9 +1197,7 @@ const PayslipModal = ({ onModalClose, onSaved, open, extraParams }) => {
         /* EDIT / VIEW MODE: Statement View or Form Edit Mode */
         <>
           {activeTab === "preview" ? (
-            <div
-              style={{ overflowY: "auto", maxHeight: "72vh", padding: "2px" }}
-            >
+            <div className="w-full">
               <PayslipViewDocument
                 elementId="payslip-modal-document"
                 payslip={fullPayslipData || editFormMethod.methods.getValues()}

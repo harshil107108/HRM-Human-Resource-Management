@@ -90,11 +90,11 @@ export default function PayslipViewDocument({ payslip, company, elementId = "pay
       style={{
         backgroundColor: "#ffffff",
         color: "#0f172a",
-        padding: "28px",
-        borderRadius: "12px",
+        padding: "24px 26px",
+        borderRadius: "10px",
         border: "1px solid #e2e8f0",
-        maxWidth: "920px",
-        margin: "0 auto",
+        width: "100%",
+        maxWidth: "100%",
         boxSizing: "border-box",
         fontFamily: "'Nunito', 'Segoe UI', -apple-system, sans-serif",
       }}

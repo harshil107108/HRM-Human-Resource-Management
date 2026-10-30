@@ -1,6 +1,6 @@
 import { HpGrid } from "@/hp-grid/src";
 import { createRowContextMenu } from "@/utils/gridContextMenu";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import useLeaveBalanceConfig from "./useLeaveBalanceConfig";
 import useModal from "@/hooks/useModal";
 import LeaveBalanceModal from "./LeaveBalanceModal";
@@ -8,10 +8,63 @@ import useApiCall from "@/hooks/useApiCall";
 import { api, apiEndpoints } from "@/api/api";
 import useAlert from "@/hooks/useAlert";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
+import { useAuth } from "@/context/AuthContext";
+import { Users, PieChart } from "lucide-react";
+import { formMethod, FormRenderer, useWatch } from "@/form-engine";
 
 const LeaveBalanceListing = () => {
   const { apiCall, isPending } = useApiCall();
   const { deleteAlert, successAlert } = useAlert();
+  const { user, isSuperAdmin, can } = useAuth();
+
+  const userRole = String(user?.roleCode || user?.primaryRole || "").toUpperCase();
+  const isAdmin =
+    isSuperAdmin ||
+    ["SUPER_ADMIN", "ADMIN", "HR"].includes(userRole);
+
+  const [employeeList, setEmployeeList] = useState([]);
+  const [balanceData, setBalanceData] = useState([]);
+
+  // Form instance for employee filter using formMethod selectWrapper
+  const employeeFilterForm = useMemo(() => {
+    return formMethod.createForm({
+      schema: [
+        {
+          id: "employeeId",
+          type: "selectWrapper",
+          placeholder: "All Employees",
+          options: [{ label: "All Employees", value: "" }],
+          className: "col-span-12 !mb-0",
+        },
+      ],
+      initialValue: { employeeId: "" },
+    });
+  }, []);
+
+  const employeeFilterSchema = useMemo(
+    () => [
+      {
+        id: "employeeId",
+        type: "selectWrapper",
+        placeholder: "All Employees",
+        options: [
+          { label: "All Employees", value: "" },
+          ...employeeList.map((emp) => ({
+            label: `${emp.firstName || ""} ${emp.lastName || ""} (${emp.employeeId || "EMP"})`,
+            value: emp._id,
+          })),
+        ],
+        className: "col-span-12 !mb-0",
+      },
+    ],
+    [employeeList]
+  );
+
+  useEffect(() => {
+    employeeFilterForm.methods.setSchema(employeeFilterSchema);
+  }, [employeeFilterSchema, employeeFilterForm]);
+
+  const selectedEmployeeId = useWatch(employeeFilterForm, "employeeId") || "";
 
   const handleDelete = (id) => {
     deleteAlert({
@@ -31,66 +84,198 @@ const LeaveBalanceListing = () => {
             title: "Balance Deleted",
             text: "Leave balance record deleted successfully.",
           });
-          getLeaveBalanceListing();
+          getLeaveBalanceListing(selectedEmployeeId);
         }
       },
     });
   };
 
-  const { leaveBalanceListingColDef } = useLeaveBalanceConfig({ handleDelete });
+  const { leaveBalanceListingColDef } = useLeaveBalanceConfig({
+    handleDelete,
+    isAdmin,
+  });
   const { isModalOpen, extraParams, onModalOpen, onModalClose } = useModal();
-  const [balanceData, setBalanceData] = useState([]);
 
-  const getLeaveBalanceListing = async () => {
+  // Load employee list for Admin dropdown filter
+  useEffect(() => {
+    if (isAdmin) {
+      apiCall({
+        id: "getEmployeesHelp",
+        api: api + apiEndpoints.employee.employee.EmployeeGetData,
+        payload: {},
+        silent: true,
+      }).then((res) => {
+        if (res?.success) {
+          setEmployeeList(res.data?.data || []);
+        }
+      });
+    }
+  }, [isAdmin]);
+
+  const getLeaveBalanceListing = async (empId = selectedEmployeeId) => {
+    const payload = {};
+    if (isAdmin && empId) {
+      payload.employeeId = empId;
+    }
+
     const res = await apiCall({
       id: "getLeaveBalanceListing",
       api: api + apiEndpoints.leave.balance.BalanceGetData,
-      payload: {},
+      payload,
     });
 
     if (res?.success) {
       const data = res.data?.data || [];
-      const formatted = data.map((item) => ({
-        ...item,
-        employeeName: item.employeeId
-          ? `${item.employeeId.firstName || ""} ${item.employeeId.lastName || ""} (${item.employeeId.employeeId || ""})`
-          : "N/A",
-        leaveTypeName: item.leaveTypeId?.typeName || item.leaveTypeId?.typeCode || "N/A",
-      }));
+      const formatted = data.map((item) => {
+        const empName =
+          item.employeeName ||
+          (item.employeeId
+            ? `${item.employeeId.firstName || ""} ${item.employeeId.lastName || ""} (${item.employeeId.employeeId || ""})`
+            : "N/A");
+        const ltName =
+          item.leaveTypeName ||
+          item.leaveType?.typeName ||
+          item.leaveTypeId?.typeName ||
+          item.leaveType?.typeCode ||
+          "N/A";
+        const credited = Number(
+          item.credited !== undefined
+            ? item.credited
+            : item.totalAllocated !== undefined
+            ? item.totalAllocated
+            : 0
+        );
+        const used = Number(
+          item.used !== undefined
+            ? item.used
+            : item.usedDays !== undefined
+            ? item.usedDays
+            : 0
+        );
+        const pending = Number(
+          item.pending !== undefined
+            ? item.pending
+            : item.pendingDays !== undefined
+            ? item.pendingDays
+            : 0
+        );
+        const remaining = Number(
+          item.remaining !== undefined
+            ? item.remaining
+            : item.balanceDays !== undefined
+            ? item.balanceDays
+            : Math.max(0, credited - used)
+        );
+
+        return {
+          ...item,
+          employeeName: empName,
+          leaveTypeName: ltName,
+          credited,
+          used,
+          pending,
+          remaining,
+        };
+      });
       setBalanceData(formatted);
     }
   };
 
   useEffect(() => {
-    getLeaveBalanceListing();
-  }, []);
+    getLeaveBalanceListing(selectedEmployeeId);
+  }, [selectedEmployeeId]);
 
   const handleAdd = () => {
     onModalOpen({ mode: "add" });
   };
 
   const handleDoubleClick = (data) => {
+    if (!isAdmin) return;
     const id = data?.data?._id;
     if (id) {
       onModalOpen({ mode: "edit", id });
     }
   };
 
-  useDocumentTitle("orvexa | Leave Balances");
+  useDocumentTitle(
+    isAdmin ? "orvexa | Employee Leave Balances" : "orvexa | My Leave Balances"
+  );
 
-  // Right-click menu: Edit and Delete.
-  const contextData = createRowContextMenu({
-    onEdit: (row) => handleDoubleClick({ data: row }),
-    onDelete: (row) => handleDelete(row._id),
-  });
+  // Right-click menu for Admin: Edit and Delete.
+  const contextData = useMemo(() => {
+    if (!isAdmin) return null;
+    return createRowContextMenu({
+      onEdit: (row) => handleDoubleClick({ data: row }),
+      onDelete: (row) => handleDelete(row._id),
+    });
+  }, [isAdmin]);
+
+  // Overall totals across displayed rows
+  const summary = useMemo(() => {
+    let totalCredited = 0;
+    let totalUsed = 0;
+    let totalPending = 0;
+    let totalRemaining = 0;
+
+    balanceData.forEach((b) => {
+      totalCredited += Number(b.credited) || 0;
+      totalUsed += Number(b.used) || 0;
+      totalPending += Number(b.pending) || 0;
+      totalRemaining += Number(b.remaining) || 0;
+    });
+
+    return { totalCredited, totalUsed, totalPending, totalRemaining };
+  }, [balanceData]);
+
+  // Custom Toolbar Controls using FormRenderer selectWrapper
+  const toolbarRightControls = isAdmin ? (
+    <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-md px-2.5 py-0.5">
+        <Users size={14} className="text-slate-500 shrink-0" />
+        <span className="font-semibold text-slate-600 shrink-0">Employee:</span>
+        <div className="w-64">
+          <FormRenderer
+            formMethod={employeeFilterForm}
+            formSchema={employeeFilterSchema}
+            className="!grid-cols-1 !gap-0"
+          />
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div className="flex items-center gap-2 text-xs">
+      <span className="px-2.5 py-1 rounded-md bg-blue-50 text-blue-800 font-semibold border border-blue-200">
+        Credited: {summary.totalCredited}d
+      </span>
+      <span className="px-2.5 py-1 rounded-md bg-amber-50 text-amber-800 font-semibold border border-amber-200">
+        Used: {summary.totalUsed}d
+      </span>
+      <span className="px-2.5 py-1 rounded-md bg-purple-50 text-purple-800 font-semibold border border-purple-200">
+        Pending: {summary.totalPending}d
+      </span>
+      <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
+        Remaining: {summary.totalRemaining}d
+      </span>
+    </div>
+  );
+
+  const selectedEmployeeObj = employeeList.find(
+    (e) => String(e._id) === String(selectedEmployeeId)
+  );
+  const employeeDisplayName = user?.name || user?.firstName || "My";
+  const gridTitle = isAdmin
+    ? selectedEmployeeId && selectedEmployeeObj
+      ? `Leave Balances (${selectedEmployeeObj.firstName} ${selectedEmployeeObj.lastName})`
+      : "Employee Leave Balances (All Employees)"
+    : `My Leave Balances (${employeeDisplayName} - ${new Date().getFullYear()})`;
 
   return (
     <>
-      {isModalOpen && (
+      {isModalOpen && isAdmin && (
         <LeaveBalanceModal
           open={isModalOpen}
           onModalClose={onModalClose}
-          onSaved={getLeaveBalanceListing}
+          onSaved={() => getLeaveBalanceListing(selectedEmployeeId)}
           extraParams={extraParams}
         />
       )}
@@ -100,11 +285,25 @@ const LeaveBalanceListing = () => {
         rowData={balanceData}
         colDef={leaveBalanceListingColDef}
         style={{ height: "100%" }}
-        onDoubleClick={handleDoubleClick}
-        onAddClick={handleAdd}
-        title="Employee Leave Balances"
+        icon={<PieChart size={15} />}
+        onDoubleClick={isAdmin ? handleDoubleClick : undefined}
+        onAddClick={isAdmin ? handleAdd : undefined}
+        addButtonLabel="Allocate / Adjust Balance"
+        title={gridTitle}
+        toolbarRight={toolbarRightControls}
+        searchable={true}
         columnFilterable={true}
-        panding={isPending("deleteLeaveBalance") || isPending("getLeaveBalanceListing")}
+        rowClassName={(row) => {
+          const remaining = Number(
+            row?.remaining !== undefined ? row.remaining : row?.balanceDays
+          );
+          if (remaining <= 0) return "hp-grid-row--leave-exhausted";
+          if (remaining === 1) return "hp-grid-row--leave-warning";
+          return "";
+        }}
+        panding={
+          isPending("deleteLeaveBalance") || isPending("getLeaveBalanceListing")
+        }
       />
     </>
   );

@@ -7,6 +7,9 @@ import {
   Clock,
   Coffee,
   ListChecks,
+  Briefcase,
+  Users,
+  Calculator,
   ShieldAlert,
   ArrowRight,
   RefreshCw,
@@ -26,6 +29,7 @@ const DayReportLockedOverlay = ({
   date,
   onDateChange,
   summary = { totalWorkMinutes: 0, totalBreakMinutes: 0 },
+  stats = null,
   activitiesCount = 0,
   canUnlock = false,
   onUnlock,
@@ -128,36 +132,52 @@ const DayReportLockedOverlay = ({
         </p>
 
         {/* Summary Metrics Cards */}
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-3 w-full mb-5 text-left">
-          <div className="p-3 bg-slate-50/90 border border-slate-100 rounded-2xl">
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-0.5">
-              <Clock size={12} className="text-blue-500" />
-              <span>Work</span>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full mb-3 text-left">
+          <div className="p-2.5 bg-blue-50/80 border border-blue-200/80 rounded-xl">
+            <div className="flex items-center gap-1.5 text-[10px] text-blue-700 font-bold uppercase tracking-wider mb-0.5">
+              <Clock size={12} className="text-blue-600" />
+              <span>Working Hours</span>
             </div>
-            <div className="text-base font-extrabold text-slate-800">
-              {formatDuration(summary?.totalWorkMinutes)}
+            <div className="text-sm font-extrabold text-blue-950">
+              {formatDuration(stats?.totalWorkMinutes ?? summary?.totalWorkMinutes)}
             </div>
           </div>
 
-          <div className="p-3 bg-slate-50/90 border border-slate-100 rounded-2xl">
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-0.5">
+          <div className="p-2.5 bg-slate-50/90 border border-slate-200 rounded-xl">
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-0.5">
+              <Briefcase size={12} className="text-blue-500" />
+              <span>Tasks</span>
+            </div>
+            <div className="text-sm font-bold text-slate-800">
+              {formatDuration(stats?.taskMinutes ?? 0)}
+            </div>
+          </div>
+
+          <div className="p-2.5 bg-slate-50/90 border border-slate-200 rounded-xl">
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-0.5">
+              <Users size={12} className="text-indigo-500" />
+              <span>Meetings</span>
+            </div>
+            <div className="text-sm font-bold text-slate-800">
+              {formatDuration(stats?.meetingMinutes ?? 0)}
+            </div>
+          </div>
+
+          <div className="p-2.5 bg-slate-50/90 border border-slate-200 rounded-xl">
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-0.5">
               <Coffee size={12} className="text-amber-500" />
-              <span>Break</span>
+              <span>Breaks</span>
             </div>
-            <div className="text-base font-extrabold text-slate-800">
-              {formatDuration(summary?.totalBreakMinutes)}
+            <div className="text-sm font-bold text-slate-800">
+              {formatDuration(stats?.breakMinutes ?? summary?.totalBreakMinutes)}
             </div>
           </div>
+        </div>
 
-          <div className="p-3 bg-slate-50/90 border border-slate-100 rounded-2xl">
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-0.5">
-              <ListChecks size={12} className="text-purple-500" />
-              <span>Activities</span>
-            </div>
-            <div className="text-base font-extrabold text-slate-800">
-              {activitiesCount || 0} Logged
-            </div>
-          </div>
+        {/* Calculation breakdown pill */}
+        <div className="w-full flex items-center justify-center gap-1 text-[11px] text-slate-500 font-medium py-1 px-2.5 mb-4 bg-slate-50 border border-slate-200/80 rounded-lg">
+          <Calculator size={11} className="text-blue-600" />
+          <span>Calculation: Tasks ({formatDuration(stats?.taskMinutes ?? 0)}) + Meetings ({formatDuration(stats?.meetingMinutes ?? 0)}) = <strong>{formatDuration(stats?.totalWorkMinutes ?? summary?.totalWorkMinutes)} Work</strong></span>
         </div>
 
         {/* Security Authorization Notice */}

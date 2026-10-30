@@ -12,8 +12,14 @@ const toNavigation = (menus = [], user) =>
   menus.map((group) => {
     let children = group.children?.length
       ? group.children
-          .filter((child) => child.path !== "/administration/permissions")
-          .map((child) => ({ label: child.menuName, path: child.path }))
+        .filter(
+          (child) =>
+            child.path !== "/administration/permissions" &&
+            child.menuCode !== "PAY_STRUCTURE" &&
+            !child.path?.includes("salary-structure") &&
+            !child.path?.includes("payroll/structure")
+        )
+        .map((child) => ({ label: child.menuName, path: child.path }))
       : undefined;
 
     // Check if user is Admin, HR, Manager, or Team Leader
@@ -65,6 +71,29 @@ const toNavigation = (menus = [], user) =>
       }
     }
 
+    const isAttendanceGroup =
+      group.menuCode === "ATTENDANCE" ||
+      group.menuName === "Attendance" ||
+      group.path === "/attendance";
+
+    if (isAttendanceGroup && isSupervisor) {
+      children = children ? [...children] : [];
+      const hasWeekendPolicy = children.some(
+        (c) =>
+          c.path === "/attendance/weekend-policy" ||
+          c.path === "/attendance/weekends" ||
+          c.label === "Weekend Policy"
+      );
+      if (!hasWeekendPolicy) {
+        const shiftIdx = children.findIndex((c) => c.path === "/attendance/shifts");
+        const insertIdx = shiftIdx !== -1 ? shiftIdx + 1 : children.length;
+        children.splice(insertIdx, 0, {
+          label: "Weekend Policy",
+          path: "/attendance/weekend-policy",
+        });
+      }
+    }
+
     return {
       label: group.menuName,
       icon: getMenuIcon(group.icon),
@@ -92,20 +121,17 @@ const ParentMenuItem = ({
       type="button"
       onClick={onClick}
       title={isCollapsed ? label : undefined}
-      className={`group w-full flex items-center rounded-md text-[13px] transition-all duration-150 font-medium select-none outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 ${
-        isCollapsed ? "justify-center p-2" : "gap-2.5 px-2.5 py-1.5"
-      } ${
-        isActive && !hasChildren
+      className={`group w-full flex items-center rounded-md text-[13px] transition-all duration-150 font-medium select-none outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 ${isCollapsed ? "justify-center p-2" : "gap-2.5 px-2.5 py-1.5"
+        } ${isActive && !hasChildren
           ? "bg-blue-50 text-blue-700 font-semibold shadow-sm"
           : "text-slate-600 hover:bg-blue-50/70 hover:text-blue-700"
-      }`}
+        }`}
     >
       <Icon
-        className={`w-4 h-4 shrink-0 transition-colors ${
-          isActive
+        className={`w-4 h-4 shrink-0 transition-colors ${isActive
             ? "text-blue-600"
             : "text-slate-400 group-hover:text-slate-600"
-        }`}
+          }`}
       />
 
       {!isCollapsed && (
@@ -114,9 +140,8 @@ const ParentMenuItem = ({
 
       {!isCollapsed && hasChildren && (
         <ChevronDown
-          className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${
-            isExpanded ? "transform rotate-180" : ""
-          }`}
+          className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${isExpanded ? "transform rotate-180" : ""
+            }`}
         />
       )}
     </button>
@@ -142,10 +167,9 @@ const NestedSubMenu = ({ children, isCollapsed }) => {
           <NavLink
             to={sub.path}
             className={({ isActive }) =>
-              `block px-3 py-1 text-[12px] font-medium rounded-md transition-all duration-150 outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 ${
-                isActive
-                  ? "bg-blue-50 text-blue-700 font-semibold"
-                  : "text-slate-500 hover:text-blue-700 hover:bg-blue-50/60"
+              `block px-3 py-1 text-[12px] font-medium rounded-md transition-all duration-150 outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 ${isActive
+                ? "bg-blue-50 text-blue-700 font-semibold"
+                : "text-slate-500 hover:text-blue-700 hover:bg-blue-50/60"
               }`
             }
           >
@@ -243,9 +267,8 @@ export const Sidebar = ({
       >
         {/* Brand Header */}
         <div
-          className={`h-14 px-4 flex items-center border-b border-slate-100/80 overflow-hidden ${
-            navigationCollapsed ? "justify-center" : "justify-between"
-          }`}
+          className={`h-14 px-4 flex items-center border-b border-slate-100/80 overflow-hidden ${navigationCollapsed ? "justify-center" : "justify-between"
+            }`}
         >
           <div className="flex items-center overflow-hidden">
             {navigationCollapsed ? (
@@ -288,8 +311,8 @@ export const Sidebar = ({
               const hasChildren = !!item.children;
               const isGroupActive = hasChildren
                 ? item.children.some((child) =>
-                    location.pathname.startsWith(child.path),
-                  )
+                  location.pathname.startsWith(child.path),
+                )
                 : location.pathname === item.path;
 
               const isGroupExpanded = !!expandedGroups[item.label];

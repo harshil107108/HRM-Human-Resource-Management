@@ -28,7 +28,11 @@ export function cx(...classNames) {
  * in a consuming component never breaks the layout.
  */
 export function resolveModalWidth(size) {
-  return MODAL_SIZES[size] || MODAL_SIZES[DEFAULT_MODAL_SIZE];
+  if (MODAL_SIZES[size]) return MODAL_SIZES[size];
+  if (typeof size === 'string' && (/^\d+(px|%|vw|rem|em)$/.test(size.trim()))) {
+    return size.trim();
+  }
+  return MODAL_SIZES[DEFAULT_MODAL_SIZE];
 }
 
 export function prefersReducedMotion() {

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+    ensureRowIds,
     getColumnStyle,
     parseColumnWidth,
     normalizeStickyPos,
@@ -74,4 +75,25 @@ test('computeStickyColumnStyles orders columns and calculates offsets correctly'
     assert.equal(style.position, 'sticky');
     assert.equal(style.right, '0px');
     assert.equal(style.width, '80px');
+});
+
+test('ensureRowIds keeps ids stable across repeated syncs of the same rows', () => {
+    const source = [{ name: 'a' }, { name: 'b' }];
+    const first = ensureRowIds(source);
+    const second = ensureRowIds(source);
+    assert.equal(first[0], second[0]);
+    assert.equal(first[1].id, second[1].id);
+    assert.notEqual(first[0].id, first[1].id);
+});
+
+test('ensureRowIds reuses a backend _id so refetched objects keep the same key', () => {
+    const a = ensureRowIds([{ _id: 'abc123', n: 1 }])[0];
+    const b = ensureRowIds([{ _id: 'abc123', n: 2 }])[0];
+    assert.equal(a.id, 'abc123');
+    assert.equal(b.id, 'abc123');
+});
+
+test('ensureRowIds leaves rows that already have an id untouched', () => {
+    const row = { id: 7, name: 'x' };
+    assert.equal(ensureRowIds([row])[0], row);
 });

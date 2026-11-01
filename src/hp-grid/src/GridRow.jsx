@@ -42,6 +42,7 @@ const GridRow = React.memo(function GridRow({
   onRowDragOver,
   onRowDragLeave,
   onRowDrop,
+  pinnedTop,
 }) {
   const dynamicRowClass =
     typeof rowClassName === "function"
@@ -81,11 +82,16 @@ const GridRow = React.memo(function GridRow({
         isSelected ? "hp-grid-row--selected" : "",
         isContextActive ? "hp-grid-row--context-active" : "",
         rowDraggable ? "hp-grid-row--draggable" : "",
+        pinnedTop !== undefined ? "hp-grid-row--pinned" : "",
         dynamicRowClass,
       ]
         .filter(Boolean)
         .join(" ")}
-      style={{ height: rowHeight }}
+      style={
+        pinnedTop !== undefined
+          ? { height: rowHeight, position: "absolute", top: pinnedTop, left: 0 }
+          : { height: rowHeight }
+      }
       draggable={rowDraggable}
       onDragStart={rowDraggable ? (e) => onRowDragStart?.({ event: e, row, rowIndex }) : undefined}
       onDragEnd={rowDraggable ? (e) => onRowDragEnd?.({ event: e, row, rowIndex }) : undefined}

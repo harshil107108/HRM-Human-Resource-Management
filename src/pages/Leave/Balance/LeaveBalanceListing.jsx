@@ -5,12 +5,66 @@ import useLeaveBalanceConfig from "./useLeaveBalanceConfig";
 import useModal from "@/hooks/useModal";
 import LeaveBalanceModal from "./LeaveBalanceModal";
 import useApiCall from "@/hooks/useApiCall";
+import useServerPagedRows from "@/hooks/useServerPagedRows";
 import { api, apiEndpoints } from "@/api/api";
 import useAlert from "@/hooks/useAlert";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/context/AuthContext";
 import { Users, PieChart } from "lucide-react";
 import { formMethod, FormRenderer, useWatch } from "@/form-engine";
+
+// Normalises one balance record for the grid (names + numeric day counts).
+const formatBalanceRow = (item) => {
+    const empName =
+      item.employeeName ||
+      (item.employeeId
+        ? `${item.employeeId.firstName || ""} ${item.employeeId.lastName || ""} (${item.employeeId.employeeId || ""})`
+        : "N/A");
+    const ltName =
+      item.leaveTypeName ||
+      item.leaveType?.typeName ||
+      item.leaveTypeId?.typeName ||
+      item.leaveType?.typeCode ||
+      "N/A";
+    const credited = Number(
+      item.credited !== undefined
+        ? item.credited
+        : item.totalAllocated !== undefined
+        ? item.totalAllocated
+        : 0
+    );
+    const used = Number(
+      item.used !== undefined
+        ? item.used
+        : item.usedDays !== undefined
+        ? item.usedDays
+        : 0
+    );
+    const pending = Number(
+      item.pending !== undefined
+        ? item.pending
+        : item.pendingDays !== undefined
+        ? item.pendingDays
+        : 0
+    );
+    const remaining = Number(
+      item.remaining !== undefined
+        ? item.remaining
+        : item.balanceDays !== undefined
+        ? item.balanceDays
+        : Math.max(0, credited - used)
+    );
+
+    return {
+      ...item,
+      employeeName: empName,
+      leaveTypeName: ltName,
+      credited,
+      used,
+      pending,
+      remaining,
+    };
+};
 
 const LeaveBalanceListing = () => {
   const { apiCall, isPending } = useApiCall();
@@ -23,7 +77,6 @@ const LeaveBalanceListing = () => {
     ["SUPER_ADMIN", "ADMIN", "HR"].includes(userRole);
 
   const [employeeList, setEmployeeList] = useState([]);
-  const [balanceData, setBalanceData] = useState([]);
 
   // Form instance for employee filter using formMethod selectWrapper
   const employeeFilterForm = useMemo(() => {
@@ -66,6 +119,15 @@ const LeaveBalanceListing = () => {
 
   const selectedEmployeeId = useWatch(employeeFilterForm, "employeeId") || "";
 
+  // Balances arrive a page at a time; search, column filters and the
+  // employee dropdown are applied on the server so they cover every record.
+  const balances = useServerPagedRows({
+    api: api + apiEndpoints.leave.balance.BalanceGetData,
+    params: isAdmin && selectedEmployeeId ? { employeeId: selectedEmployeeId } : {},
+    mapRow: formatBalanceRow,
+  });
+  const balanceData = balances.rows;
+
   const handleDelete = (id) => {
     deleteAlert({
       title: "Delete Leave Balance?",
@@ -84,7 +146,7 @@ const LeaveBalanceListing = () => {
             title: "Balance Deleted",
             text: "Leave balance record deleted successfully.",
           });
-          getLeaveBalanceListing(selectedEmployeeId);
+          balances.reload();
         }
       },
     });
@@ -111,79 +173,6 @@ const LeaveBalanceListing = () => {
       });
     }
   }, [isAdmin]);
-
-  const getLeaveBalanceListing = async (empId = selectedEmployeeId) => {
-    const payload = {};
-    if (isAdmin && empId) {
-      payload.employeeId = empId;
-    }
-
-    const res = await apiCall({
-      id: "getLeaveBalanceListing",
-      api: api + apiEndpoints.leave.balance.BalanceGetData,
-      payload,
-    });
-
-    if (res?.success) {
-      const data = res.data?.data || [];
-      const formatted = data.map((item) => {
-        const empName =
-          item.employeeName ||
-          (item.employeeId
-            ? `${item.employeeId.firstName || ""} ${item.employeeId.lastName || ""} (${item.employeeId.employeeId || ""})`
-            : "N/A");
-        const ltName =
-          item.leaveTypeName ||
-          item.leaveType?.typeName ||
-          item.leaveTypeId?.typeName ||
-          item.leaveType?.typeCode ||
-          "N/A";
-        const credited = Number(
-          item.credited !== undefined
-            ? item.credited
-            : item.totalAllocated !== undefined
-            ? item.totalAllocated
-            : 0
-        );
-        const used = Number(
-          item.used !== undefined
-            ? item.used
-            : item.usedDays !== undefined
-            ? item.usedDays
-            : 0
-        );
-        const pending = Number(
-          item.pending !== undefined
-            ? item.pending
-            : item.pendingDays !== undefined
-            ? item.pendingDays
-            : 0
-        );
-        const remaining = Number(
-          item.remaining !== undefined
-            ? item.remaining
-            : item.balanceDays !== undefined
-            ? item.balanceDays
-            : Math.max(0, credited - used)
-        );
-
-        return {
-          ...item,
-          employeeName: empName,
-          leaveTypeName: ltName,
-          credited,
-          used,
-          pending,
-          remaining,
-        };
-      });
-      setBalanceData(formatted);
-    }
-  };
-
-  useEffect(() => {
-    getLeaveBalanceListing(selectedEmployeeId);
-  }, [selectedEmployeeId]);
 
   const handleAdd = () => {
     onModalOpen({ mode: "add" });
@@ -275,7 +264,7 @@ const LeaveBalanceListing = () => {
         <LeaveBalanceModal
           open={isModalOpen}
           onModalClose={onModalClose}
-          onSaved={() => getLeaveBalanceListing(selectedEmployeeId)}
+          onSaved={balances.reload}
           extraParams={extraParams}
         />
       )}
@@ -293,6 +282,15 @@ const LeaveBalanceListing = () => {
         toolbarRight={toolbarRightControls}
         searchable={true}
         columnFilterable={true}
+        serverSide
+        onSearchChange={balances.setSearch}
+        onColumnFiltersChange={balances.setFilters}
+        onLoadMore={balances.loadMore}
+        hasMore={balances.hasMore}
+        loadingMore={balances.loadingMore}
+        loadMoreError={balances.loadMoreError}
+        onRetryLoadMore={balances.retryLoadMore}
+        totalCount={balances.total}
         rowClassName={(row) => {
           const remaining = Number(
             row?.remaining !== undefined ? row.remaining : row?.balanceDays
@@ -301,9 +299,7 @@ const LeaveBalanceListing = () => {
           if (remaining === 1) return "hp-grid-row--leave-warning";
           return "";
         }}
-        panding={
-          isPending("deleteLeaveBalance") || isPending("getLeaveBalanceListing")
-        }
+        panding={isPending("deleteLeaveBalance") || balances.loading}
       />
     </>
   );

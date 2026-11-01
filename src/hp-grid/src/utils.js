@@ -33,14 +33,28 @@ export function generateUUID() {
  * stable identity automatically, without the consumer having to manage
  * ids themselves.
  */
+// Source row -> the copy that carries an id. Without this, handing the same
+// row objects to the grid twice minted a fresh UUID (and a new object) for
+// every row each time, so every row was remounted on every data sync.
+const rowsWithId = new WeakMap();
+
 export function ensureRowIds(rows) {
   if (!Array.isArray(rows)) {
     if (rows && Array.isArray(rows.data)) return ensureRowIds(rows.data);
     return [];
   }
-  return rows.map((row) =>
-    row && row.id != null ? row : { ...row, id: generateUUID() },
-  );
+  return rows.map((row) => {
+    if (row && row.id != null) return row;
+    if (!row || typeof row !== "object") return { id: generateUUID() };
+    let withId = rowsWithId.get(row);
+    if (!withId) {
+      // Backend documents carry `_id`; reusing it keeps the key stable even
+      // when a refetch hands back brand-new objects for the same records.
+      withId = { ...row, id: row._id != null ? String(row._id) : generateUUID() };
+      rowsWithId.set(row, withId);
+    }
+    return withId;
+  });
 }
 
 export function parseColumnWidth(value, fallback = 120) {

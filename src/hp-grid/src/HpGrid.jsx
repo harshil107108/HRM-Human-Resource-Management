@@ -5,6 +5,7 @@ import React, {
   useLayoutEffect,
   useCallback,
   useMemo,
+  useDeferredValue,
 } from "react";
 import { flushSync } from "react-dom";
 import { registerGrid, unregisterGrid } from "./GridRegistry";
@@ -15,6 +16,11 @@ import { LayoutGrid, List, ChevronRight, ChevronDown, ChevronsUpDown, ChevronsDo
 import { useRouteAccess } from "@/context/RouteAccessContext";
 import NoPermission from "@/components/common/NoPermission";
 import { generateUUID, ensureRowIds, getColumnStyle, computeStickyColumnStyles } from "./utils";
+import {
+  VIRTUALIZE_THRESHOLD,
+  computeWindow,
+  scrollTopToReveal,
+} from "./virtualization";
 import { Lottie } from "lottie-react";
 import loadingAnimation from "../../assets/images/Animation.json";
 import noDataImage from "../../assets/images/Nodata.avif";
@@ -249,6 +255,20 @@ function HpGridBase(props) {
     // ---- row identity, used by applyTransaction's update/remove matching ----
     // Defaults to `row.id`. Provide this if your rows don't have an `id` field.
     getRowId,
+
+    // ---- server-side paging + infinite scroll (all optional) ----
+    // The grid never fetches by itself. When the user scrolls near the end of
+    // the loaded rows it calls onLoadMore(); the owner (see
+    // useServerPagedRows) fetches the next page and appends it to `rowData`.
+    onLoadMore, // () => void
+    hasMore = false, // more pages exist on the server
+    loadingMore = false, // a next-page request is in flight
+    loadMoreError = null, // truthy (message string ok) when the last next-page request failed
+    onRetryLoadMore, // () => void
+    totalCount, // optional total on the server, shown once everything is loaded
+    // true when the server already applied search / column filters, so the
+    // grid must not filter the loaded rows a second time.
+    serverSide = false,
   } = props;
 
   const isLoading = pending || panding;
@@ -490,20 +510,65 @@ function HpGridBase(props) {
     if (typeof onColumnFiltersChange === "function") onColumnFiltersChange({});
   }, [onColumnFiltersChange]);
 
+  // Event-time callbacks are read through a ref so their identity never
+  // changes. Pages usually build these inline, and a new function per render
+  // would otherwise defeat React.memo on every GridRow (every row would
+  // re-render whenever the page re-rendered).
+  const latestHandlersRef = useRef({});
+  useLayoutEffect(() => {
+    latestHandlersRef.current = {
+      onContextMenu,
+      contextData,
+      onDoubleClick,
+      onRowDragStart,
+      onRowDragEnd,
+      onRowDragOver,
+      onRowDragLeave,
+      onRowDrop,
+      onLoadMore,
+    };
+  });
+  const handleStableDoubleClick = useCallback(
+    (...args) => latestHandlersRef.current.onDoubleClick?.(...args),
+    [],
+  );
+  const handleStableRowDragStart = useCallback(
+    (...args) => latestHandlersRef.current.onRowDragStart?.(...args),
+    [],
+  );
+  const handleStableRowDragEnd = useCallback(
+    (...args) => latestHandlersRef.current.onRowDragEnd?.(...args),
+    [],
+  );
+  const handleStableRowDragOver = useCallback(
+    (...args) => latestHandlersRef.current.onRowDragOver?.(...args),
+    [],
+  );
+  const handleStableRowDragLeave = useCallback(
+    (...args) => latestHandlersRef.current.onRowDragLeave?.(...args),
+    [],
+  );
+  const handleStableRowDrop = useCallback(
+    (...args) => latestHandlersRef.current.onRowDrop?.(...args),
+    [],
+  );
+
   const handleRowContextMenu = useCallback(
     ({ event, row, rowIndex, data, colDef: rowColDef }) => {
-      if (typeof onContextMenu === "function") {
-        onContextMenu({ event, row, rowIndex, data, colDef: rowColDef });
+      const { onContextMenu: externalListener, contextData: menuSource } =
+        latestHandlersRef.current;
+      if (typeof externalListener === "function") {
+        externalListener({ event, row, rowIndex, data, colDef: rowColDef });
       }
 
-      if (!contextData) return;
+      if (!menuSource) return;
 
       let items = [];
-      if (typeof contextData === "function") {
+      if (typeof menuSource === "function") {
         items =
-          contextData({ row, rowIndex, data, event, colDef: rowColDef }) || [];
-      } else if (Array.isArray(contextData)) {
-        items = contextData;
+          menuSource({ row, rowIndex, data, event, colDef: rowColDef }) || [];
+      } else if (Array.isArray(menuSource)) {
+        items = menuSource;
       }
 
       if (items && items.length > 0) {
@@ -518,7 +583,7 @@ function HpGridBase(props) {
         });
       }
     },
-    [contextData, onContextMenu],
+    [],
   );
 
   const handleCloseContextMenu = useCallback(() => {
@@ -527,6 +592,14 @@ function HpGridBase(props) {
 
   // rowIndex-colIndex -> actual focusable DOM node
   const cellRefs = useRef({});
+  // Row windowing hand-off (filled in once displayRows exists, further down)
+  // and the focus request waiting for a scrolled-to row to mount.
+  const virtualRef = useRef(null);
+  const pendingFocusRef = useRef(null);
+  // Row index of an editable cell that currently has focus. That row stays
+  // mounted even if scrolled out of the window, so text typed into it but
+  // not yet committed (Enter / blur) is never discarded by unmounting.
+  const [editingRowIndex, setEditingRowIndex] = useState(null);
   const registerCellRef = useCallback((rowIndex, colIndex, node) => {
     const key = `${rowIndex}-${colIndex}`;
     if (node) cellRefs.current[key] = node;
@@ -579,6 +652,7 @@ function HpGridBase(props) {
 
   const handleCellBlur = useCallback(
     (rowIndex, colIndex, col, value) => {
+      setEditingRowIndex((current) => (current === rowIndex ? null : current));
       const updatedRow = {
         ...rowDataRef.current[rowIndex],
         [col.field]: value,
@@ -593,6 +667,13 @@ function HpGridBase(props) {
 
   const handleCellFocus = useCallback((rowIndex, colIndex) => {
     setFocusedCell({ rowIndex, colIndex });
+    const col = colDefRef.current[colIndex];
+    const row = rowDataRef.current[rowIndex];
+    const editable =
+      typeof col?.editable === "function"
+        ? !!col.editable(row, rowIndex)
+        : !!col?.editable;
+    setEditingRowIndex(editable ? rowIndex : null);
   }, []);
 
   /* ----------------------------------------------------------------
@@ -638,6 +719,19 @@ function HpGridBase(props) {
       node.focus();
       setFocusedCell({ rowIndex, colIndex });
       return true;
+    }
+    // Row isn't mounted because it's outside the virtual window: scroll it
+    // into view and let the layout effect below focus it once it mounts.
+    const virtual = virtualRef.current;
+    if (virtual?.enabled) {
+      const position = virtual.displayRows.findIndex(
+        (item) => item.rowIndex === rowIndex,
+      );
+      if (position !== -1) {
+        pendingFocusRef.current = { rowIndex, colIndex };
+        virtual.scrollToIndex(position);
+        return true;
+      }
     }
     return false;
   }, []);
@@ -1152,22 +1246,42 @@ function HpGridBase(props) {
     [rowClassName, expand]
   );
 
+  // Filtering walks every loaded row, so it runs on deferred values: the
+  // search box / filter inputs update instantly and the (potentially
+  // thousands-of-rows) filter pass yields to typing instead of blocking it.
+  // With `serverSide` the server already filtered, so the grid must not.
+  const deferredSearchTerm = useDeferredValue(searchTerm);
+  const deferredColumnFilters = useDeferredValue(columnFilters);
+  const deferredFilterFields = useMemo(
+    () =>
+      Object.keys(deferredColumnFilters).filter(
+        (field) =>
+          deferredColumnFilters[field] !== "" &&
+          deferredColumnFilters[field] != null,
+      ),
+    [deferredColumnFilters],
+  );
+
   const displayRows = useMemo(() => {
     if (expand && treeModel) {
       const { roots } = treeModel;
       const flattened = [];
-      const term = searchable && searchTerm.trim() ? searchTerm.trim().toLowerCase() : "";
-      const hasColumnFilters = columnFilterable && activeColumnFilterFields.length > 0;
+      const term =
+        !serverSide && searchable && deferredSearchTerm.trim()
+          ? deferredSearchTerm.trim().toLowerCase()
+          : "";
+      const hasColumnFilters =
+        !serverSide && columnFilterable && deferredFilterFields.length > 0;
 
       const rowMatchesFilters = (r) => {
         if (!hasColumnFilters) return true;
-        return activeColumnFilterFields.every((field) => {
+        return deferredFilterFields.every((field) => {
           const col = colDef.find((c) => c.field === field);
           if (!col) return true;
           const filterType = getColumnFilterType(col);
           return matchesColumnFilter(
             r[field],
-            columnFilters[field],
+            deferredColumnFilters[field],
             filterType,
             col,
           );
@@ -1217,8 +1331,8 @@ function HpGridBase(props) {
 
     let indexed = safeRowData.map((row, rowIndex) => ({ row, rowIndex }));
 
-    if (searchable && searchTerm.trim()) {
-      const term = searchTerm.trim().toLowerCase();
+    if (!serverSide && searchable && deferredSearchTerm.trim()) {
+      const term = deferredSearchTerm.trim().toLowerCase();
       indexed = indexed.filter(({ row }) =>
         colDef.some((col) =>
           String(row[col.field] ?? "")
@@ -1228,15 +1342,15 @@ function HpGridBase(props) {
       );
     }
 
-    if (columnFilterable && activeColumnFilterFields.length) {
+    if (!serverSide && columnFilterable && deferredFilterFields.length) {
       indexed = indexed.filter(({ row }) =>
-        activeColumnFilterFields.every((field) => {
+        deferredFilterFields.every((field) => {
           const col = colDef.find((c) => c.field === field);
           if (!col) return true;
           const filterType = getColumnFilterType(col);
           return matchesColumnFilter(
             row[field],
-            columnFilters[field],
+            deferredColumnFilters[field],
             filterType,
             col,
           );
@@ -1252,10 +1366,11 @@ function HpGridBase(props) {
     rowData,
     colDef,
     searchable,
-    searchTerm,
+    deferredSearchTerm,
     columnFilterable,
-    columnFilters,
-    activeColumnFilterFields,
+    deferredColumnFilters,
+    deferredFilterFields,
+    serverSide,
   ]);
 
   const handleSearchChange = (value) => {
@@ -1443,6 +1558,192 @@ function HpGridBase(props) {
     colDef.every(
       (column) => column.width !== undefined && column.width !== null,
     );
+
+  /* ----------------------------------------------------------------
+   * Row virtualization (list view only)
+   *   Above VIRTUALIZE_THRESHOLD rows, only the rows in the viewport
+   *   (+ overscan) are mounted. Rows are a fixed height, so the window is
+   *   plain arithmetic on the scroll position; padding above and a spacer
+   *   below keep the scrollbar and scroll position exact.
+   * ---------------------------------------------------------------- */
+  const bodyRef = useRef(null);
+  const sentinelRef = useRef(null);
+  const virtualEnabled =
+    !isCardView && displayRows.length > VIRTUALIZE_THRESHOLD;
+  // Distance between two row tops. Measured from the DOM once rows exist
+  // (it includes the row border and any responsive CSS override); until
+  // then rowHeight + the 1px border is the best guess.
+  const [rowStride, setRowStride] = useState(rowHeight + 1);
+  const [windowRange, setWindowRange] = useState({ start: 0, end: 0 });
+
+  const measureWindow = useCallback(() => {
+    const area = scrollAreaRef.current;
+    const body = bodyRef.current;
+    if (!area || !body) return;
+    const next = computeWindow({
+      scrollTop:
+        area.getBoundingClientRect().top - body.getBoundingClientRect().top,
+      viewportHeight: area.clientHeight,
+      rowStride,
+      rowCount: displayRows.length,
+    });
+    setWindowRange((prev) =>
+      prev.start === next.start && prev.end === next.end ? prev : next,
+    );
+  }, [rowStride, displayRows.length]);
+
+  useLayoutEffect(() => {
+    if (!virtualEnabled) return undefined;
+    const area = scrollAreaRef.current;
+    if (!area) return undefined;
+
+    let frame = 0;
+    const schedule = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        measureWindow();
+      });
+    };
+    area.addEventListener("scroll", schedule, { passive: true });
+    const resizeObserver = new ResizeObserver(schedule);
+    resizeObserver.observe(area);
+    measureWindow(); // synchronous first pass, before paint: no blank flash
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      area.removeEventListener("scroll", schedule);
+      resizeObserver.disconnect();
+    };
+  }, [virtualEnabled, measureWindow]);
+
+  const windowStart = virtualEnabled
+    ? Math.min(windowRange.start, displayRows.length)
+    : 0;
+  const windowEnd = virtualEnabled
+    ? Math.min(windowRange.end, displayRows.length)
+    : displayRows.length;
+
+  // Re-measure the real row stride after rows mount.
+  useLayoutEffect(() => {
+    if (!virtualEnabled) return;
+    const firstRow = bodyRef.current?.querySelector(":scope > .hp-grid-row");
+    if (!firstRow) return;
+    const measured =
+      Math.round(firstRow.getBoundingClientRect().height * 100) / 100;
+    if (measured > 0 && Math.abs(measured - rowStride) > 0.01) {
+      setRowStride(measured);
+    }
+  }, [virtualEnabled, windowStart, windowEnd, rowStride, scrollAreaWidth]);
+
+  const scrollToIndex = useCallback(
+    (position) => {
+      const area = scrollAreaRef.current;
+      const body = bodyRef.current;
+      if (!area || !body) return;
+      const target = scrollTopToReveal({
+        index: position,
+        rowStride,
+        bodyTop:
+          body.getBoundingClientRect().top -
+          area.getBoundingClientRect().top +
+          area.scrollTop,
+        stickyTop:
+          (area.querySelector(".hp-grid-header")?.offsetHeight || 0) +
+          (area.querySelector(".hp-grid-header-filters")?.offsetHeight || 0),
+        scrollTop: area.scrollTop,
+        viewportHeight: area.clientHeight,
+      });
+      if (target !== null) {
+        area.scrollTop = target;
+        measureWindow(); // mount the target row in this same update
+      }
+    },
+    [rowStride, measureWindow],
+  );
+
+  useLayoutEffect(() => {
+    virtualRef.current = { enabled: virtualEnabled, displayRows, scrollToIndex };
+  }, [virtualEnabled, displayRows, scrollToIndex]);
+
+  // Finish a keyboard move into a row that had to be scrolled into view.
+  // Deliberately runs after every render (it is a no-op unless a focus
+  // request is pending) so the request completes on whichever render
+  // mounts the target row.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => {
+    const pending = pendingFocusRef.current;
+    if (!pending) return;
+    pendingFocusRef.current = null;
+    const node = cellRefs.current[`${pending.rowIndex}-${pending.colIndex}`];
+    if (node && typeof node.focus === "function") {
+      node.focus();
+      setFocusedCell(pending);
+    }
+  });
+
+  // Footer rows ("loading more" / retry / end) stay in view while the grid
+  // scrolls sideways, like the empty-state image does.
+  const loadMoreStyle =
+    !isCardView && scrollAreaWidth > 0
+      ? {
+          position: "sticky",
+          left: 0,
+          width: `${scrollAreaWidth}px`,
+          maxWidth: `${scrollAreaWidth}px`,
+        }
+      : { gridColumn: "1 / -1" };
+
+  // A row being edited stays mounted even when scrolled out of the window.
+  let pinnedRow = null;
+  let pinnedPosition = -1;
+  if (virtualEnabled && editingRowIndex !== null) {
+    pinnedPosition = displayRows.findIndex(
+      (item) => item.rowIndex === editingRowIndex,
+    );
+    if (
+      pinnedPosition !== -1 &&
+      (pinnedPosition < windowStart || pinnedPosition >= windowEnd)
+    ) {
+      pinnedRow = displayRows[pinnedPosition];
+    }
+  }
+
+  /* ----------------------------------------------------------------
+   * Infinite scroll
+   *   An IntersectionObserver watches a sentinel that sits after the last
+   *   row (and after the virtual spacer), so it only intersects when the
+   *   user is genuinely near the end of everything loaded. No scroll-event
+   *   math. The observer exists only while a load is allowed, and
+   *   disconnects the moment it fires, so a page can't be requested twice.
+   * ---------------------------------------------------------------- */
+  const infiniteScrollEnabled = typeof onLoadMore === "function";
+  const canLoadMore =
+    infiniteScrollEnabled &&
+    hasMore &&
+    !loadingMore &&
+    !loadMoreError &&
+    !isLoading;
+
+  useEffect(() => {
+    if (!canLoadMore) return undefined;
+    const sentinel = sentinelRef.current;
+    const root = scrollAreaRef.current;
+    if (!sentinel || !root) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer.disconnect();
+        latestHandlersRef.current.onLoadMore?.();
+      },
+      { root, rootMargin: "0px 0px 400px 0px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+    // displayRows.length: a loaded page that still leaves the sentinel in
+    // view must re-arm the observer to fetch the next one.
+  }, [canLoadMore, displayRows.length]);
 
   return (
     <div
@@ -1633,7 +1934,13 @@ function HpGridBase(props) {
 
 
             <div
+              ref={bodyRef}
               className={`hp-grid-body ${isCardView ? "hp-grid-body--cards hp-grid-card-view" : ""}`}
+              style={
+                virtualEnabled
+                  ? { paddingTop: windowStart * rowStride }
+                  : undefined
+              }
             >
               {isLoading && (
                 <div
@@ -1901,7 +2208,10 @@ function HpGridBase(props) {
                     </article>
                   );
                 })
-                : displayRows.map(({ row, rowIndex }) => (
+                : (virtualEnabled
+                  ? displayRows.slice(windowStart, windowEnd)
+                  : displayRows
+                ).concat(pinnedRow ? [{ ...pinnedRow, pinned: true }] : []).map(({ row, rowIndex, pinned }) => (
                   <GridRow
                     key={row._rowKey ?? row.id ?? rowIndex}
                     row={row}
@@ -1921,19 +2231,63 @@ function HpGridBase(props) {
                     onCellBlur={handleCellBlur}
                     onCellFocus={handleCellFocus}
                     onCellKeyDown={handleCellKeyDown}
-                    onDoubleClick={onDoubleClick}
+                    onDoubleClick={handleStableDoubleClick}
                     onContextMenu={handleRowContextMenu}
                     isContextActive={contextMenu?.rowIndex === rowIndex}
                     rowHeight={rowHeight}
                     rowClassName={resolvedRowClassName}
                     rowDraggable={rowDraggable}
-                    onRowDragStart={onRowDragStart}
-                    onRowDragEnd={onRowDragEnd}
-                    onRowDragOver={onRowDragOver}
-                    onRowDragLeave={onRowDragLeave}
-                    onRowDrop={onRowDrop}
+                    onRowDragStart={handleStableRowDragStart}
+                    onRowDragEnd={handleStableRowDragEnd}
+                    onRowDragOver={handleStableRowDragOver}
+                    onRowDragLeave={handleStableRowDragLeave}
+                    onRowDrop={handleStableRowDrop}
+                    pinnedTop={pinned ? pinnedPosition * rowStride : undefined}
                   />
                 ))}
+
+              {virtualEnabled && (
+                <div
+                  aria-hidden="true"
+                  style={{ height: (displayRows.length - windowEnd) * rowStride }}
+                />
+              )}
+
+              {infiniteScrollEnabled && (
+                <>
+                  <div
+                    ref={sentinelRef}
+                    className="hp-grid-sentinel"
+                    aria-hidden="true"
+                  />
+                  {loadingMore && (
+                    <div
+                      className="hp-grid-load-more"
+                      role="status"
+                      style={loadMoreStyle}
+                    >
+                      <span className="hp-grid-load-more-spinner" />
+                      Loading more records...
+                    </div>
+                  )}
+                  {!loadingMore && loadMoreError && (
+                    <div
+                      className="hp-grid-load-more hp-grid-load-more--error"
+                      role="alert"
+                      style={loadMoreStyle}
+                    >
+                      <span>
+                        {typeof loadMoreError === "string"
+                          ? loadMoreError
+                          : "Couldn't load more records."}
+                      </span>
+                      <button type="button" onClick={onRetryLoadMore}>
+                        Retry
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -2005,34 +2359,47 @@ function HpGrid(props) {
     });
   }, [colDef, canEdit, canDelete]);
 
+  // Pages pass these as fresh inline functions on every render. They are only
+  // invoked on user events, so read the latest through a ref and hand the
+  // grid a function whose identity never changes - otherwise every row's
+  // React.memo is defeated each time the page re-renders.
+  const latestRef = useRef({});
+  useLayoutEffect(() => {
+    latestRef.current = { onAddClick, onDoubleClick, onCardClick, contextData };
+  });
+
   const handleAddClick = useCallback(
     (...args) => {
       setIntent("add");
-      return onAddClick?.(...args);
+      return latestRef.current.onAddClick?.(...args);
     },
-    [onAddClick, setIntent],
+    [setIntent],
   );
 
   const handleDoubleClick = useCallback(
     (...args) => {
       setIntent("edit");
-      return onDoubleClick?.(...args);
+      return latestRef.current.onDoubleClick?.(...args);
     },
-    [onDoubleClick, setIntent],
+    [setIntent],
   );
 
   const handleCardClick = useCallback(
     (...args) => {
       setIntent("edit");
-      return onCardClick?.(...args);
+      return latestRef.current.onCardClick?.(...args);
     },
-    [onCardClick, setIntent],
+    [setIntent],
   );
 
+  // Only whether a menu exists matters for identity; its items are read
+  // fresh from the latest prop each time a menu is opened.
+  const hasContextData = Boolean(contextData);
   const gridContextData = useMemo(() => {
-    if (!contextData) return contextData;
+    if (!hasContextData) return undefined;
     return (params) => {
-      const items = typeof contextData === "function" ? contextData(params) : contextData;
+      const source = latestRef.current.contextData;
+      const items = typeof source === "function" ? source(params) : source;
       const adjusted = (items || []).map((item) => {
         if (!item || item.divider) return item;
         switch (item.permission) {
@@ -2057,7 +2424,7 @@ function HpGrid(props) {
       });
       return tidyMenuItems(adjusted, params?.row, params?.rowIndex);
     };
-  }, [contextData, canAdd, canEdit, canDelete, setIntent]);
+  }, [hasContextData, canAdd, canEdit, canDelete, setIntent]);
 
   if (!canView) {
     return (

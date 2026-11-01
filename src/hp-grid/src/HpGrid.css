@@ -1604,3 +1604,64 @@
   z-index: 26 !important;
   background-color: var(--hpg-header-bg, #eef3fb) !important;
 }
+/* ------------- virtualization + infinite scroll ------------- */
+/* An edited row that scrolled out of the virtual window stays mounted so
+   uncommitted text isn't lost; it is positioned at its true offset. */
+.hp-grid-row--pinned {
+  z-index: 1;
+  background: #ffffff;
+}
+
+.hp-grid-sentinel {
+  height: 1px;
+  pointer-events: none;
+}
+
+.hp-grid-load-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.hp-grid-load-more--end {
+  color: #94a3b8;
+}
+
+.hp-grid-load-more--error {
+  color: #b91c1c;
+}
+
+.hp-grid-load-more--error button {
+  border: 1px solid #fca5a5;
+  background: #ffffff;
+  color: #b91c1c;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hp-grid-load-more--error button:hover {
+  background: #fef2f2;
+}
+
+.hp-grid-load-more-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #cbd5e1;
+  border-top-color: #14b8a6;
+  border-radius: 50%;
+  animation: hp-grid-spin 700ms linear infinite;
+}
+
+@keyframes hp-grid-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

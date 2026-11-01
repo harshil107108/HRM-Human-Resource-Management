@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import useAssetConfig from "./useAssetConfig";
 import useAlert from "@/hooks/useAlert";
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { Package, CheckCircle2, UserCheck, Wrench, AlertTriangle, Trash2 } from "lucide-react";
 import { api, apiEndpoints } from "@/api/api";
 import useApiCall from "@/hooks/useApiCall";
 import { formatDateForInput } from "@/utils/dateUtils";
@@ -154,7 +155,7 @@ const AssetListing = () => {
         id: "totalAssets",
         title: "Total Assets",
         value: AssetListingData.length.toLocaleString(),
-        icon: "▣",
+        icon: <Package size={20} />,
         type: "blue",
         status: "",
         isDraggable: false,
@@ -164,7 +165,7 @@ const AssetListing = () => {
         id: "available",
         title: "Available",
         value: getStatusCount("AVAILABLE").toLocaleString(),
-        icon: "✓",
+        icon: <CheckCircle2 size={20} />,
         type: "green",
         status: "AVAILABLE",
         isDraggable: true,
@@ -174,7 +175,7 @@ const AssetListing = () => {
         id: "assigned",
         title: "Assigned",
         value: getStatusCount("ASSIGNED").toLocaleString(),
-        icon: "♙",
+        icon: <UserCheck size={20} />,
         type: "purple",
         status: "ASSIGNED",
         isDraggable: true,
@@ -184,7 +185,7 @@ const AssetListing = () => {
         id: "underRepair",
         title: "Under Repair",
         value: getStatusCount("UNDER_REPAIR").toLocaleString(),
-        icon: "🔧",
+        icon: <Wrench size={20} />,
         type: "orange",
         status: "UNDER_REPAIR",
         isDraggable: true,
@@ -194,7 +195,7 @@ const AssetListing = () => {
         id: "lost",
         title: "Lost",
         value: getStatusCount("LOST").toLocaleString(),
-        icon: "!",
+        icon: <AlertTriangle size={20} />,
         type: "red",
         status: "LOST",
         isDraggable: true,
@@ -204,7 +205,7 @@ const AssetListing = () => {
         id: "disposed",
         title: "Disposed",
         value: getStatusCount("DISPOSED").toLocaleString(),
-        icon: "✓",
+        icon: <Trash2 size={20} />,
         type: "cyan",
         status: "DISPOSED",
         isDraggable: true,

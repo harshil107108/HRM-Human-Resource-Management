@@ -127,6 +127,38 @@ grid.focusOnCellIndex(2, "name"); // by row INDEX (position) + field/col name
 | `enterKeyMovement`  | `'right' \| 'down'`                                                       | What Enter does after committing a value. `'right'` (default): moves to the next column, same row, wrapping to the next row's first column at the end. `'down'`: classic spreadsheet behaviour, same column next row                                                |
 | `getRowId`          | `(row) => string \| number`                                               | How `applyTransaction`'s `update`/`remove` match rows. Defaults to `row.id`                                                                                                                                                                                         |
 
+### Large lists: virtualization and server paging
+
+**Row virtualization is automatic.** In list view, once a grid holds more
+than 100 rows (`VIRTUALIZE_THRESHOLD` in `virtualization.js`) only the rows in
+the viewport plus a small overscan are mounted; the scrollbar and scroll
+position still reflect the full list. Grids with 100 rows or fewer render
+exactly as before. Rows must keep their fixed height (`rowHeight`). A cell
+being edited stays mounted even if scrolled out of view, so uncommitted text is
+never lost, and arrow-key navigation scrolls the next row into view.
+
+**Infinite scroll + server paging is opt-in.** The grid never fetches; give it
+these props and it calls `onLoadMore()` when the user nears the end of the
+loaded rows (an `IntersectionObserver`, no scroll math):
+
+| Prop              | Type                        | Description                                                                                                        |
+| ----------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `onLoadMore`      | `() => void`                | Enables infinite scroll. Called when more rows are needed                                                          |
+| `hasMore`         | `boolean`                   | More pages exist; when `false` the end-of-list note is shown                                                       |
+| `loadingMore`     | `boolean`                   | A next-page request is in flight (shows a small inline indicator, not the full-grid loader)                         |
+| `loadMoreError`   | `string \| truthy`          | The last next-page request failed; shows an inline message with **Retry**                                          |
+| `onRetryLoadMore` | `() => void`                | Retry button handler                                                                                               |
+| `totalCount`      | `number`                    | Optional server total, shown in the end-of-list note                                                               |
+| `serverSide`      | `boolean`                   | The server already applied search / column filters, so the grid must not filter the loaded rows again               |
+
+Use `hooks/useServerPagedRows` to wire a paged endpoint to these props: it
+sends `{ page, limit, search, filters }`, resets to page 1 when the query
+changes, drops stale responses, de-duplicates by `_id`, and never has two
+pages in flight. Backend contract: `HRM-backend/utils/pagination.js` (an
+endpoint is paged only when the request carries `limit`; without it the
+endpoint returns the full list as before). Reference implementations:
+`Attendance/Logs` and `Leave/Balance`.
+
 ### List and card views
 
 The card view is opt-in so existing `HpGrid` consumers keep their current

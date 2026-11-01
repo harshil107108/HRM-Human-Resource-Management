@@ -105,7 +105,10 @@ const AttendanceLogModal = ({
                     getLogById();
                 }
             } else {
-                formInstance.methods.setValues(initialValue);
+                formInstance.methods.setValues({
+                    ...initialValue,
+                    ...(extraParams?.defaultDate ? { date: extraParams.defaultDate } : {}),
+                });
             }
         }
     }, [open, logId, data]);

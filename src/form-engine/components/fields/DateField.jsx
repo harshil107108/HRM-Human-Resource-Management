@@ -191,7 +191,7 @@ function ChevronIcon({ direction = "left", ...props }) {
   );
 }
 
-export default function DateField({ field, form, ...standaloneProps }) {
+export default function DateField({ field, form, formMethod: formMethodProp, ...standaloneProps }) {
   const {
     id = "date-field",
     label,
@@ -208,14 +208,15 @@ export default function DateField({ field, form, ...standaloneProps }) {
     className = "",
     wrapperClassName = "",
   } = field || standaloneProps;
-  const store = form || EMPTY_FORM_STORE;
+  const activeForm = form || formMethodProp;
+  const store = activeForm || EMPTY_FORM_STORE;
   const formValue = useFormStore(store, (snapshot) => snapshot.values[id]);
   const formError = useFormStore(store, (snapshot) => snapshot.errors[id]);
-  const controlledValue = form ? formValue : standaloneValue;
-  const onChange = form
-    ? (nextValue) => form.methods.setValue(id, nextValue)
+  const controlledValue = activeForm ? formValue : standaloneValue;
+  const onChange = activeForm
+    ? (nextValue) => activeForm.methods.setValue(id, nextValue)
     : standaloneOnChange;
-  const onBlur = form ? () => form.methods.blurField(id) : standaloneOnBlur;
+  const onBlur = activeForm ? () => activeForm.methods.blurField(id) : standaloneOnBlur;
   const isControlled = controlledValue !== undefined;
   const [innerValue, setInnerValue] = useState("");
   const value = isControlled ? controlledValue : innerValue;
@@ -671,7 +672,7 @@ export default function DateField({ field, form, ...standaloneProps }) {
 
       setCalendarPosition({
         top: fieldBounds.bottom + 4,
-        left: fieldBounds.left,
+        left: typeof window !== 'undefined' ? Math.max(8, Math.min(fieldBounds.left, window.innerWidth - 272)) : fieldBounds.left,
       });
     };
 

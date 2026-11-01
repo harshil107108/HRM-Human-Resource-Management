@@ -1,28 +1,29 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { formatDateForInput } from "@/utils/dateUtils";
+import { calculateLeaveWorkingDays } from "@/utils/leaveUtils";
 
-export const useLeaveRequestConfig = ({ handleDelete } = {}) => {
+export const useLeaveRequestConfig = ({ handleDelete, weekendPolicy = null, holidays = [] } = {}) => {
   const today = formatDateForInput(new Date());
 
-  const getTotalDays = (startDate, endDate, isHalfDay) => {
-    if (isHalfDay) return 0.5;
-    if (!startDate || !endDate || startDate > endDate) return 1;
+  const getTotalDays = useCallback((startDate, endDate, isHalfDay) => {
+    if (!startDate) return 0;
+    const calc = calculateLeaveWorkingDays({
+      startDate,
+      endDate: isHalfDay ? startDate : (endDate || startDate),
+      isHalfDay,
+      weekendPolicy,
+      holidays,
+    });
+    return calc.totalWorkingDays;
+  }, [weekendPolicy, holidays]);
 
-    const [startYear, startMonth, startDay] = startDate.split("-").map(Number);
-    const [endYear, endMonth, endDay] = endDate.split("-").map(Number);
-    const start = Date.UTC(startYear, startMonth - 1, startDay);
-    const end = Date.UTC(endYear, endMonth - 1, endDay);
-
-    return Math.floor((end - start) / 86400000) + 1;
-  };
-
-  const updateTotalDays = (form) => {
+  const updateTotalDays = useCallback((form) => {
     const values = form.methods.getValues();
     form.methods.setValue(
       "days",
       getTotalDays(values.startDate, values.endDate, values.isHalfDay),
     );
-  };
+  }, [getTotalDays]);
 
   const leaveRequestListingColDef = [
     {
@@ -191,7 +192,8 @@ export const useLeaveRequestConfig = ({ handleDelete } = {}) => {
             min: startDate,
           });
           form.methods.setValue("endDate", isHalfDay ? "" : startDate);
-          form.methods.setValue("days", isHalfDay ? 0.5 : 1);
+          const count = getTotalDays(startDate, isHalfDay ? startDate : startDate, isHalfDay);
+          form.methods.setValue("days", count);
         },
         className: "col-span-3",
       },
@@ -203,7 +205,7 @@ export const useLeaveRequestConfig = ({ handleDelete } = {}) => {
         className: "col-span-12",
       },
     }),
-    [],
+    [getTotalDays, today, updateTotalDays],
   );
 
   return {

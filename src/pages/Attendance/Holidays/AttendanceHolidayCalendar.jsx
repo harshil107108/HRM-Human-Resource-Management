@@ -362,7 +362,7 @@ const AttendanceHolidayCalendar = () => {
       <div className="h-12 px-3 py-1.5 bg-white rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-3 shrink-0">
         {/* Left: Icon, Title, Month Chip */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200/80 text-indigo-600 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-200/80 text-rose-600 flex items-center justify-center shrink-0">
             <PartyPopper size={16} />
           </div>
           <h1 className="text-sm font-bold text-slate-800 tracking-tight truncate">
@@ -425,7 +425,7 @@ const AttendanceHolidayCalendar = () => {
 
       {/* 2. Main Area: Full-screen No-Scroll Grid & Sidebar */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-2.5 flex-1 min-h-0 overflow-hidden">
-        {/* Left: Calendar with 1px Industry-Standard Continuous Grid (8 Cols) */}
+        {/* Left: Calendar with 1px Continuous Grid (8 Cols) */}
         <div className="xl:col-span-8 flex flex-col h-full min-h-0 bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
           {/* Calendar Sub-Header */}
           <div className="h-9 px-3 border-b border-slate-200 flex items-center justify-between shrink-0 bg-white">
@@ -454,8 +454,8 @@ const AttendanceHolidayCalendar = () => {
               </span>
             </div>
             {sameMonthHolidays.length > 0 ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/70">
-                <Sparkles size={11} className="text-indigo-500" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/70">
+                <Sparkles size={11} className="text-rose-500" />
                 {sameMonthHolidays.length} {sameMonthHolidays.length === 1 ? "Holiday" : "Holidays"}
               </span>
             ) : (
@@ -465,7 +465,7 @@ const AttendanceHolidayCalendar = () => {
             )}
           </div>
 
-          {/* Weekday Column Headers (Industry Standard 1px Borders) */}
+          {/* Weekday Column Headers */}
           <div className="h-7 grid grid-cols-7 border-b border-slate-200 bg-slate-50/70 shrink-0 text-center text-[10px] font-bold uppercase tracking-wider">
             {dayNames.map((day, idx) => {
               const isWeekendCol = idx === 0 || idx === 6;
@@ -475,7 +475,11 @@ const AttendanceHolidayCalendar = () => {
                   key={day}
                   className={`flex items-center justify-center ${
                     !isLastCol ? "border-r border-slate-200" : ""
-                  } ${isWeekendCol ? "text-slate-400 font-semibold bg-slate-100/40" : "text-slate-600 font-semibold"}`}
+                  } ${
+                    isWeekendCol
+                      ? "text-rose-600 font-bold bg-rose-50/40"
+                      : "text-slate-600 font-semibold"
+                  }`}
                 >
                   {day}
                 </div>
@@ -483,7 +487,7 @@ const AttendanceHolidayCalendar = () => {
             })}
           </div>
 
-          {/* Days Grid: 1px Integrated Grid Lines across all rows and columns with No Page Scroll */}
+          {/* Days Grid: Subtle Professional Red for Weekends and Holidays */}
           <div
             className="flex-1 min-h-0 grid grid-cols-7 border-l-0 border-t-0"
             style={{
@@ -495,6 +499,7 @@ const AttendanceHolidayCalendar = () => {
               const dayHolidays = holidayDateMap[cell.key] || [];
               const isHoliday = dayHolidays.length > 0;
               const isWeekend = isDateWeekend(cell.dateObj);
+              const isRedDay = isHoliday || isWeekend;
               const isToday = cell.iso === todayStr;
               const isSelected = cell.iso === selectedDate;
               const isLastCol = (idx + 1) % 7 === 0;
@@ -509,21 +514,21 @@ const AttendanceHolidayCalendar = () => {
                     isSelected
                       ? `ring-2 ring-sky-600 ring-inset ${
                           isHoliday
-                            ? "bg-indigo-50/80"
+                            ? "bg-rose-50/90"
                             : isWeekend
-                            ? "bg-slate-100/70"
+                            ? "bg-rose-50/60"
                             : "bg-sky-50/40"
                         }`
                       : !isCurrentMonth
                       ? isHoliday
-                        ? "bg-indigo-50/25 opacity-50"
+                        ? "bg-rose-50/25 opacity-40"
                         : isWeekend
-                        ? "bg-slate-50/60 opacity-40"
+                        ? "bg-rose-50/20 opacity-35"
                         : "bg-slate-50/30 opacity-40"
                       : isHoliday
-                      ? "bg-indigo-50/50 hover:bg-indigo-50/80"
+                      ? "bg-rose-50/70 hover:bg-rose-50/95"
                       : isWeekend
-                      ? "bg-slate-50/40 hover:bg-slate-100/60"
+                      ? "bg-rose-50/30 hover:bg-rose-50/60"
                       : isToday
                       ? "bg-sky-50/25 hover:bg-sky-50/50"
                       : "bg-white hover:bg-slate-50/70"
@@ -536,15 +541,15 @@ const AttendanceHolidayCalendar = () => {
                         {cell.dayNum}
                       </span>
                     ) : !isCurrentMonth ? (
-                      <span className={`text-xs font-medium ${isHoliday ? "text-indigo-400" : "text-slate-300"}`}>
+                      <span className={`text-xs font-medium ${isRedDay ? "text-rose-400/80" : "text-slate-300"}`}>
                         {cell.dayNum}
                       </span>
                     ) : isHoliday ? (
-                      <span className="text-xs font-bold text-indigo-700">
+                      <span className="text-xs font-bold text-rose-700">
                         {cell.dayNum}
                       </span>
                     ) : isWeekend ? (
-                      <span className="text-xs font-semibold text-slate-400">
+                      <span className="text-xs font-semibold text-rose-600">
                         {cell.dayNum}
                       </span>
                     ) : (
@@ -568,16 +573,16 @@ const AttendanceHolidayCalendar = () => {
                         return (
                           <div
                             key={hIdx}
-                            className="text-[10px] font-bold text-indigo-900 bg-indigo-100/85 border border-indigo-200/90 px-1.5 py-0.5 rounded shadow-2xs truncate flex items-center gap-1"
+                            className="text-[10px] font-bold text-rose-900 bg-rose-100/90 border border-rose-200/90 px-1.5 py-0.5 rounded shadow-2xs truncate flex items-center gap-1"
                             title={`${festivalName} • ${h.holidayType || "Official Holiday"}`}
                           >
-                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 shrink-0" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-600 shrink-0" />
                             <span className="truncate">{festivalName}</span>
                           </div>
                         );
                       })
                     ) : isWeekend && isCurrentMonth ? (
-                      <span className="text-[9px] font-medium text-slate-500 bg-slate-100/90 border border-slate-200/80 px-1 py-0.2 rounded w-fit block truncate">
+                      <span className="text-[9px] font-medium text-rose-600 bg-rose-50/90 border border-rose-200/60 px-1.5 py-0.2 rounded w-fit block truncate">
                         Weekend
                       </span>
                     ) : null}
@@ -602,11 +607,11 @@ const AttendanceHolidayCalendar = () => {
                 </span>
                 <span className="text-[10px] text-slate-500 font-medium">Total Holidays</span>
               </div>
-              <div className="bg-indigo-50/60 border border-indigo-200/70 rounded-lg p-2 text-center">
-                <span className="text-base font-bold text-indigo-700 leading-tight block">
+              <div className="bg-rose-50/60 border border-rose-200/70 rounded-lg p-2 text-center">
+                <span className="text-base font-bold text-rose-700 leading-tight block">
                   {stats.inCurrentMonth}
                 </span>
-                <span className="text-[10px] text-indigo-600 font-semibold">
+                <span className="text-[10px] text-rose-600 font-semibold">
                   In {monthNames[month].slice(0, 3)}
                 </span>
               </div>
@@ -647,18 +652,18 @@ const AttendanceHolidayCalendar = () => {
                   return (
                     <div
                       key={idx}
-                      className="p-2 rounded-lg bg-indigo-50/70 border border-indigo-200/80 space-y-1"
+                      className="p-2 rounded-lg bg-rose-50/70 border border-rose-200/80 space-y-1"
                     >
                       <div className="flex items-start justify-between gap-1.5">
-                        <h4 className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
-                          <PartyPopper size={13} className="text-indigo-600 shrink-0" />
+                        <h4 className="text-xs font-bold text-rose-950 flex items-center gap-1.5">
+                          <PartyPopper size={13} className="text-rose-600 shrink-0" />
                           <span className="truncate">{festivalName}</span>
                         </h4>
-                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-600 text-white uppercase">
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-rose-600 text-white uppercase">
                           {h.holidayType || "Official"}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] pt-1 border-t border-indigo-200/60">
+                      <div className="flex items-center gap-2 text-[10px] pt-1 border-t border-rose-200/60">
                         {h.paidHoliday !== false && (
                           <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
                             <CheckCircle2 size={11} /> Paid
@@ -675,11 +680,11 @@ const AttendanceHolidayCalendar = () => {
                 })}
               </div>
             ) : isSelectedDateWeekend ? (
-              <div className="mt-2 p-2 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center gap-2.5 text-xs text-slate-700">
-                <div className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
+              <div className="mt-2 p-2 rounded-lg bg-rose-50/40 border border-rose-200/60 flex items-center gap-2.5 text-xs text-rose-700">
+                <div className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
                 <div>
-                  <span className="font-semibold text-slate-800 block leading-tight">Weekend / Weekly Off</span>
-                  <p className="text-[10px] text-slate-500">Scheduled weekly off as per company policy.</p>
+                  <span className="font-semibold text-rose-900 block leading-tight">Weekend / Weekly Off</span>
+                  <p className="text-[10px] text-rose-600/80">Scheduled weekly off as per company policy.</p>
                 </div>
               </div>
             ) : (
@@ -699,7 +704,7 @@ const AttendanceHolidayCalendar = () => {
               <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
                 Holidays in {monthNames[month]}
               </span>
-              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200/60">
                 {sameMonthHolidays.length}
               </span>
             </div>
@@ -727,21 +732,21 @@ const AttendanceHolidayCalendar = () => {
                     <div
                       key={idx}
                       onClick={() => handleHolidayItemClick(h)}
-                      className="flex items-center justify-between p-1.5 rounded-lg border border-slate-200/80 bg-white hover:bg-indigo-50/40 hover:border-indigo-200 transition-colors cursor-pointer shadow-2xs group"
+                      className="flex items-center justify-between p-1.5 rounded-lg border border-slate-200/80 bg-white hover:bg-rose-50/40 hover:border-rose-200 transition-colors cursor-pointer shadow-2xs group"
                       title={`Jump to ${festivalName}`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="w-7 h-7 rounded-md bg-indigo-50 border border-indigo-200/80 font-bold text-xs text-indigo-700 flex items-center justify-center shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <span className="w-7 h-7 rounded-md bg-rose-50 border border-rose-200/80 font-bold text-xs text-rose-700 flex items-center justify-center shrink-0 group-hover:bg-rose-600 group-hover:text-white transition-colors">
                           {dayNum}
                         </span>
                         <div className="min-w-0">
-                          <h4 className="text-xs font-bold text-slate-800 truncate leading-tight group-hover:text-indigo-900 transition-colors">
+                          <h4 className="text-xs font-bold text-slate-800 truncate leading-tight group-hover:text-rose-900 transition-colors">
                             {festivalName}
                           </h4>
                           <span className="text-[10px] text-slate-400 font-medium">{dayOfWeek}</span>
                         </div>
                       </div>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/70 uppercase shrink-0">
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-rose-50 text-rose-700 border border-rose-200/70 uppercase shrink-0">
                         {h.holidayType || "Official"}
                       </span>
                     </div>
@@ -758,11 +763,11 @@ const AttendanceHolidayCalendar = () => {
             </div>
             <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-xs text-slate-700">
               <div className="flex items-center gap-1.5">
-                <span className="w-3.5 h-3.5 rounded bg-indigo-100 border border-indigo-300 shrink-0" />
+                <span className="w-3.5 h-3.5 rounded bg-rose-100 border border-rose-300 shrink-0" />
                 <span className="text-[11px] font-medium text-slate-700">Official Holiday</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3.5 h-3.5 rounded bg-slate-100 border border-slate-300 shrink-0" />
+                <span className="w-3.5 h-3.5 rounded bg-rose-50 border border-rose-200 shrink-0" />
                 <span className="text-[11px] font-medium text-slate-700">Weekend / Off</span>
               </div>
               <div className="flex items-center gap-1.5">

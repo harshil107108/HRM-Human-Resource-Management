@@ -105,9 +105,12 @@ const AttendanceLogModal = ({
                     getLogById();
                 }
             } else {
+                const isAbsentMode = extraParams?.defaultStatus === "Absent";
                 formInstance.methods.setValues({
                     ...initialValue,
                     ...(extraParams?.defaultDate ? { date: extraParams.defaultDate } : {}),
+                    ...(extraParams?.defaultEmployeeId ? { employeeId: extraParams.defaultEmployeeId } : {}),
+                    ...(isAbsentMode ? { status: "Absent", clockIn: "", clockOut: "" } : {}),
                 });
             }
         }
@@ -117,6 +120,12 @@ const AttendanceLogModal = ({
         const isValid = formInstance.methods.validate();
         if (!isValid) return;
         const formData = formInstance.methods.getValues();
+
+        if (formData.status === "Absent") {
+            formData.clockIn = "";
+            formData.clockOut = "";
+            formData.totalHours = 0;
+        }
 
         const payload = {
             ...formData,

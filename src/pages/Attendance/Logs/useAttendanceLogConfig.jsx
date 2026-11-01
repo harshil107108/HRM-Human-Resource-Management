@@ -38,6 +38,26 @@ export const useAttendanceLogConfig = ({ handleDelete } = {}) => {
             field: "status",
             headerName: "Status",
             width: 130,
+            render: (val) => {
+                const s = String(val || "Present");
+                let badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
+                if (s === "Absent") {
+                    badgeClass = "bg-rose-100 text-rose-700 border-rose-300 font-semibold";
+                } else if (s === "Half Day") {
+                    badgeClass = "bg-amber-50 text-amber-700 border-amber-200";
+                } else if (s === "On Leave") {
+                    badgeClass = "bg-sky-50 text-sky-700 border-sky-200";
+                } else if (s === "Holiday" || s === "Weekly Off") {
+                    badgeClass = "bg-purple-50 text-purple-700 border-purple-200";
+                } else if (s === "Late") {
+                    badgeClass = "bg-orange-50 text-orange-700 border-orange-200";
+                }
+                return (
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs border ${badgeClass}`}>
+                        {s}
+                    </span>
+                );
+            },
         },
         {
             id: "source",
@@ -57,8 +77,12 @@ export const useAttendanceLogConfig = ({ handleDelete } = {}) => {
             headerName: "Action",
             width: 80,
             type: "actions",
+            deleteDisabled: (row) => Boolean(row?.isVirtual),
+            deleteDisabledTitle: (row) => row?.isVirtual ? "Unrecorded absence" : "Delete",
             onClick: (data) => {
-                handleDelete?.(data._id);
+                if (!data?.isVirtual) {
+                    handleDelete?.(data._id);
+                }
             },
         },
     ];

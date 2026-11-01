@@ -12,6 +12,8 @@ import {
   CheckCircle2,
   Clock,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -111,6 +113,18 @@ const AttendanceHolidayCalendar = () => {
     const today = new Date();
     setCurrentDate(today);
     setSelectedDate(getTodayDateString());
+  };
+
+  const handlePrevMonth = () => {
+    const prev = new Date(year, month - 1, 1);
+    setCurrentDate(prev);
+    setSelectedDate(`${prev.getFullYear()}-${pad2(prev.getMonth() + 1)}-01`);
+  };
+
+  const handleNextMonth = () => {
+    const next = new Date(year, month + 1, 1);
+    setCurrentDate(next);
+    setSelectedDate(`${next.getFullYear()}-${pad2(next.getMonth() + 1)}-01`);
   };
 
   // Safely parse raw date into year, month (0-indexed), day
@@ -344,26 +358,25 @@ const AttendanceHolidayCalendar = () => {
 
   return (
     <div className="h-full min-h-0 flex flex-col overflow-hidden p-3 gap-2.5 bg-slate-50/50">
-      {/* 1. Compact Managed Header Toolbar (Single-line, industry standard) */}
+      {/* 1. Compact Managed Header Toolbar */}
       <div className="h-12 px-3 py-1.5 bg-white rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-3 shrink-0">
         {/* Left: Icon, Title, Month Chip */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-7 h-7 rounded-lg bg-red-50 border border-red-200 text-red-600 flex items-center justify-center shrink-0">
-            <PartyPopper size={15} />
+          <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200/80 text-indigo-600 flex items-center justify-center shrink-0">
+            <PartyPopper size={16} />
           </div>
           <h1 className="text-sm font-bold text-slate-800 tracking-tight truncate">
             Attendance Holiday Calendar
           </h1>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-200/80 shrink-0">
-            <CalendarDays size={11} className="text-red-500" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200/80 shrink-0">
+            <CalendarDays size={12} className="text-slate-500" />
             {monthNames[month]} {year}
           </span>
         </div>
 
         {/* Right: Controls */}
         <div className="flex items-center gap-2 shrink-0">
-
-          {/* Form Method Date Input without extra chevrons */}
+          {/* Form Method Date Input */}
           <div className="w-36 sm:w-44">
             <DateField
               id="holidayCalendarJumpDate"
@@ -404,7 +417,7 @@ const AttendanceHolidayCalendar = () => {
           >
             <RefreshCw
               size={13}
-              className={isLoading ? "animate-spin text-blue-600" : ""}
+              className={isLoading ? "animate-spin text-sky-600" : ""}
             />
           </button>
         </div>
@@ -415,18 +428,34 @@ const AttendanceHolidayCalendar = () => {
         {/* Left: Calendar with 1px Industry-Standard Continuous Grid (8 Cols) */}
         <div className="xl:col-span-8 flex flex-col h-full min-h-0 bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
           {/* Calendar Sub-Header */}
-          <div className="h-9 px-3.5 border-b border-slate-200 flex items-center justify-between shrink-0 bg-white">
-            <div className="flex items-center gap-2">
+          <div className="h-9 px-3 border-b border-slate-200 flex items-center justify-between shrink-0 bg-white">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handlePrevMonth}
+                className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                title="Previous Month"
+              >
+                <ChevronLeft size={15} />
+              </button>
               <span className="text-xs font-bold text-slate-800">
                 {monthNames[month]} {year}
               </span>
-              <span className="text-[11px] text-slate-400 font-medium">
+              <button
+                type="button"
+                onClick={handleNextMonth}
+                className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                title="Next Month"
+              >
+                <ChevronRight size={15} />
+              </button>
+              <span className="text-[11px] text-slate-400 font-medium ml-1">
                 • {daysInCurrentMonth} Days
               </span>
             </div>
             {sameMonthHolidays.length > 0 ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-50 text-red-700 border border-red-200/60">
-                <Sparkles size={10} className="text-red-500" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/70">
+                <Sparkles size={11} className="text-indigo-500" />
                 {sameMonthHolidays.length} {sameMonthHolidays.length === 1 ? "Holiday" : "Holidays"}
               </span>
             ) : (
@@ -446,7 +475,7 @@ const AttendanceHolidayCalendar = () => {
                   key={day}
                   className={`flex items-center justify-center ${
                     !isLastCol ? "border-r border-slate-200" : ""
-                  } ${isWeekendCol ? "text-red-600 bg-red-50/50 font-extrabold" : "text-slate-500 font-semibold"}`}
+                  } ${isWeekendCol ? "text-slate-400 font-semibold bg-slate-100/40" : "text-slate-600 font-semibold"}`}
                 >
                   {day}
                 </div>
@@ -466,7 +495,6 @@ const AttendanceHolidayCalendar = () => {
               const dayHolidays = holidayDateMap[cell.key] || [];
               const isHoliday = dayHolidays.length > 0;
               const isWeekend = isDateWeekend(cell.dateObj);
-              const isRedSquare = isHoliday || isWeekend;
               const isToday = cell.iso === todayStr;
               const isSelected = cell.iso === selectedDate;
               const isLastCol = (idx + 1) % 7 === 0;
@@ -479,32 +507,44 @@ const AttendanceHolidayCalendar = () => {
                     isLastCol ? "border-r-0" : "border-r-slate-200"
                   } border-b-slate-200 p-1.5 flex flex-col justify-between overflow-hidden cursor-pointer transition-colors relative select-none ${
                     isSelected
-                      ? `ring-2 ring-blue-500 ring-inset ${
-                          isRedSquare ? "bg-red-50/80" : "bg-blue-50/30"
+                      ? `ring-2 ring-sky-600 ring-inset ${
+                          isHoliday
+                            ? "bg-indigo-50/80"
+                            : isWeekend
+                            ? "bg-slate-100/70"
+                            : "bg-sky-50/40"
                         }`
                       : !isCurrentMonth
-                      ? isRedSquare
-                        ? "bg-red-50/25 opacity-50"
-                        : "bg-slate-50/40 opacity-45"
-                      : isRedSquare
-                      ? "bg-red-50/60 hover:bg-red-50/85"
+                      ? isHoliday
+                        ? "bg-indigo-50/25 opacity-50"
+                        : isWeekend
+                        ? "bg-slate-50/60 opacity-40"
+                        : "bg-slate-50/30 opacity-40"
+                      : isHoliday
+                      ? "bg-indigo-50/50 hover:bg-indigo-50/80"
+                      : isWeekend
+                      ? "bg-slate-50/40 hover:bg-slate-100/60"
                       : isToday
-                      ? "bg-blue-50/20 hover:bg-blue-50/40"
+                      ? "bg-sky-50/25 hover:bg-sky-50/50"
                       : "bg-white hover:bg-slate-50/70"
                   }`}
                 >
                   {/* Top Row: Date Number and Today Tag */}
                   <div className="flex justify-between items-start leading-none">
                     {isToday ? (
-                      <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shadow-xs">
+                      <span className="w-5 h-5 rounded-full bg-sky-600 text-white font-bold text-[10px] flex items-center justify-center shadow-xs">
                         {cell.dayNum}
                       </span>
                     ) : !isCurrentMonth ? (
-                      <span className={`text-xs font-medium ${isRedSquare ? "text-red-400" : "text-slate-300"}`}>
+                      <span className={`text-xs font-medium ${isHoliday ? "text-indigo-400" : "text-slate-300"}`}>
                         {cell.dayNum}
                       </span>
-                    ) : isRedSquare ? (
-                      <span className="text-xs font-bold text-red-700">
+                    ) : isHoliday ? (
+                      <span className="text-xs font-bold text-indigo-700">
+                        {cell.dayNum}
+                      </span>
+                    ) : isWeekend ? (
+                      <span className="text-xs font-semibold text-slate-400">
                         {cell.dayNum}
                       </span>
                     ) : (
@@ -514,7 +554,7 @@ const AttendanceHolidayCalendar = () => {
                     )}
 
                     {isToday && (
-                      <span className="text-[8px] font-bold text-blue-600 bg-blue-100/70 px-1 py-0.2 rounded uppercase">
+                      <span className="text-[8px] font-bold text-sky-700 bg-sky-100/80 px-1 py-0.2 rounded uppercase">
                         Today
                       </span>
                     )}
@@ -528,16 +568,16 @@ const AttendanceHolidayCalendar = () => {
                         return (
                           <div
                             key={hIdx}
-                            className="text-[10px] font-bold text-red-900 bg-red-100/90 border border-red-300/80 px-1.5 py-0.5 rounded shadow-2xs truncate flex items-center gap-1"
+                            className="text-[10px] font-bold text-indigo-900 bg-indigo-100/85 border border-indigo-200/90 px-1.5 py-0.5 rounded shadow-2xs truncate flex items-center gap-1"
                             title={`${festivalName} • ${h.holidayType || "Official Holiday"}`}
                           >
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 shrink-0" />
                             <span className="truncate">{festivalName}</span>
                           </div>
                         );
                       })
                     ) : isWeekend && isCurrentMonth ? (
-                      <span className="text-[9px] font-semibold text-red-600 bg-red-100/60 border border-red-200/70 px-1 py-0.2 rounded w-fit block truncate">
+                      <span className="text-[9px] font-medium text-slate-500 bg-slate-100/90 border border-slate-200/80 px-1 py-0.2 rounded w-fit block truncate">
                         Weekend
                       </span>
                     ) : null}
@@ -562,11 +602,11 @@ const AttendanceHolidayCalendar = () => {
                 </span>
                 <span className="text-[10px] text-slate-500 font-medium">Total Holidays</span>
               </div>
-              <div className="bg-red-50/70 border border-red-200/70 rounded-lg p-2 text-center">
-                <span className="text-base font-bold text-red-700 leading-tight block">
+              <div className="bg-indigo-50/60 border border-indigo-200/70 rounded-lg p-2 text-center">
+                <span className="text-base font-bold text-indigo-700 leading-tight block">
                   {stats.inCurrentMonth}
                 </span>
-                <span className="text-[10px] text-red-600 font-semibold">
+                <span className="text-[10px] text-indigo-600 font-semibold">
                   In {monthNames[month].slice(0, 3)}
                 </span>
               </div>
@@ -580,7 +620,7 @@ const AttendanceHolidayCalendar = () => {
                 Selected Day Details
               </span>
               {selectedDate === todayStr && (
-                <span className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.2 rounded uppercase">
+                <span className="text-[9px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-1.5 py-0.2 rounded uppercase">
                   Today
                 </span>
               )}
@@ -607,18 +647,18 @@ const AttendanceHolidayCalendar = () => {
                   return (
                     <div
                       key={idx}
-                      className="p-2 rounded-lg bg-red-50/80 border border-red-200/80 space-y-1"
+                      className="p-2 rounded-lg bg-indigo-50/70 border border-indigo-200/80 space-y-1"
                     >
                       <div className="flex items-start justify-between gap-1.5">
-                        <h4 className="text-xs font-bold text-red-950 flex items-center gap-1">
-                          <PartyPopper size={12} className="text-red-600 shrink-0" />
+                        <h4 className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                          <PartyPopper size={13} className="text-indigo-600 shrink-0" />
                           <span className="truncate">{festivalName}</span>
                         </h4>
-                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-red-600 text-white uppercase">
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-600 text-white uppercase">
                           {h.holidayType || "Official"}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] pt-1 border-t border-red-200/60">
+                      <div className="flex items-center gap-2 text-[10px] pt-1 border-t border-indigo-200/60">
                         {h.paidHoliday !== false && (
                           <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
                             <CheckCircle2 size={11} /> Paid
@@ -635,15 +675,15 @@ const AttendanceHolidayCalendar = () => {
                 })}
               </div>
             ) : isSelectedDateWeekend ? (
-              <div className="mt-2 p-2 rounded-lg bg-red-50/60 border border-red-200/70 flex items-center gap-2 text-xs text-red-700">
-                <div className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+              <div className="mt-2 p-2 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center gap-2.5 text-xs text-slate-700">
+                <div className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
                 <div>
-                  <span className="font-semibold text-red-900 block leading-tight">Weekend / Weekly Off</span>
-                  <p className="text-[10px] text-red-600/80">Scheduled weekly off as per Weekend Policy.</p>
+                  <span className="font-semibold text-slate-800 block leading-tight">Weekend / Weekly Off</span>
+                  <p className="text-[10px] text-slate-500">Scheduled weekly off as per company policy.</p>
                 </div>
               </div>
             ) : (
-              <div className="mt-2 p-2 rounded-lg bg-slate-50 border border-slate-200/70 flex items-center gap-2 text-xs text-slate-600">
+              <div className="mt-2 p-2 rounded-lg bg-slate-50 border border-slate-200/70 flex items-center gap-2.5 text-xs text-slate-600">
                 <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
                 <div>
                   <span className="font-semibold text-slate-800 block leading-tight">Standard Working Day</span>
@@ -659,14 +699,14 @@ const AttendanceHolidayCalendar = () => {
               <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
                 Holidays in {monthNames[month]}
               </span>
-              <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded-full bg-red-50 text-red-700 border border-red-200/60">
+              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60">
                 {sameMonthHolidays.length}
               </span>
             </div>
 
             {isLoading ? (
               <div className="py-4 text-center text-xs text-slate-500 flex items-center justify-center gap-1.5">
-                <RefreshCw size={12} className="animate-spin text-blue-600" />
+                <RefreshCw size={12} className="animate-spin text-sky-600" />
                 <span>Loading...</span>
               </div>
             ) : sameMonthHolidays.length === 0 ? (
@@ -687,21 +727,21 @@ const AttendanceHolidayCalendar = () => {
                     <div
                       key={idx}
                       onClick={() => handleHolidayItemClick(h)}
-                      className="flex items-center justify-between p-1.5 rounded-lg border border-red-200/80 bg-red-50/40 hover:bg-red-50 transition-colors cursor-pointer shadow-2xs"
+                      className="flex items-center justify-between p-1.5 rounded-lg border border-slate-200/80 bg-white hover:bg-indigo-50/40 hover:border-indigo-200 transition-colors cursor-pointer shadow-2xs group"
                       title={`Jump to ${festivalName}`}
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="w-7 h-7 rounded-md bg-white border border-red-200 font-extrabold text-xs text-red-700 flex items-center justify-center shrink-0">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="w-7 h-7 rounded-md bg-indigo-50 border border-indigo-200/80 font-bold text-xs text-indigo-700 flex items-center justify-center shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                           {dayNum}
                         </span>
                         <div className="min-w-0">
-                          <h4 className="text-xs font-bold text-red-950 truncate leading-tight">
+                          <h4 className="text-xs font-bold text-slate-800 truncate leading-tight group-hover:text-indigo-900 transition-colors">
                             {festivalName}
                           </h4>
-                          <span className="text-[10px] text-slate-500">{dayOfWeek}</span>
+                          <span className="text-[10px] text-slate-400 font-medium">{dayOfWeek}</span>
                         </div>
                       </div>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-red-600 text-white uppercase shrink-0">
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/70 uppercase shrink-0">
                         {h.holidayType || "Official"}
                       </span>
                     </div>
@@ -716,22 +756,22 @@ const AttendanceHolidayCalendar = () => {
             <div className="text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
               Calendar Color Legend
             </div>
-            <div className="space-y-1.5 text-xs text-slate-700">
-              <div className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 rounded bg-red-50 border-2 border-red-400 shrink-0" />
-                <span className="text-[11px] font-semibold text-red-700">Official Holiday (Red)</span>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-xs text-slate-700">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3.5 h-3.5 rounded bg-indigo-100 border border-indigo-300 shrink-0" />
+                <span className="text-[11px] font-medium text-slate-700">Official Holiday</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 rounded bg-red-50/80 border border-red-300 shrink-0" />
-                <span className="text-[11px] font-semibold text-red-700">Weekend / Weekly Off (Red)</span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3.5 h-3.5 rounded bg-slate-100 border border-slate-300 shrink-0" />
+                <span className="text-[11px] font-medium text-slate-700">Weekend / Off</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 rounded bg-blue-600 shrink-0" />
-                <span className="text-[11px] font-semibold text-blue-700">Today (Blue)</span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3.5 h-3.5 rounded bg-sky-600 shrink-0" />
+                <span className="text-[11px] font-medium text-slate-700">Today</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <span className="w-3.5 h-3.5 rounded bg-white border border-slate-300 shrink-0" />
-                <span className="text-[11px] font-medium text-slate-600">Working Day</span>
+                <span className="text-[11px] font-medium text-slate-700">Working Day</span>
               </div>
             </div>
           </div>
